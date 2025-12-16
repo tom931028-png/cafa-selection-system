@@ -1,11 +1,12 @@
-# 使用 Nginx 來當作網頁伺服器 (因為你的檔案是純靜態的 HTML)
+# 使用 Nginx
 FROM nginx:alpine
 
-# 將你的 HTML 檔案複製到 Nginx 的預設目錄
+# 將你的檔案複製進去
 COPY . /usr/share/nginx/html
 
-# 告訴 Google Cloud 這個容器會使用 8080 port
-EXPOSE 8080
+# 【關鍵修改】直接建立一個新的設定檔，強制規定用 8080 Port
+# 這樣就絕對不會有「改不到」的問題了
+RUN echo "server { listen 8080; server_name localhost; location / { root /usr/share/nginx/html; index index.html index.htm; try_files \$uri \$uri/ /index.html; } }" > /etc/nginx/conf.d/default.conf
 
-# 修改 Nginx 設定以符合 Cloud Run 的 Port 需求 (Cloud Run 預設 port 為 8080)
-RUN sed -i 's/listen  80;/listen 8080;/' /etc/nginx/conf.d/default.conf
+# 告訴 Cloud Run 我們用 8080
+EXPOSE 8080
