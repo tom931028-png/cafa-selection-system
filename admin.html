@@ -232,18 +232,5 @@
     </script>
 </body>
 </html>
-            const idx = db.findIndex(s => s.id === currentStudentId);
-            if(idx===-1) return;
-            db[idx].courses = db[idx].courses.map(c => {
-                const inp = document.getElementById(`score-${c.id}`);
-                if(inp && inp.value!=='') c.score = parseInt(inp.value);
-                return c;
-            });
-            localStorage.setItem(STUDENT_DB_KEY, JSON.stringify(db));
-            alert("✅ 成績已儲存"); loadStudentGrades();
-        }
-    </script>
-</body>
 
-</html>
 
