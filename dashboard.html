@@ -12,39 +12,23 @@
         .menu-item:hover, .menu-item.active { background-color: #0044CC; border-left: 4px solid #FFD700; }
         .student-info { margin-top: auto; padding: 20px; background-color: #002266; font-size: 13px; }
         .main-content { flex: 1; padding: 30px; overflow-y: auto; }
-        
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .header-title { font-size: 24px; font-weight: bold; color: #00308F; border-left: 5px solid #00308F; padding-left: 15px; }
         .card { background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 20px; }
-        
-        /* 表格與標籤 */
         table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
         th { background-color: #f8f9fa; color: #555; }
         .tag { padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
-        .tag-compulsory { background: #e3f2fd; color: #0d47a1; } 
-        .tag-elective { background: #e8f5e9; color: #1b5e20; } 
-        .tag-fixed { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
-        
-        /* 按鈕 */
+        .tag-compulsory { background: #e3f2fd; color: #0d47a1; } .tag-elective { background: #e8f5e9; color: #1b5e20; } .tag-fixed { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
         .btn { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 13px; }
-        .btn-add { background: #28a745; color: white; } 
-        .btn-drop { background: #dc3545; color: white; } 
-        .btn-print { background: #6c757d; color: white; }
-        .btn-disabled { background: #ccc; cursor: not-allowed; color: #666; }
-
-        /* 可視化課表 */
+        .btn-add { background: #28a745; color: white; } .btn-drop { background: #dc3545; color: white; } .btn-print { background: #6c757d; color: white; } .btn-disabled { background: #ccc; cursor: not-allowed; color: #666; }
         .schedule-table { text-align: center; table-layout: fixed; }
         .schedule-table td { height: 80px; border: 1px solid #ccc; vertical-align: middle; padding: 5px; background: #fff; }
         .schedule-table th { background: #00308F; color: white; border: 1px solid #ccc; }
         .course-block { padding: 5px; border-radius: 4px; color: white; height: 100%; display: flex; flex-direction: column; justify-content: center; font-size: 12px; }
         .block-fixed { background-color: #c62828; } .block-normal { background-color: #1976d2; }
-
-        /* 成績單 */
-        .semester-title { background-color: #e3f2fd; padding: 10px; font-weight: bold; color: #0d47a1; margin-top: 20px; border-radius: 4px; }
         .score-high { color: green; font-weight: bold; } .score-fail { color: red; font-weight: bold; }
         .gpa-box { background: #333; color: #FFD700; padding: 15px; border-radius: 8px; display: inline-block; margin-bottom: 20px; font-size: 18px; }
-
         @media print { .sidebar, .btn, .header-bar input { display: none !important; } .main-content { padding: 0; } .card { box-shadow: none; border:none; } }
     </style>
 </head>
@@ -55,8 +39,8 @@
         <div class="menu-item" onclick="switchTab('schedule')">📅 已選清單</div>
         <div class="menu-item" onclick="switchTab('visual')">📊 可視化課表</div>
         <div class="menu-item" onclick="switchTab('history')">📈 歷年成績</div>
-        <div class="menu-item" onclick="window.location.href='index.html'">🚪 登出系統</div>
-        <div class="student-info">學號：1140052<br>姓名：李大維 學生<br>系級：航太系三年級</div>
+        <div class="menu-item" onclick="logout()">🚪 登出系統</div>
+        <div class="student-info" id="user-info-box">載入中...</div>
     </div>
 
     <div class="main-content">
@@ -82,62 +66,87 @@
     <script>
         let allCourses = [];
         let myCourses = [];
-        const currentUser = { id: "1140052", name: "李大維", dept: "航太系三年級" };
-        const mockHistory = [
-            { semester: "112學年度 第2學期", courses: [{ name: "微積分(二)", credit: 3, score: 85, type: "必修" }, { name: "普通物理", credit: 3, score: 78, type: "必修" }] },
-            { semester: "113學年度 第1學期", courses: [{ name: "工程數學", credit: 3, score: 68, type: "必修" }] }
-        ];
+        let currentUser = null;
 
-        window.onload = function() { 
+        window.onload = function() {
+            // 1. 檢查登入狀態
+            const userStr = sessionStorage.getItem('cafa_current_user');
+            if (!userStr) {
+                alert("請先登入！");
+                window.location.href = 'index.html';
+                return;
+            }
+            currentUser = JSON.parse(userStr);
+            
+            // 2. 更新左下角資訊
+            document.getElementById('user-info-box').innerHTML = `學號：${currentUser.id}<br>姓名：${currentUser.name}<br>系級：${currentUser.dept}`;
+
+            // 3. 初始化資料 (注意：要從資料庫拉最新的 myCourses)
+            syncFromCloud(); 
             allCourses = []; 
-            loadFixedCourses(); loadPublicElectives(); syncFromCloud(); 
-            renderCourseList(); saveToCloud(); generateEmptyScheduleGrid();
+            loadFixedCourses(); loadPublicElectives(); 
+            
+            renderCourseList(); generateEmptyScheduleGrid();
         };
 
+        function logout() {
+            sessionStorage.removeItem('cafa_current_user');
+            window.location.href = 'index.html';
+        }
+
+        // --- 核心：從資料庫同步該學生的最新資料 ---
         function syncFromCloud() {
             let db = JSON.parse(localStorage.getItem('cafa_all_students_db')) || [];
             let me = db.find(s => s.id === currentUser.id);
-            if (me && me.courses) {
-                me.courses.forEach(cloudCourse => {
-                    let localCourse = myCourses.find(c => c.id === cloudCourse.id);
-                    if (localCourse) localCourse.score = cloudCourse.score; // 同步成績
-                    else myCourses.push(cloudCourse); // 同步新增的課程
-                });
+            if (me) {
+                // 更新當前使用者資料
+                currentUser = me;
+                myCourses = me.courses || [];
             }
         }
-        
+
+        // --- 核心：儲存回資料庫 ---
+        function saveToCloud() {
+            let db = JSON.parse(localStorage.getItem('cafa_all_students_db')) || [];
+            const idx = db.findIndex(s => s.id === currentUser.id);
+            if (idx > -1) {
+                // 更新該學生的課程資料
+                db[idx].courses = myCourses;
+                db[idx].totalCredits = myCourses.reduce((s,c)=>s+c.credit,0);
+                db[idx].lastUpdate = new Date().toLocaleString();
+                localStorage.setItem('cafa_all_students_db', JSON.stringify(db));
+            }
+        }
+
+        // --- 載入課程列表 ---
         function loadPublicElectives() {
             const d = localStorage.getItem('cafa_public_electives');
             if(d) JSON.parse(d).forEach(c => { c.capacity=50; c.enrolled=0; allCourses.push(c); });
         }
         function loadFixedCourses() {
             const d = localStorage.getItem('cafa_fixed_courses');
-            if(d) JSON.parse(d).forEach(c => { if(!myCourses.some(mc=>mc.id===c.id)) myCourses.push(c); });
+            // 自動加入固定必修 (如果還沒加)
+            if(d) JSON.parse(d).forEach(c => { 
+                if(!myCourses.some(mc=>mc.id===c.id)) {
+                    myCourses.push(c);
+                    saveToCloud(); // 自動存回去
+                }
+            });
         }
 
         function renderCourseList() {
             const tbody = document.getElementById('course-list-body'); tbody.innerHTML='';
             allCourses.forEach(c => {
                 const isSelected = myCourses.some(mc=>mc.id===c.id);
-                const isOpen = (c.isOpen !== false); // 預設為 true
-                
+                const isOpen = (c.isOpen !== false); 
                 let btnHtml = '';
                 if(isSelected) btnHtml = `<button class="btn btn-disabled" disabled>已選</button>`;
-                else if(!isOpen) btnHtml = `<button class="btn btn-disabled" disabled>⛔ 暫停選課</button>`;
+                else if(!isOpen) btnHtml = `<button class="btn btn-disabled" disabled>⛔ 暫停</button>`;
                 else btnHtml = `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`;
-
                 const tagClass = c.type==='必修'?'tag-compulsory':'tag-elective';
                 tbody.innerHTML += `<tr><td><span class="tag ${tagClass}">${c.type}</span></td><td>${c.id}</td><td>${c.name}</td><td>${c.credit}</td><td>${c.time}</td><td>${c.enrolled}/${c.capacity}</td><td>${btnHtml}</td></tr>`;
             });
             document.getElementById('current-credits').innerText = myCourses.reduce((s,c)=>s+c.credit,0);
-        }
-
-        function saveToCloud() {
-            let db = JSON.parse(localStorage.getItem('cafa_all_students_db')) || [];
-            const data = { id: currentUser.id, name: currentUser.name, dept: currentUser.dept, courses: myCourses, totalCredits: myCourses.reduce((s,c)=>s+c.credit,0), lastUpdate: new Date().toLocaleString() };
-            const idx = db.findIndex(s => s.id === currentUser.id);
-            if(idx>-1) db[idx]=data; else db.push(data);
-            localStorage.setItem('cafa_all_students_db', JSON.stringify(db));
         }
 
         function renderMySchedule() {
@@ -147,6 +156,7 @@
                 tbody.innerHTML += `<tr><td><span class="tag ${isFixed?'tag-fixed':(c.type==='必修'?'tag-compulsory':'tag-elective')}">${c.type}</span></td><td>${c.name}</td><td>${c.credit}</td><td>${c.time}</td><td>${c.location||''}</td><td>${isFixed?'<span style="color:red">🔒</span>':`<button class="btn btn-drop" onclick="drop('${c.id}')">退</button>`}</td></tr>`;
             });
         }
+
         function add(id) { 
             const c=allCourses.find(x=>x.id===id); 
             if(checkTime(c)) { alert("衝堂！"); return; }
@@ -187,19 +197,27 @@
         function renderHistory() {
             const container = document.getElementById('history-content'); container.innerHTML = '';
             let totalScore=0, totalCredits=0;
+            // 模擬歷史 (假資料)
+            const mockHistory = [
+                { semester: "112學年度 第2學期", courses: [{ name: "微積分(二)", credit: 3, score: 85 }, { name: "普通物理", credit: 3, score: 78 }] }
+            ];
             mockHistory.forEach(sem => {
                 let html = `<div class="card"><div class="semester-title">${sem.semester}</div><table><thead><tr><th>課程</th><th>學分</th><th>成績</th></tr></thead><tbody>`;
                 sem.courses.forEach(c => { totalScore+=c.score*c.credit; totalCredits+=c.credit; html+=`<tr><td>${c.name}</td><td>${c.credit}</td><td class="${c.score<60?'score-fail':'score-high'}">${c.score}</td></tr>`; });
                 html+=`</tbody></table></div>`; container.innerHTML+=html;
             });
+            // 本學期
             const currentGraded = myCourses.filter(c => c.score !== undefined && c.score !== null && c.score !== '');
             if(currentGraded.length>0) {
-                let html = `<div class="card"><div class="semester-title">本學期</div><table><thead><tr><th>課程</th><th>學分</th><th>成績</th></tr></thead><tbody>`;
+                let html = `<div class="card"><div class="semester-title">本學期 (114-1)</div><table><thead><tr><th>課程</th><th>學分</th><th>成績</th></tr></thead><tbody>`;
                 currentGraded.forEach(c => { let s=parseInt(c.score); totalScore+=s*c.credit; totalCredits+=c.credit; html+=`<tr><td>${c.name}</td><td>${c.credit}</td><td class="${s<60?'score-fail':'score-high'}">${s}</td></tr>`; });
                 html+=`</tbody></table></div>`; container.innerHTML = html + container.innerHTML;
+            } else {
+                container.innerHTML = `<div class="card"><div style="padding:15px">本學期尚無成績</div></div>` + container.innerHTML;
             }
             document.getElementById('total-gpa').innerText = totalCredits>0 ? (totalScore/totalCredits).toFixed(2) : "0.0";
         }
+
         function switchTab(tab) {
             ['selection','schedule','visual','history'].forEach(v => document.getElementById(v+'-view').style.display='none');
             document.querySelectorAll('.menu-item').forEach(i=>i.classList.remove('active'));
