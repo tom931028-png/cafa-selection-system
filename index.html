@@ -1,3 +1,15 @@
+沒問題！這是修改後的 index.html (登入頁) 完整程式碼。
+
+我已經把登入邏輯寫好了：
+
+如果帳號輸入 admin 或 teacher 👉 自動跳轉到 導師端 (admin.html)。
+
+輸入其他任何帳號（例如學號） 👉 自動跳轉到 學生端 (dashboard.html)。
+
+請直接覆蓋原本的 index.html：
+
+HTML
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -119,15 +131,15 @@
             3. 選課期間系統流量大，請同學依年級分流時間登入。
         </div>
 
-        <form action="#" method="POST" onsubmit="event.preventDefault(); window.location.href='dashboard.html';">
+        <form onsubmit="handleLogin(event)">
             <div class="form-group">
-                <label for="student_id">學號 (Student ID)</label>
-                <input type="text" id="student_id" name="student_id" placeholder="請輸入學號" required>
+                <label for="student_id">帳號 (User ID)</label>
+                <input type="text" id="student_id" name="student_id" placeholder="學生輸入學號 / 教師輸入 admin" required>
             </div>
             
             <div class="form-group">
                 <label for="password">密碼 (Password)</label>
-                <input type="password" id="password" name="password" placeholder="請輸入選課密碼" required>
+                <input type="password" id="password" name="password" placeholder="請輸入密碼" required>
             </div>
 
             <div class="form-group">
@@ -147,6 +159,25 @@
             Copyright © 2025 R.O.C. Air Force Academy. All rights reserved.
         </div>
     </div>
+
+    <script>
+        function handleLogin(event) {
+            // 阻止表單預設的送出行為（避免重整頁面）
+            event.preventDefault(); 
+            
+            // 取得輸入的帳號
+            const idInput = document.getElementById('student_id').value.trim().toLowerCase();
+            
+            // 判斷邏輯
+            if (idInput === 'admin' || idInput === 'teacher' || idInput === 'root') {
+                // 如果是這幾個關鍵字，就跳轉到導師端
+                window.location.href = 'admin.html';
+            } else {
+                // 其他任何輸入（例如學號 1140052），都跳轉到學生端
+                window.location.href = 'dashboard.html';
+            }
+        }
+    </script>
 
 </body>
 </html>
