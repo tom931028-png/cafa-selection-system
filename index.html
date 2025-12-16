@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>空軍軍官學校選課系統 | CAFA Course Selection System</title>
+    <style>
+        body {
+            font-family: "Microsoft JhengHei", "PMingLiU", Arial, sans-serif;
+            background-color: #eef2f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 48, 143, 0.15);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            border-top: 5px solid #00308F;
+        }
+        .logo-area {
+            margin-bottom: 10px;
+            color: #00308F;
+            font-weight: bold;
+            font-size: 26px;
+            letter-spacing: 1px;
+        }
+        .sub-logo {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 25px;
+            font-weight: bold;
+        }
+        .system-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #00308F;
+            display: inline-block;
+            padding-bottom: 8px;
+            font-weight: 600;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #444;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus {
+            border-color: #00308F;
+            outline: none;
+        }
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            background-color: #00308F;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .btn-login:hover {
+            background-color: #002266;
+        }
+        .footer-info {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #777;
+            line-height: 1.6;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        .alert {
+            background-color: #e8f0fe;
+            color: #0d47a1;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin-bottom: 25px;
+            text-align: left;
+            border-left: 4px solid #00308F;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="logo-area">中華民國空軍軍官學校</div>
+        <div class="sub-logo">R.O.C. Air Force Academy</div>
+        <div class="system-title">114學年度 線上選課系統</div>
+
+        <div class="alert">
+            📣 <strong>公告：</strong><br>
+            1. 本系統限校內網路或 VPN 連線使用。<br>
+            2. 預設密碼為身分證字號末 4 碼。<br>
+            3. 選課期間系統流量大，請同學依年級分流時間登入。
+        </div>
+
+        <form action="#" method="POST" onsubmit="event.preventDefault(); window.location.href='dashboard.html';">
+            <div class="form-group">
+                <label for="student_id">學號 (Student ID)</label>
+                <input type="text" id="student_id" name="student_id" placeholder="請輸入學號" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">密碼 (Password)</label>
+                <input type="password" id="password" name="password" placeholder="請輸入選課密碼" required>
+            </div>
+
+            <div class="form-group">
+                <label for="captcha">驗證碼 (Captcha)</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="captcha" placeholder="輸入右側數字" style="width: 60%;">
+                    <div style="background: #f0f0f0; width: 40%; text-align: center; line-height: 42px; color: #333; font-weight: bold; letter-spacing: 5px; border: 1px solid #ccc; border-radius: 4px;">9527</div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-login">登入系統 Login</button>
+        </form>
+
+        <div class="footer-info">
+            忘記密碼？ | 選課操作手冊下載<br>
+            系統問題請洽 教務處課務組 (分機 1234)<br>
+            Copyright © 2025 R.O.C. Air Force Academy. All rights reserved.
+        </div>
+    </div>
+
+</body>
+</html>

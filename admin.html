@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>導師管理系統 | CAFA Admin</title>
+    <style>
+        body { font-family: "Microsoft JhengHei", Arial, sans-serif; background-color: #ffebee; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid #c62828; }
+        h2, h3 { color: #c62828; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        .section-box { margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px dashed #ccc; }
+        
+        /* 表單控制 */
+        .control-panel { background-color: #fff3e0; padding: 20px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #ff9800; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-group { flex: 1; }
+        label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #666; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        /* 按鈕群 */
+        .btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.2s; }
+        .btn-submit { background-color: #c62828; color: white; width: 100%; font-size: 16px; } .btn-submit:hover { background-color: #b71c1c; }
+        .btn-delete { background-color: #555; color: white; }
+        .btn-save { background-color: #2e7d32; color: white; width: 100%; }
+        .btn-toggle-on { background-color: #2e7d32; color: white; } 
+        .btn-toggle-off { background-color: #e65100; color: white; }
+        
+        /* 表格與標籤 */
+        table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
+        th { background-color: #f5f5f5; color: #444; padding: 12px; text-align: left; border-bottom: 2px solid #ddd; }
+        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        
+        .tag-type { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }
+        .tag-fixed { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .tag-elective { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .status-badge { font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
+        .status-open { background: #e8f5e9; color: green; border: 1px solid green; }
+        .status-closed { background: #ffebee; color: red; border: 1px solid red; }
+        .score-input { width: 60px; padding: 5px; text-align: center; font-weight: bold; border: 2px solid #ccc; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="section-box">
+            <h2>👨‍🏫 課程管理 (排課/選課開關)</h2>
+            <div class="control-panel">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>課程屬性</label>
+                        <select id="c_type">
+                            <option value="elective">📖 開放選修</option>
+                            <option value="fixed">🔒 班定必修</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>代碼</label><input type="text" id="c_id" placeholder="ID"></div>
+                    <div class="form-group" style="flex:2;"><label>名稱</label><input type="text" id="c_name" placeholder="Name"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>學分</label><input type="number" id="c_credit" value="2"></div>
+                    <div class="form-group"><label>時間</label><input type="text" id="c_time" placeholder="三/5,6"></div>
+                    <div class="form-group"><label>地點</label><input type="text" id="c_location" placeholder="教室"></div>
+                    <div class="form-group"><label>教官</label><input type="text" id="c_teacher" placeholder="姓名"></div>
+                </div>
+                <button class="btn btn-submit" onclick="addNewCourse()">發布課程</button>
+            </div>
+            
+            <h3>已發布課程列表</h3>
+            <table>
+                <thead><tr><th>屬性/狀態</th><th>名稱</th><th>時間/地點</th><th>選課開關</th><th>操作</th></tr></thead>
+                <tbody id="managed-list-body"></tbody>
+            </table>
+        </div>
+
+        <div class="section-box" style="background-color: #fdfbf7; padding: 20px; border-radius: 8px;">
+            <h2>📝 學生成績登錄</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>選擇學生</label>
+                    <select id="student-selector" onchange="loadStudentGrades()"><option value="">-- 讀取中 --</option></select>
+                </div>
+                <div class="form-group" style="display:flex; align-items:flex-end;">
+                    <button class="btn btn-save" onclick="saveGrades()">💾 儲存該生成績</button>
+                </div>
+            </div>
+            <table id="grade-table">
+                <thead><tr><th>課程名稱</th><th>學分</th><th>目前分數</th><th>輸入新成績</th></tr></thead>
+                <tbody id="grade-list-body"><tr><td colspan="4" style="text-align:center;color:#999;">請先選擇學生</td></tr></tbody>
+            </table>
+        </div>
+
+        <div>
+            <h3>👨‍🎓 學生選課狀況總覽</h3>
+            <table>
+                <thead><tr><th>學號/姓名</th><th>總學分</th><th>選課明細</th></tr></thead>
+                <tbody id="student-list-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const FIXED_KEY = 'cafa_fixed_courses';
+        const ELECTIVE_KEY = 'cafa_public_electives';
+        const STUDENT_DB_KEY = 'cafa_all_students_db';
+        let currentStudentId = null;
+
+        window.onload = function() {
+            renderManagedList(); renderStudentList(); updateStudentSelector();
+            setInterval(() => { renderStudentList(); updateStudentSelector(); }, 5000);
+        };
+
+        // --- 1. 排課功能 ---
+        function addNewCourse() {
+            const type = document.getElementById('c_type').value;
+            const id = document.getElementById('c_id').value;
+            const name = document.getElementById('c_name').value;
+            const credit = parseInt(document.getElementById('c_credit').value);
+            const time = document.getElementById('c_time').value;
+            const location = document.getElementById('c_location').value;
+            const teacher = document.getElementById('c_teacher').value;
+            
+            if(!id||!name) { alert("請填寫完整資訊"); return; }
+            
+            const newCourse = { id, name, credit, time, location, teacher, type: type==='fixed'?'必修':'選修', isFixed: type==='fixed', isOpen: true };
+            const key = type === 'fixed' ? FIXED_KEY : ELECTIVE_KEY;
+            let list = JSON.parse(localStorage.getItem(key)) || [];
+            if(list.some(c=>c.id===id)) { alert("課程代碼重複"); return; }
+            list.push(newCourse);
+            localStorage.setItem(key, JSON.stringify(list));
+            renderManagedList();
+            document.querySelectorAll('input').forEach(i => i.value = '');
+        }
+
+        function renderManagedList() {
+            const tbody = document.getElementById('managed-list-body'); tbody.innerHTML = '';
+            const fixed = JSON.parse(localStorage.getItem(FIXED_KEY)) || [];
+            const elect = JSON.parse(localStorage.getItem(ELECTIVE_KEY)) || [];
+            
+            fixed.forEach((c,i) => {
+                tbody.innerHTML += `<tr><td><span class="tag-type tag-fixed">班定</span></td><td>${c.name}</td><td>${c.time}/${c.location}</td><td><small style="color:#999">(強制)</small></td><td><button class="btn btn-delete" onclick="delCourse('${FIXED_KEY}',${i})">刪除</button></td></tr>`;
+            });
+            elect.forEach((c,i) => {
+                let isOpen = (c.isOpen !== false);
+                let badge = isOpen ? `<span class="status-badge status-open">開放中</span>` : `<span class="status-badge status-closed">已關閉</span>`;
+                let btn = isOpen ? `<button class="btn btn-toggle-off" onclick="toggleStatus('${ELECTIVE_KEY}',${i})">關閉選課</button>` : `<button class="btn btn-toggle-on" onclick="toggleStatus('${ELECTIVE_KEY}',${i})">開啟選課</button>`;
+                tbody.innerHTML += `<tr><td><span class="tag-type tag-elective">選修</span>${badge}</td><td>${c.name}</td><td>${c.time}/${c.location}</td><td>${btn}</td><td><button class="btn btn-delete" onclick="delCourse('${ELECTIVE_KEY}',${i})">刪除</button></td></tr>`;
+            });
+        }
+        
+        function toggleStatus(key, idx) {
+            let list = JSON.parse(localStorage.getItem(key)) || [];
+            if(list[idx].isOpen === undefined) list[idx].isOpen = true;
+            list[idx].isOpen = !list[idx].isOpen;
+            localStorage.setItem(key, JSON.stringify(list));
+            renderManagedList();
+        }
+        function delCourse(key, idx) { if(confirm("確定刪除?")) { let l=JSON.parse(localStorage.getItem(key))||[]; l.splice(idx,1); localStorage.setItem(key,JSON.stringify(l)); renderManagedList(); } }
+
+        // --- 2. 監控與成績 ---
+        function renderStudentList() {
+            const db = JSON.parse(localStorage.getItem(STUDENT_DB_KEY)) || [];
+            const tbody = document.getElementById('student-list-body'); tbody.innerHTML = '';
+            db.forEach(s => {
+                let courses = s.courses.map(c => `<span style="background:#eee;padding:2px;margin:1px;font-size:12px;">${c.name}</span>`).join('');
+                tbody.innerHTML += `<tr><td>${s.name} (${s.id})</td><td>${s.totalCredits}</td><td>${courses}</td></tr>`;
+            });
+        }
+        function updateStudentSelector() {
+            const sel = document.getElementById('student-selector');
+            const db = JSON.parse(localStorage.getItem(STUDENT_DB_KEY)) || [];
+            const saved = sel.value;
+            sel.innerHTML = '<option value="">-- 請選擇學生 --</option>';
+            db.forEach(s => { let opt=document.createElement('option'); opt.value=s.id; opt.text=`${s.id} - ${s.name}`; sel.add(opt); });
+            sel.value = saved;
+        }
+        function loadStudentGrades() {
+            currentStudentId = document.getElementById('student-selector').value;
+            const tbody = document.getElementById('grade-list-body'); tbody.innerHTML='';
+            if(!currentStudentId) return;
+            const db = JSON.parse(localStorage.getItem(STUDENT_DB_KEY)) || [];
+            const s = db.find(x => x.id === currentStudentId);
+            if(!s || !s.courses.length) { tbody.innerHTML='<tr><td colspan=4>無課程資料</td></tr>'; return; }
+            s.courses.forEach(c => {
+                let sc = (c.score!==undefined && c.score!==null) ? c.score : '';
+                tbody.innerHTML += `<tr><td>${c.name}</td><td>${c.credit}</td><td style="color:blue;font-weight:bold">${sc||'-'}</td><td><input type="number" id="score-${c.id}" value="${sc}" class="score-input"></td></tr>`;
+            });
+        }
+        function saveGrades() {
+            if(!currentStudentId) return;
+            const db = JSON.parse(localStorage.getItem(STUDENT_DB_KEY)) || [];
+            const idx = db.findIndex(s => s.id === currentStudentId);
+            if(idx===-1) return;
+            db[idx].courses = db[idx].courses.map(c => {
+                const inp = document.getElementById(`score-${c.id}`);
+                if(inp && inp.value!=='') c.score = parseInt(inp.value);
+                return c;
+            });
+            localStorage.setItem(STUDENT_DB_KEY, JSON.stringify(db));
+            alert("✅ 成績已儲存"); loadStudentGrades();
+        }
+    </script>
+</body>
+</html>
