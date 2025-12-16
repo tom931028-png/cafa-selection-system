@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>選課主系統 | CAFA Student</title>
+    <title>選課主系統 (雲端版) | CAFA Student</title>
     <style>
         body { font-family: "Microsoft JhengHei", Arial, sans-serif; margin: 0; background-color: #f4f7fa; color: #333; display: flex; height: 100vh; overflow: hidden; }
         .sidebar { width: 250px; background-color: #00308F; color: white; display: flex; flex-direction: column; padding-top: 20px; }
@@ -21,24 +21,22 @@
         .tag { padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
         .tag-compulsory { background: #e3f2fd; color: #0d47a1; } .tag-elective { background: #e8f5e9; color: #1b5e20; } .tag-fixed { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
         .btn { padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 13px; }
-        .btn-add { background: #28a745; color: white; } .btn-drop { background: #dc3545; color: white; } .btn-print { background: #6c757d; color: white; } .btn-disabled { background: #ccc; cursor: not-allowed; color: #666; }
+        .btn-add { background: #28a745; color: white; } .btn-drop { background: #dc3545; color: white; } .btn-disabled { background: #ccc; cursor: not-allowed; color: #666; }
         .schedule-table { text-align: center; table-layout: fixed; }
         .schedule-table td { height: 80px; border: 1px solid #ccc; vertical-align: middle; padding: 5px; background: #fff; }
         .schedule-table th { background: #00308F; color: white; border: 1px solid #ccc; }
         .course-block { padding: 5px; border-radius: 4px; color: white; height: 100%; display: flex; flex-direction: column; justify-content: center; font-size: 12px; }
         .block-fixed { background-color: #c62828; } .block-normal { background-color: #1976d2; }
-        .score-high { color: green; font-weight: bold; } .score-fail { color: red; font-weight: bold; }
-        .gpa-box { background: #333; color: #FFD700; padding: 15px; border-radius: 8px; display: inline-block; margin-bottom: 20px; font-size: 18px; }
-        @media print { .sidebar, .btn, .header-bar input { display: none !important; } .main-content { padding: 0; } .card { box-shadow: none; border:none; } }
+        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; font-size: 24px; color: #00308F; z-index: 999; }
     </style>
 </head>
 <body>
+    <div id="loading">雲端資料同步中...</div>
     <div class="sidebar">
         <div class="sidebar-header"><h2>CAFA 選課系統</h2><p>114學年度 第1學期</p></div>
         <div class="menu-item active" onclick="switchTab('selection')">🛒 加退選課程</div>
         <div class="menu-item" onclick="switchTab('schedule')">📅 已選清單</div>
         <div class="menu-item" onclick="switchTab('visual')">📊 可視化課表</div>
-        <div class="menu-item" onclick="switchTab('history')">📈 歷年成績</div>
         <div class="menu-item" onclick="logout()">🚪 登出系統</div>
         <div class="student-info" id="user-info-box">載入中...</div>
     </div>
@@ -53,136 +51,102 @@
             <div class="card"><table style="width:100%"><thead><tr><th>選別</th><th>課程名稱</th><th>學分</th><th>時間</th><th>地點</th><th>操作</th></tr></thead><tbody id="my-course-body"></tbody></table></div>
         </div>
         <div id="visual-view" style="display: none;">
-            <div class="header-bar"><div class="header-title">週課表檢視</div><button class="btn btn-print" onclick="window.print()">🖨️ 列印</button></div>
+            <div class="header-bar"><div class="header-title">週課表檢視</div><button class="btn" onclick="window.print()">🖨️ 列印</button></div>
             <div class="card"><table class="schedule-table" style="width:100%"><thead><tr><th style="width:80px;">節次</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr></thead><tbody id="visual-schedule-body"></tbody></table></div>
-        </div>
-        <div id="history-view" style="display: none;">
-            <div class="header-bar"><div class="header-title">歷年成績查詢</div><button class="btn btn-print" onclick="window.print()">🖨️ 列印成績單</button></div>
-            <div class="gpa-box">總平均 (GPA): <span id="total-gpa">--</span></div>
-            <div id="history-content"></div>
         </div>
     </div>
 
-    <script>
-        let allCourses = [];
-        let myCourses = [];
-        let currentUser = null;
+    <script type="module">
+        import { loadFromCloud, saveToCloud } from './firebase-connect.js';
 
-        window.onload = function() {
-            // 1. 檢查登入狀態
-            const userStr = sessionStorage.getItem('cafa_current_user');
-            if (!userStr) {
-                alert("請先登入！");
-                window.location.href = 'index.html';
-                return;
-            }
+        const KEYS = { STUDENTS: 'cafa_all_students_db', FIXED: 'cafa_fixed_courses', ELECTIVE: 'cafa_public_electives' };
+        let allCourses = [], myCourses = [], currentUser = null, studentDB = [];
+
+        window.logout = function() { sessionStorage.removeItem('cafa_user'); window.location.href='index.html'; }
+        window.switchTab = switchTab;
+        window.add = add;
+        window.drop = drop;
+
+        window.onload = async function() {
+            const userStr = sessionStorage.getItem('cafa_user');
+            if(!userStr) { window.location.href='index.html'; return; }
             currentUser = JSON.parse(userStr);
-            
-            // 2. 更新左下角資訊
             document.getElementById('user-info-box').innerHTML = `學號：${currentUser.id}<br>姓名：${currentUser.name}<br>系級：${currentUser.dept}`;
 
-            // 3. 初始化資料 (注意：要從資料庫拉最新的 myCourses)
-            syncFromCloud(); 
-            allCourses = []; 
-            loadFixedCourses(); loadPublicElectives(); 
-            
-            renderCourseList(); generateEmptyScheduleGrid();
+            await syncData();
+            document.getElementById('loading').style.display = 'none';
         };
 
-        function logout() {
-            sessionStorage.removeItem('cafa_current_user');
-            window.location.href = 'index.html';
-        }
-
-        // --- 核心：從資料庫同步該學生的最新資料 ---
-        function syncFromCloud() {
-            let db = JSON.parse(localStorage.getItem('cafa_all_students_db')) || [];
-            let me = db.find(s => s.id === currentUser.id);
-            if (me) {
-                // 更新當前使用者資料
-                currentUser = me;
-                myCourses = me.courses || [];
-            }
-        }
-
-        // --- 核心：儲存回資料庫 ---
-        function saveToCloud() {
-            let db = JSON.parse(localStorage.getItem('cafa_all_students_db')) || [];
-            const idx = db.findIndex(s => s.id === currentUser.id);
-            if (idx > -1) {
-                // 更新該學生的課程資料
-                db[idx].courses = myCourses;
-                db[idx].totalCredits = myCourses.reduce((s,c)=>s+c.credit,0);
-                db[idx].lastUpdate = new Date().toLocaleString();
-                localStorage.setItem('cafa_all_students_db', JSON.stringify(db));
-            }
-        }
-
-        // --- 載入課程列表 ---
-        function loadPublicElectives() {
-            const d = localStorage.getItem('cafa_public_electives');
-            if(d) JSON.parse(d).forEach(c => { c.capacity=50; c.enrolled=0; allCourses.push(c); });
-        }
-        function loadFixedCourses() {
-            const d = localStorage.getItem('cafa_fixed_courses');
-            // 自動加入固定必修 (如果還沒加)
-            if(d) JSON.parse(d).forEach(c => { 
-                if(!myCourses.some(mc=>mc.id===c.id)) {
-                    myCourses.push(c);
-                    saveToCloud(); // 自動存回去
-                }
+        async function syncData() {
+            studentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
+            const me = studentDB.find(s => s.id === currentUser.id);
+            if(me) { currentUser = me; myCourses = me.courses || []; }
+            
+            allCourses = [];
+            const elect = (await loadFromCloud(KEYS.ELECTIVE)) || [];
+            elect.forEach(c => { c.capacity=50; c.enrolled=0; allCourses.push(c); });
+            
+            const fixed = (await loadFromCloud(KEYS.FIXED)) || [];
+            fixed.forEach(c => {
+                if(!myCourses.some(mc=>mc.id===c.id)) { myCourses.push(c); saveMyData(); }
             });
+
+            renderCourseList(); generateGrid();
+        }
+
+        async function saveMyData() {
+            const idx = studentDB.findIndex(s => s.id === currentUser.id);
+            if(idx > -1) {
+                studentDB[idx].courses = myCourses;
+                studentDB[idx].totalCredits = myCourses.reduce((s,c)=>s+c.credit,0);
+                await saveToCloud(KEYS.STUDENTS, studentDB);
+            }
         }
 
         function renderCourseList() {
             const tbody = document.getElementById('course-list-body'); tbody.innerHTML='';
             allCourses.forEach(c => {
-                const isSelected = myCourses.some(mc=>mc.id===c.id);
-                const isOpen = (c.isOpen !== false); 
-                let btnHtml = '';
-                if(isSelected) btnHtml = `<button class="btn btn-disabled" disabled>已選</button>`;
-                else if(!isOpen) btnHtml = `<button class="btn btn-disabled" disabled>⛔ 暫停</button>`;
-                else btnHtml = `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`;
-                const tagClass = c.type==='必修'?'tag-compulsory':'tag-elective';
-                tbody.innerHTML += `<tr><td><span class="tag ${tagClass}">${c.type}</span></td><td>${c.id}</td><td>${c.name}</td><td>${c.credit}</td><td>${c.time}</td><td>${c.enrolled}/${c.capacity}</td><td>${btnHtml}</td></tr>`;
+                const isSel = myCourses.some(mc=>mc.id===c.id);
+                const isOpen = c.isOpen !== false;
+                let btn = isSel ? `<button class="btn btn-disabled" disabled>已選</button>` : 
+                          !isOpen ? `<button class="btn btn-disabled" disabled>⛔ 暫停</button>` :
+                          `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`;
+                const tag = c.type==='必修'?'tag-compulsory':'tag-elective';
+                tbody.innerHTML += `<tr><td><span class="tag ${tag}">${c.type}</span></td><td>${c.id}</td><td>${c.name}</td><td>${c.credit}</td><td>${c.time}</td><td>${c.enrolled}/${c.capacity}</td><td>${btn}</td></tr>`;
             });
             document.getElementById('current-credits').innerText = myCourses.reduce((s,c)=>s+c.credit,0);
+        }
+
+        async function add(id) {
+            const c = allCourses.find(x=>x.id===id);
+            myCourses.push(c); await saveMyData(); renderCourseList(); 
+        }
+        async function drop(id) {
+            if(!confirm("退選？")) return;
+            myCourses = myCourses.filter(c=>c.id!==id); await saveMyData(); renderCourseList(); 
+        }
+
+        function switchTab(tab) {
+            ['selection','schedule','visual'].forEach(v => document.getElementById(v+'-view').style.display='none');
+            document.querySelectorAll('.menu-item').forEach(i=>i.classList.remove('active'));
+            if(tab==='selection') { document.getElementById('selection-view').style.display='block'; renderCourseList(); }
+            if(tab==='schedule') { document.getElementById('schedule-view').style.display='block'; renderMySchedule(); }
+            if(tab==='visual') { document.getElementById('visual-view').style.display='block'; generateGrid(); }
         }
 
         function renderMySchedule() {
             const tbody = document.getElementById('my-course-body'); tbody.innerHTML='';
             myCourses.forEach(c => {
                 let isFixed = c.isFixed===true;
-                tbody.innerHTML += `<tr><td><span class="tag ${isFixed?'tag-fixed':(c.type==='必修'?'tag-compulsory':'tag-elective')}">${c.type}</span></td><td>${c.name}</td><td>${c.credit}</td><td>${c.time}</td><td>${c.location||''}</td><td>${isFixed?'<span style="color:red">🔒</span>':`<button class="btn btn-drop" onclick="drop('${c.id}')">退</button>`}</td></tr>`;
+                tbody.innerHTML += `<tr><td><span class="tag ${isFixed?'tag-fixed':'tag-elective'}">${c.type}</span></td><td>${c.name}</td><td>${c.credit}</td><td>${c.time}</td><td>${c.location||''}</td><td>${isFixed?'🔒':`<button class="btn btn-drop" onclick="drop('${c.id}')">退</button>`}</td></tr>`;
             });
         }
-
-        function add(id) { 
-            const c=allCourses.find(x=>x.id===id); 
-            if(checkTime(c)) { alert("衝堂！"); return; }
-            myCourses.push(c); saveToCloud(); renderCourseList(); renderMySchedule(); 
-        }
-        function drop(id) { if(confirm("退選?")) { myCourses=myCourses.filter(c=>c.id!==id); saveToCloud(); renderCourseList(); renderMySchedule(); } }
-        
-        function checkTime(newC) {
-             if(!newC.time) return false;
-             let [d1, p1] = newC.time.split('/');
-             let periods1 = p1.split(',');
-             for(let oldC of myCourses) {
-                 if(!oldC.time) continue;
-                 let [d2, p2] = oldC.time.split('/');
-                 if(d1 === d2 && periods1.some(p => p2.split(',').includes(p))) return true;
-             }
-             return false;
-        }
-
-        function generateEmptyScheduleGrid() {
+        function generateGrid() {
+            // 簡化版課表渲染
             const t = document.getElementById('visual-schedule-body'); t.innerHTML='';
             const times = ["08:10", "09:10", "10:10", "11:10", "13:30", "14:30", "15:30", "16:30", "17:30", "19:00"];
-            for(let i=1;i<=10;i++) t.innerHTML+=`<tr><td style="background:#f0f0f0;font-size:12px;">第${i}節<br>${times[i-1]}</td><td id="c1-${i}"></td><td id="c2-${i}"></td><td id="c3-${i}"></td><td id="c4-${i}"></td><td id="c5-${i}"></td></tr>`;
-        }
-        function renderVisual() {
-            generateEmptyScheduleGrid();
+            for(let i=1;i<=10;i++) t.innerHTML+=`<tr><td style="background:#f0f0f0;">${i}</td><td id="c1-${i}"></td><td id="c2-${i}"></td><td id="c3-${i}"></td><td id="c4-${i}"></td><td id="c5-${i}"></td></tr>`;
+            
             const dayMap = {"一":1,"二":2,"三":3,"四":4,"五":5};
             myCourses.forEach(c => {
                 if(!c.time) return;
@@ -190,42 +154,11 @@
                 let day = dayMap[dayStr];
                 pStr.split(',').forEach(p => {
                     let el = document.getElementById(`c${day}-${p}`);
-                    if(el) el.innerHTML = `<div class="course-block ${c.isFixed?'block-fixed':'block-normal'}">${c.name}<br><small>${c.location||''}</small></div>`;
+                    if(el) el.innerHTML = `<div class="course-block ${c.isFixed?'block-fixed':'block-normal'}">${c.name}</div>`;
                 });
             });
-        }
-        function renderHistory() {
-            const container = document.getElementById('history-content'); container.innerHTML = '';
-            let totalScore=0, totalCredits=0;
-            // 模擬歷史 (假資料)
-            const mockHistory = [
-                { semester: "112學年度 第2學期", courses: [{ name: "微積分(二)", credit: 3, score: 85 }, { name: "普通物理", credit: 3, score: 78 }] }
-            ];
-            mockHistory.forEach(sem => {
-                let html = `<div class="card"><div class="semester-title">${sem.semester}</div><table><thead><tr><th>課程</th><th>學分</th><th>成績</th></tr></thead><tbody>`;
-                sem.courses.forEach(c => { totalScore+=c.score*c.credit; totalCredits+=c.credit; html+=`<tr><td>${c.name}</td><td>${c.credit}</td><td class="${c.score<60?'score-fail':'score-high'}">${c.score}</td></tr>`; });
-                html+=`</tbody></table></div>`; container.innerHTML+=html;
-            });
-            // 本學期
-            const currentGraded = myCourses.filter(c => c.score !== undefined && c.score !== null && c.score !== '');
-            if(currentGraded.length>0) {
-                let html = `<div class="card"><div class="semester-title">本學期 (114-1)</div><table><thead><tr><th>課程</th><th>學分</th><th>成績</th></tr></thead><tbody>`;
-                currentGraded.forEach(c => { let s=parseInt(c.score); totalScore+=s*c.credit; totalCredits+=c.credit; html+=`<tr><td>${c.name}</td><td>${c.credit}</td><td class="${s<60?'score-fail':'score-high'}">${s}</td></tr>`; });
-                html+=`</tbody></table></div>`; container.innerHTML = html + container.innerHTML;
-            } else {
-                container.innerHTML = `<div class="card"><div style="padding:15px">本學期尚無成績</div></div>` + container.innerHTML;
-            }
-            document.getElementById('total-gpa').innerText = totalCredits>0 ? (totalScore/totalCredits).toFixed(2) : "0.0";
-        }
-
-        function switchTab(tab) {
-            ['selection','schedule','visual','history'].forEach(v => document.getElementById(v+'-view').style.display='none');
-            document.querySelectorAll('.menu-item').forEach(i=>i.classList.remove('active'));
-            if(tab==='selection') { document.getElementById('selection-view').style.display='block'; renderCourseList(); }
-            if(tab==='schedule') { document.getElementById('schedule-view').style.display='block'; renderMySchedule(); }
-            if(tab==='visual') { document.getElementById('visual-view').style.display='block'; renderVisual(); }
-            if(tab==='history') { syncFromCloud(); document.getElementById('history-view').style.display='block'; renderHistory(); }
         }
     </script>
 </body>
 </html>
+
