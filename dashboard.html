@@ -10,7 +10,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: "Microsoft JhengHei", Arial, sans-serif; margin: 0; background-color: var(--bg-grey); color: #333; display: flex; height: 100vh; overflow: hidden; }
         
-        /* --- 手機版漢堡選單按鈕 --- */
+        /* --- 手機版漢堡選單 --- */
         .mobile-menu-btn { display: none; position: fixed; top: 15px; left: 15px; z-index: 1100; background: var(--cafa-blue-main); color: white; border: none; padding: 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; font-size: 20px; }
         
         /* --- 側邊欄 --- */
@@ -30,9 +30,9 @@
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); flex-wrap: wrap; gap: 10px; }
         .header-title { font-size: 22px; font-weight: bold; color: var(--cafa-blue-main); border-left: 6px solid var(--cafa-gold); padding-left: 12px; }
         
-        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-top: 3px solid var(--cafa-blue-light); box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-top: 3px solid var(--cafa-blue-light); box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto; position: relative; transition: all 0.3s ease; }
         
-        /* --- 興趣標籤與輸入框 (新) --- */
+        /* --- 興趣標籤與輸入框 --- */
         .interest-section { margin-bottom: 15px; }
         .interest-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
         .interest-tag { padding: 6px 14px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; transition: 0.2s; background: white; font-size: 13px; color: #666; user-select: none; display: flex; align-items: center; }
@@ -40,10 +40,8 @@
         .interest-tag.active { background: var(--cafa-gold); color: #002266; border-color: var(--cafa-gold); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .tag-remove { margin-left: 5px; font-size: 14px; opacity: 0.6; padding: 0 4px; border-radius: 50%; }
         .tag-remove:hover { background: rgba(0,0,0,0.1); opacity: 1; }
-
         .custom-input-group { display: flex; gap: 8px; max-width: 400px; margin-top: 10px; }
         .custom-input-group input { flex: 1; padding: 8px 15px; border: 1px solid #ccc; border-radius: 20px; outline: none; font-size: 14px; }
-        .custom-input-group input:focus { border-color: var(--cafa-blue-main); }
         .btn-small-add { background: var(--cafa-blue-main); color: white; border: none; border-radius: 20px; padding: 0 15px; cursor: pointer; font-weight: bold; }
 
         /* --- 表格與元件 --- */
@@ -52,19 +50,43 @@
         td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
         .tag { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; white-space: nowrap; }
         .tag-compulsory { background: #e3f2fd; color: #0d47a1; } .tag-elective { background: #e8f5e9; color: #1b5e20; } .tag-fixed { background: #fff3e0; color: #e65100; }
-        
         .btn { padding: 8px 16px; border-radius: 30px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; white-space: nowrap; }
-        .btn:active { transform: scale(0.95); }
         .btn-add { background: #28a745; color: white; } .btn-drop { background: #dc3545; color: white; }
         .btn-save { background: var(--cafa-blue-main); color: white; width: 100%; padding: 14px; margin-top:20px; font-size: 16px; box-shadow: 0 4px 10px rgba(0,48,143,0.3); }
+        .btn-print { background: #607d8b; color: white; display: flex; align-items: center; gap: 5px; }
 
-        /* --- 課表 --- */
-        .schedule-table { min-width: 800px; table-layout: fixed; }
-        .schedule-table th { text-align: center; }
-        .schedule-table td { height: 60px; padding: 2px; text-align: center; vertical-align: top; border: 1px solid #eee; }
-        .course-block { padding: 4px; border-radius: 6px; color: white; font-size: 11px; margin-bottom: 2px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); line-height: 1.3; overflow: hidden; height: 95%; display: flex; flex-direction: column; justify-content: center; }
-        .block-fixed { background: linear-gradient(135deg, #e65100, #ff9800); }
-        .block-normal { background: linear-gradient(135deg, var(--cafa-blue-main), var(--cafa-blue-light)); }
+        /* --- 視覺化課表 & 主題樣式 (Theme Styles) --- */
+        .schedule-container { overflow-x: auto; margin: 0 -20px; padding: 0 20px; }
+        .schedule-table { min-width: 700px; table-layout: fixed; border-collapse: separate; border-spacing: 0; border: 1px solid #eee; }
+        .schedule-table th, .schedule-table td { text-align: center; border-right: 1px solid #eee; border-bottom: 1px solid #eee; }
+        .schedule-table td { height: 75px; padding: 2px; vertical-align: middle; }
+        .schedule-table th:first-child, .schedule-table td:first-child { position: sticky; left: 0; background-color: #f8f9fa; z-index: 5; box-shadow: 2px 0 5px rgba(0,0,0,0.05); width: 50px; font-weight: bold; color: #666; border-right: 2px solid #ddd; }
+        .schedule-table th { z-index: 6; }
+        .course-block { width: 100%; height: 100%; padding: 4px; border-radius: 6px; color: white; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: center; align-items: center; line-height: 1.3; }
+        .block-fixed { background: linear-gradient(135deg, #e65100, #fb8c00); }
+        .block-elective { background: linear-gradient(135deg, #00308F, #1976d2); }
+
+        /* 主題按鈕與定義 */
+        .theme-controls { display: flex; align-items: center; gap: 8px; }
+        .theme-btn { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid #ddd; transition: 0.2s; position: relative; }
+        .theme-btn:hover { transform: scale(1.1); }
+        .tb-white { background: white; }
+        .tb-blue { background: #e3f2fd; }
+        .tb-dark { background: #333; }
+        .tb-warm { background: #fff8e1; }
+
+        /* 1. 空軍藍主題 (含浮水印) */
+        .card-theme-blue { background: linear-gradient(to bottom right, #f0f7ff, #dbeafe) !important; border-color: #1e88e5 !important; }
+        .card-theme-blue::before { content: '✈'; position: absolute; font-size: 150px; color: rgba(0,0,0,0.03); bottom: 20px; right: 20px; pointer-events: none; transform: rotate(-15deg); z-index: 0; }
+        
+        /* 2. 極簡黑主題 */
+        .card-theme-dark { background: #2c3e50 !important; color: #ecf0f1 !important; border-color: #34495e !important; }
+        .card-theme-dark th { background: #34495e !important; color: white !important; border-color: #465c71 !important; }
+        .card-theme-dark td { border-color: #465c71 !important; }
+        .card-theme-dark .schedule-table th:first-child, .card-theme-dark .schedule-table td:first-child { background-color: #34495e !important; color: #ecf0f1; border-color: #465c71; }
+        
+        /* 3. 暖陽黃主題 */
+        .card-theme-warm { background: #fffdeb !important; border-color: #fdd835 !important; }
 
         /* --- AI Chat --- */
         .ai-fab { position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px; background: linear-gradient(45deg, #00308F, #0055ff); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 2000; transition: transform 0.2s; }
@@ -86,9 +108,28 @@
             .sidebar-overlay.show { display: block; }
             .main-content { padding: 70px 15px 15px 15px; }
             .header-bar { flex-direction: column; align-items: flex-start; }
-            .theme-controls { display: none; }
+            .theme-controls { display: flex; margin-top: 10px; } /* 手機版顯示主題切換 */
             .rank-card { margin-top: 50px; }
             .card { padding: 15px; border-radius: 10px; }
+        }
+
+        /* --- 列印專用樣式 --- */
+        @media print {
+            .sidebar, .mobile-menu-btn, .ai-fab, .chat-window, .theme-controls, .btn, .header-title::before { display: none !important; }
+            body, .main-content { margin: 0; padding: 0; background: white; overflow: visible; display: block; }
+            .card { box-shadow: none; border: 1px solid #ccc; margin: 0; padding: 0; page-break-inside: avoid; }
+            .header-bar { box-shadow: none; border-bottom: 2px solid #000; padding: 10px 0; margin-bottom: 20px; display: block; }
+            .header-title { border: none; padding: 0; text-align: center; font-size: 24px; color: black; }
+            #visual-view, #schedule-view { display: block !important; }
+            #selection-view, #leaderboard-view, #career-view, #history-view { display: none !important; }
+            .schedule-container { overflow: visible; margin: 0; padding: 0; }
+            .schedule-table { min-width: 100%; width: 100%; table-layout: auto; }
+            .schedule-table th, .schedule-table td { border: 1px solid #000; color: black; }
+            .course-block { border: 1px solid #000; color: black; background: none !important; box-shadow: none; }
+            .card::before { content: "空軍官校 - 學生課表"; display: block; text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 10px; }
+            /* 列印時強制移除背景色，改為白底黑字，確保清晰 */
+            .card-theme-blue, .card-theme-dark, .card-theme-warm { background: white !important; color: black !important; }
+            .card-theme-blue::before { display: none; } 
         }
 
         #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 3000; color: var(--cafa-blue-main); flex-direction: column; }
@@ -126,7 +167,7 @@
         </div>
 
         <div id="schedule-view" style="display:none">
-            <div class="header-bar"><div class="header-title">我的已選課程</div></div>
+            <div class="header-bar"><div class="header-title">我的已選課程</div><button class="btn btn-print" onclick="window.print()">🖨️ 列印</button></div>
             <div class="card"><table style="width:100%"><tbody id="my-courses"></tbody></table></div>
         </div>
 
@@ -142,12 +183,22 @@
             <div class="header-bar">
                 <div class="header-title">週課表</div>
                 <div class="theme-controls">
-                    <span style="font-size:12px;margin:0 10px;">背景:</span>
-                    <div class="theme-btn tb-white" onclick="setTheme('white')"></div><div class="theme-btn tb-blue" onclick="setTheme('blue')"></div><div class="theme-btn tb-dark" onclick="setTheme('dark')"></div>
+                    <button class="btn btn-print" onclick="window.print()" style="margin-right:10px;">🖨️ 列印</button>
+                    <span style="font-size:12px;margin-right:5px;color:#666;">風格:</span>
+                    <div class="theme-btn tb-white" onclick="setTheme('white')" title="標準白"></div>
+                    <div class="theme-btn tb-blue" onclick="setTheme('blue')" title="空軍藍"></div>
+                    <div class="theme-btn tb-warm" onclick="setTheme('warm')" title="護眼黃"></div>
+                    <div class="theme-btn tb-dark" onclick="setTheme('dark')" title="極簡黑"></div>
                 </div>
             </div>
             <div class="card" id="visual-card">
-                <table class="schedule-table"><thead><tr><th style="width:40px">節</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr></thead><tbody id="visual-body"></tbody></table>
+                <p style="text-align:center; font-size:12px; color:#999; margin-bottom:10px;" class="no-print">(手機版請左右滑動查看完整課表)</p>
+                <div class="schedule-container">
+                    <table class="schedule-table">
+                        <thead><tr><th style="width:50px">節次</th><th>星期一</th><th>星期二</th><th>星期三</th><th>星期四</th><th>星期五</th></tr></thead>
+                        <tbody id="visual-body"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -163,24 +214,19 @@
                         <div style="font-size:24px;">🛠️</div><div>地勤生 (Ground)</div>
                     </button>
                 </div>
-
                 <h3>步驟 2: 選擇或新增興趣</h3>
                 <div class="interest-section">
                     <div style="font-size:12px; color:#666; margin-bottom:5px;">常見標籤 (點擊選擇):</div>
-                    <div class="interest-container" id="preset-tags-container">
-                        </div>
+                    <div class="interest-container" id="preset-tags-container"></div>
                 </div>
-                
                 <div class="interest-section">
                     <div style="font-size:12px; color:#666; margin-bottom:5px;">自定義標籤:</div>
-                    <div class="interest-container" id="custom-tags-container">
-                        </div>
+                    <div class="interest-container" id="custom-tags-container"></div>
                     <div class="custom-input-group">
                         <input type="text" id="new-interest-input" placeholder="輸入其他興趣 (如: 無人機、AI)">
                         <button class="btn-small-add" onclick="addCustomInterest()">＋ 新增</button>
                     </div>
                 </div>
-
                 <div id="rec-msg" style="color:var(--cafa-blue-main); font-weight:bold; margin-top:20px; border-top:1px solid #eee; padding-top:15px;"></div>
                 <button class="btn btn-save" onclick="saveCareer()">💾 儲存所有設定</button>
             </div>
@@ -209,34 +255,38 @@
         
         let allC=[], myC=[], cur=null, sDB=[], rules=[];
         const PRESET_TAGS = ['空氣動力', '機械', '英文', '管理', '程式', '氣象', '歷史', '心理'];
+        const TIME_SLOTS = ["08:10", "09:10", "10:10", "11:10", "13:30", "14:30", "15:30", "16:30", "17:30", "19:00"];
 
         window.onload = async () => {
             const u = sessionStorage.getItem('cafa_user'); 
             if(!u) return location.href='index.html';
             cur = JSON.parse(u);
             if(!cur.interests) cur.interests = []; 
-            
             try { await sync(); } catch (e) { console.error(e); alert("連線異常"); } finally { document.getElementById('loading').style.display = 'none'; }
+            
+            // 讀取已儲存的主題 (Persistence)
+            const savedTheme = localStorage.getItem('cafa_theme');
+            if(savedTheme) setTheme(savedTheme);
+        };
+
+        // 背景切換邏輯 (含記憶)
+        window.setTheme = (t) => {
+            const c = document.getElementById('visual-card');
+            c.className = 'card'; // reset
+            if(t !== 'white') c.classList.add(`card-theme-${t}`);
+            localStorage.setItem('cafa_theme', t); // Save to LocalStorage
         };
 
         async function sync() {
             sDB = (await loadFromCloud(KEYS.STUDENTS))||[];
             rules = (await loadFromCloud(KEYS.RANKS))||getDefaultRanks();
             allC = [...((await loadFromCloud(KEYS.FIXED))||[]), ...((await loadFromCloud(KEYS.ELECTIVE))||[])];
-
             const me = sDB.find(s=>s.id===cur.id); 
-            if(me){ 
-                cur = me; 
-                if(!cur.interests) cur.interests = [];
-                myC = (me.courses||[]).filter(my => allC.some(school => school.id === my.id));
-            }
-            render();
-            updateTrackUI();
-            renderInterestTags(); // 渲染標籤
+            if(me){ cur = me; if(!cur.interests) cur.interests = []; myC = (me.courses||[]).filter(my => allC.some(school => school.id === my.id)); }
+            render(); updateTrackUI(); renderInterestTags();
         }
 
         function render() {
-            // Rank
             let tot=0, cr=0; myC.forEach(c=>{if(c.score){tot+=parseInt(c.score)*parseInt(c.credit); cr+=parseInt(c.credit);}});
             let gpa = cr>0 ? (tot/cr).toFixed(1) : 0;
             let rank = rules.find(r=>gpa>=r.min) || rules[rules.length-1];
@@ -244,78 +294,34 @@
             document.getElementById('my-rank-name').innerText = rank.name; document.getElementById('my-rank-name').style.color = rank.color;
             document.getElementById('my-reward').innerText = rank.reward ? `🎁 ${rank.reward}` : ''; document.getElementById('my-punish').innerText = rank.punishment ? `⚠️ ${rank.punishment}` : '';
 
-            // Courses
             const tb = document.getElementById('course-list'); tb.innerHTML='';
             allC.filter(c => !c.isFixed && c.isOpen).forEach(c => {
                 const has = myC.some(x=>x.id===c.id);
                 tb.innerHTML += `<tr><td><span class="tag tag-elective">選修</span></td><td><div style="font-weight:bold;">${c.name}</div><div style="font-size:12px;color:#666;">${c.time} | ${c.credit}學分</div></td><td style="text-align:right;">${has ? '<span style="color:green;font-weight:bold;">已選</span>' : `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`}</td></tr>`;
             });
 
-            // My List
             const mtb = document.getElementById('my-courses'); mtb.innerHTML='';
-            myC.forEach(c => {
-                mtb.innerHTML += `<tr><td><span class="tag ${c.isFixed?'tag-fixed':'tag-elective'}">${c.isFixed?'必修':'選修'}</span></td><td><div style="font-weight:bold;">${c.name}</div><div style="font-size:12px;color:#666;">${c.location||''}</div></td><td>${c.time}</td><td style="text-align:right;">${c.isFixed ? '🔒' : `<button class="btn btn-drop" onclick="drop('${c.id}')">退</button>`}</td></tr>`;
-            });
+            myC.forEach(c => { mtb.innerHTML += `<tr><td><span class="tag ${c.isFixed?'tag-fixed':'tag-elective'}">${c.isFixed?'必修':'選修'}</span></td><td><div style="font-weight:bold;">${c.name}</div><div style="font-size:12px;color:#666;">${c.location||''}</div></td><td>${c.time}</td><td style="text-align:right;">${c.isFixed ? '🔒' : `<button class="btn btn-drop" onclick="drop('${c.id}')">退</button>`}</td></tr>`; });
             document.getElementById('credits').innerText = `已選學分: ${myC.reduce((a,b)=>a+parseInt(b.credit||0),0)}`;
 
             renderLeaderboard(); renderGrid();
-            
             let hHTML = '<table style="width:100%"><thead><tr><th>課程</th><th>學分</th><th>分數</th></tr></thead><tbody>';
             let hasScore = false; myC.forEach(c=>{if(c.score){hasScore=true; hHTML+=`<tr><td>${c.name}</td><td>${c.credit}</td><td style="color:${c.score<60?'red':'green'}">${c.score}</td></tr>`;}});
             document.getElementById('history-list').innerHTML = hasScore ? hHTML+'</tbody></table>' : '<div style="text-align:center;padding:20px;color:#999">尚無成績紀錄</div>';
-            
             renderRecommendations();
         }
 
-        // --- 職涯與興趣系統 (升級版) ---
         window.setTrack = (t) => { cur.careerTrack = t; updateTrackUI(); renderRecommendations(); };
-        
-        // 渲染標籤介面
         function renderInterestTags() {
-            const pCont = document.getElementById('preset-tags-container');
-            const cCont = document.getElementById('custom-tags-container');
+            const pCont = document.getElementById('preset-tags-container'), cCont = document.getElementById('custom-tags-container');
             pCont.innerHTML = ''; cCont.innerHTML = '';
-
-            // 1. 渲染常見預設標籤
-            PRESET_TAGS.forEach(tag => {
-                const isActive = cur.interests.includes(tag);
-                pCont.innerHTML += `<div class="interest-tag ${isActive?'active':''}" onclick="toggleInterest('${tag}')">${tag}</div>`;
-            });
-
-            // 2. 渲染使用者自訂標籤 (排除預設的)
+            PRESET_TAGS.forEach(tag => { const isActive = cur.interests.includes(tag); pCont.innerHTML += `<div class="interest-tag ${isActive?'active':''}" onclick="toggleInterest('${tag}')">${tag}</div>`; });
             const customTags = cur.interests.filter(i => !PRESET_TAGS.includes(i));
             if(customTags.length === 0) cCont.innerHTML = '<span style="font-size:12px;color:#999;padding:5px;">尚無自定義標籤</span>';
-            
-            customTags.forEach(tag => {
-                cCont.innerHTML += `<div class="interest-tag active" onclick="toggleInterest('${tag}')">${tag} <span class="tag-remove">✕</span></div>`;
-            });
+            customTags.forEach(tag => { cCont.innerHTML += `<div class="interest-tag active" onclick="toggleInterest('${tag}')">${tag} <span class="tag-remove">✕</span></div>`; });
         }
-
-        // 新增/刪除 興趣邏輯
-        window.toggleInterest = (tag) => {
-            if(cur.interests.includes(tag)) {
-                cur.interests = cur.interests.filter(t => t !== tag);
-            } else {
-                cur.interests.push(tag);
-            }
-            renderInterestTags();
-            updateTrackUI();
-            renderRecommendations();
-        };
-
-        // 新增自定義按鈕邏輯
-        window.addCustomInterest = () => {
-            const input = document.getElementById('new-interest-input');
-            const val = input.value.trim();
-            if(!val) return;
-            if(cur.interests.includes(val)) return alert("此興趣已經在清單中囉！");
-            
-            cur.interests.push(val);
-            input.value = ''; // 清空輸入框
-            renderInterestTags();
-            updateTrackUI();
-            renderRecommendations();
-        };
+        window.toggleInterest = (tag) => { if(cur.interests.includes(tag)) cur.interests = cur.interests.filter(t => t !== tag); else cur.interests.push(tag); renderInterestTags(); updateTrackUI(); renderRecommendations(); };
+        window.addCustomInterest = () => { const input = document.getElementById('new-interest-input'), val = input.value.trim(); if(!val) return; if(cur.interests.includes(val)) return alert("已存在"); cur.interests.push(val); input.value = ''; renderInterestTags(); updateTrackUI(); renderRecommendations(); };
 
         function updateTrackUI() {
             const t = cur.careerTrack;
@@ -323,37 +329,17 @@
             b1.style.borderColor='#ddd'; b1.style.background='white'; b2.style.borderColor='#ddd'; b2.style.background='white';
             if(t === 'pilot') { b1.style.borderColor='#00308F'; b1.style.background='#e3f2fd'; }
             if(t === 'ground') { b2.style.borderColor='#e65100'; b2.style.background='#fff3e0'; }
-            
-            const count = cur.interests.length;
-            document.getElementById('rec-msg').innerText = `當前設定：${t==='pilot'?'飛行生':'地勤生'} (已設定 ${count} 個興趣關鍵字)`;
+            document.getElementById('rec-msg').innerText = `當前設定：${t==='pilot'?'飛行生':'地勤生'} (已設定 ${cur.interests.length} 個興趣)`;
         }
 
         function renderRecommendations() {
             const container = document.getElementById('rec-list-container');
             if(!cur.careerTrack) return;
-            
-            // 基礎關鍵字
             let keywords = cur.careerTrack === 'pilot' ? ['空氣', '飛行', '英文', '氣象'] : ['管理', '後勤', '機械', '維修'];
-            // 加上使用者選的興趣標籤
-            if(cur.interests && cur.interests.length > 0) {
-                keywords = [...keywords, ...cur.interests];
-            }
-            
-            const recs = allC.filter(c => {
-                if(myC.some(m => m.id === c.id)) return false;
-                // 只要課程名稱包含任一關鍵字
-                return keywords.some(k => c.name.includes(k));
-            });
-
-            if(recs.length === 0) {
-                container.innerHTML = `<div style="padding:10px;text-align:center;">根據您的「${cur.interests.join('、')}」等興趣，目前沒有相符的選修課。</div>`;
-            } else {
-                container.innerHTML = recs.map(c => `
-                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
-                        <div><div style="font-weight:bold; color:var(--cafa-blue-main);">★ 推薦：${c.name}</div><div style="font-size:12px; color:#666;">${c.time} | ${c.credit}學分</div></div>
-                        <button class="btn btn-add" onclick="add('${c.id}')">加選</button>
-                    </div>`).join('');
-            }
+            if(cur.interests && cur.interests.length > 0) keywords = [...keywords, ...cur.interests];
+            const recs = allC.filter(c => { if(myC.some(m => m.id === c.id)) return false; return keywords.some(k => c.name.includes(k)); });
+            if(recs.length === 0) container.innerHTML = `<div style="padding:10px;text-align:center;">無符合推薦。</div>`;
+            else container.innerHTML = recs.map(c => `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;"><div><div style="font-weight:bold; color:var(--cafa-blue-main);">★ 推薦：${c.name}</div><div style="font-size:12px; color:#666;">${c.time} | ${c.credit}學分</div></div><button class="btn btn-add" onclick="add('${c.id}')">加選</button></div>`).join('');
         }
 
         window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); };
@@ -367,20 +353,22 @@
         };
 
         window.logout = () => { sessionStorage.removeItem('cafa_user'); location.href='index.html'; };
-        
         window.add = async (id) => { const c=allC.find(x=>x.id===id); if(checkConflict(c))return alert("衝堂！"); myC.push(c); await save(); alert("加選成功"); render(); };
         window.drop = async (id) => { if(!confirm("確定退選?"))return; myC=myC.filter(x=>x.id!==id); await save(); render(); };
-        
-        window.saveCareer = async () => { await save(); alert("職涯與興趣設定已儲存！"); };
+        window.saveCareer = async () => { await save(); alert("設定已儲存！"); };
         async function save() { const idx = sDB.findIndex(s=>s.id===cur.id); if(idx>-1){ sDB[idx].courses=myC; sDB[idx].careerTrack=cur.careerTrack; sDB[idx].interests=cur.interests; await saveToCloud(KEYS.STUDENTS, sDB); } }
-
         function checkConflict(n) { if(!n.time)return false; let [d1,p1]=n.time.split('/'); let pp1=p1.split(','); return myC.some(o=>{if(!o.time)return false; let [d2,p2]=o.time.split('/'); return d1===d2 && pp1.some(p=>p2.split(',').includes(p)); }); }
         
         function renderGrid() {
             const t = document.getElementById('visual-body'); t.innerHTML='';
             const dMap={"一":1,"二":2,"三":3,"四":4,"五":5};
-            for(let i=1;i<=10;i++) t.innerHTML += `<tr><td style="background:#f8f9fa;font-size:12px;">${i}</td><td id="c1-${i}"></td><td id="c2-${i}"></td><td id="c3-${i}"></td><td id="c4-${i}"></td><td id="c5-${i}"></td></tr>`;
-            myC.forEach(c => { if(!c.time)return; let [d,p]=c.time.split('/'); let dy=dMap[d]; p.split(',').forEach(x => { let el=document.getElementById(`c${dy}-${x}`); if(el) el.innerHTML=`<div class="course-block ${c.isFixed?'block-fixed':'block-normal'}">${c.name}<br>${c.location||''}</div>`; }); });
+            for(let i=1;i<=10;i++) {
+                t.innerHTML += `<tr><td style="font-size:14px;">${i}<div style="font-size:10px; color:#999; margin-top:2px;">${TIME_SLOTS[i-1]}</div></td><td id="c1-${i}"></td><td id="c2-${i}"></td><td id="c3-${i}"></td><td id="c4-${i}"></td><td id="c5-${i}"></td></tr>`;
+            }
+            myC.forEach(c => {
+                if(!c.time) return; let [d,p]=c.time.split('/'); let dy=dMap[d];
+                p.split(',').forEach(x => { let el=document.getElementById(`c${dy}-${x}`); if(el) el.innerHTML=`<div class="course-block ${c.isFixed?'block-fixed':'block-elective'}"><div style="font-weight:bold;">${c.name}</div><div style="opacity:0.9; font-size:11px;">${c.location||'無地點'}</div></div>`; });
+            });
         }
         
         function renderLeaderboard() {
@@ -418,4 +406,5 @@
     </script>
 </body>
 </html>
+
 
