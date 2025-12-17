@@ -23,7 +23,7 @@
         .main-content { flex: 1; padding: 30px; overflow-y: auto; background-image: linear-gradient(to bottom, #eef2f7, #f4f7fa); }
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: white; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .header-title { font-size: 24px; font-weight: bold; color: var(--cafa-blue-main); border-left: 8px solid var(--cafa-gold); padding-left: 15px; }
-        .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-top: 3px solid var(--cafa-blue-light); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-top: 3px solid var(--cafa-blue-light); box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: 0.3s; }
         
         /* 表格與標籤 */
         table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; }
@@ -36,6 +36,7 @@
         .btn:hover { transform: translateY(-1px); }
         .btn-add { background: #28a745; color: white; } .btn-drop { background: #dc3545; color: white; } 
         .btn-save { background: var(--cafa-blue-main); color: white; width: 100%; padding: 12px; margin-top:20px; }
+        .btn-print { background: #607d8b; color: white; margin-left: 10px; }
         .btn-disabled { background: #e9ecef; cursor: not-allowed; color: #adb5bd; }
 
         /* 職涯頁面樣式 */
@@ -48,13 +49,31 @@
         .interest-label { padding: 8px 16px; background: #eee; border-radius: 20px; cursor: pointer; user-select: none; transition: 0.2s; }
         .interest-check:checked + .interest-label { background: var(--cafa-gold); color: black; font-weight: bold; transform: scale(1.05); }
 
-        /* 課表格子 */
+        /* --- 可視化課表與主題 --- */
         .schedule-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        .schedule-table th { text-align: center; background: #f8f9fa; border: 1px solid #ddd; }
-        .schedule-table td { height: 60px; border: 1px solid #eee; padding: 5px; vertical-align: top; text-align: center; }
+        .schedule-table th { text-align: center; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); padding: 10px; }
+        .schedule-table td { height: 60px; border: 1px solid rgba(0,0,0,0.1); padding: 5px; vertical-align: top; text-align: center; }
         .course-block { padding: 5px; border-radius: 4px; color: white; font-size: 12px; margin-bottom: 2px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .block-fixed { background: linear-gradient(135deg, #e65100, #ff9800); }
         .block-normal { background: linear-gradient(135deg, var(--cafa-blue-main), var(--cafa-blue-light)); }
+
+        /* 背景主題按鈕 */
+        .theme-controls { display: flex; gap: 10px; align-items: center; margin-right: auto; }
+        .theme-btn { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid #ddd; transition: 0.2s; }
+        .theme-btn:hover { transform: scale(1.2); }
+        .tb-white { background: white; }
+        .tb-blue { background: #e3f2fd; }
+        .tb-warm { background: #fff8e1; }
+        .tb-dark { background: #333; }
+
+        /* 主題樣式定義 */
+        .card-theme-blue { background: linear-gradient(to bottom right, #f0f7ff, #dbeafe) !important; border-color: #1e88e5 !important; position: relative; }
+        .card-theme-blue::before { content: '✈'; position: absolute; font-size: 200px; color: rgba(0,0,0,0.03); top: 50px; left: 100px; pointer-events: none; transform: rotate(-15deg); }
+        
+        .card-theme-warm { background: #fffdeb !important; border-color: #fdd835 !important; }
+        .card-theme-dark { background: #2c3e50 !important; color: #ecf0f1 !important; border-color: #34495e !important; }
+        .card-theme-dark th { background: #34495e !important; color: white !important; border-color: #465c71 !important; }
+        .card-theme-dark td { border-color: #465c71 !important; }
 
         /* AI 懸浮視窗 */
         .ai-fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: linear-gradient(135deg, #00308F, #0055ff); color: white; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; font-size: 30px; cursor: pointer; z-index: 1000; transition: transform 0.3s; }
@@ -70,6 +89,23 @@
         .msg-user { background: var(--cafa-blue-main); color: white; align-self: flex-end; }
         
         #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 999; flex-direction: column; color: var(--cafa-blue-main); }
+
+        /* --- 列印專用樣式 --- */
+        @media print {
+            @page { size: landscape; margin: 1cm; } /* 強制橫向列印 */
+            .sidebar, .header-bar, .ai-fab, .chat-window, .theme-controls, .btn { display: none !important; }
+            .main-content { padding: 0; margin: 0; background: white; }
+            body { background: white; height: auto; overflow: visible; }
+            .card { 
+                box-shadow: none; border: 1px solid #ccc; margin: 0; padding: 10px; 
+                -webkit-print-color-adjust: exact; /* 強制列印背景色 Chrome */
+                print-color-adjust: exact;         /* 強制列印背景色 Firefox */
+            }
+            /* 修正暗黑模式不適合列印的問題 */
+            .card-theme-dark { background: white !important; color: black !important; border-color: #ccc !important; }
+            .card-theme-dark th { background: #f8f9fa !important; color: black !important; border-color: #ddd !important; }
+            .card-theme-dark td { border-color: #ddd !important; }
+        }
     </style>
 </head>
 <body>
@@ -108,8 +144,24 @@
         </div>
 
         <div id="visual-view" style="display:none">
-            <div class="header-bar"><div class="header-title">週課表檢視</div><button class="btn btn-save" style="width:auto; margin:0;" onclick="window.print()">🖨️ 列印</button></div>
-            <div class="card"><table class="schedule-table"><thead><tr><th style="width:60px;">節次</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr></thead><tbody id="visual-schedule-body"></tbody></table></div>
+            <div class="header-bar">
+                <div class="header-title">週課表檢視</div>
+                <div class="theme-controls">
+                    <span style="font-size:12px; color:#666; margin-left:20px; margin-right:5px;">切換背景:</span>
+                    <div class="theme-btn tb-white" onclick="setTheme('white')" title="標準白"></div>
+                    <div class="theme-btn tb-blue" onclick="setTheme('blue')" title="空軍藍"></div>
+                    <div class="theme-btn tb-warm" onclick="setTheme('warm')" title="護眼黃"></div>
+                    <div class="theme-btn tb-dark" onclick="setTheme('dark')" title="極簡黑"></div>
+                </div>
+                <button class="btn btn-print" onclick="window.print()">🖨️ 列印課表</button>
+            </div>
+            <div class="card" id="visual-card">
+                <div style="text-align:center; margin-bottom:10px; font-weight:bold; font-size:18px;">114學年度 第1學期 學生課表</div>
+                <table class="schedule-table">
+                    <thead><tr><th style="width:60px;">節次</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr></thead>
+                    <tbody id="visual-schedule-body"></tbody>
+                </table>
+            </div>
         </div>
 
         <div id="career-view" style="display:none">
@@ -166,7 +218,7 @@
             if(!u) { window.location.href='index.html'; return; }
             currentUser = JSON.parse(u);
             
-            // 顯示個人資訊 (包含班級)
+            // 顯示個人資訊
             document.getElementById('user-info-box').innerHTML = `
                 <div style="font-size:16px; font-weight:bold; margin-bottom:5px;">${currentUser.name}</div>
                 <div>班級：${currentUser.classId || currentUser.dept || '未分班'}</div>
@@ -191,21 +243,15 @@
         window.switchTab = switchTab; window.add = add; window.drop = drop; 
         window.selectTrack = selectTrack; window.saveCareer = saveCareer; 
         window.toggleChat = toggleChat; window.sendMessage = sendMessage;
+        window.setTheme = setTheme; // 綁定背景切換功能
 
         async function syncData() {
-            // 1. 下載最新資料
             studentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
             const me = studentDB.find(s => s.id === currentUser.id);
-            if(me) { 
-                currentUser = me; 
-                myCourses = me.courses || []; // 這裡會自動同步導師灌入的必修課
-            }
-
+            if(me) { currentUser = me; myCourses = me.courses || []; }
             allCourses = [];
             const el = (await loadFromCloud(KEYS.ELECTIVE))||[]; 
             el.forEach(c=>{c.capacity=50;c.enrolled=0;allCourses.push(c)});
-            
-            // 2. 渲染畫面
             render();
         }
 
@@ -214,57 +260,44 @@
             if(idx > -1) {
                 studentDB[idx].courses = myCourses;
                 studentDB[idx].totalCredits = myCourses.reduce((a,b)=>a+b.credit,0);
-                // 同步職涯
                 studentDB[idx].careerTrack = selectedTrack;
-                // 更新 current
                 currentUser = studentDB[idx];
                 await saveToCloud(KEYS.STUDENTS, studentDB);
             }
         }
 
         function render() {
-            // 1. 選課列表
+            // Render Lists (Selection & My Courses)
             const tb = document.getElementById('course-list-body'); tb.innerHTML='';
             allCourses.forEach(c => {
                 const has = myCourses.some(m => m.id === c.id);
                 const open = c.isOpen !== false;
-                let btn = '';
-                if(has) btn = `<button class="btn btn-disabled" disabled>已選</button>`;
-                else if(!open) btn = `<button class="btn btn-disabled" disabled>暫停</button>`;
-                else btn = `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`;
-
+                let btn = has ? `<button class="btn btn-disabled" disabled>已選</button>` : (!open ? `<button class="btn btn-disabled" disabled>暫停</button>` : `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`);
                 tb.innerHTML+=`<tr><td><span class="tag tag-elective">選修</span></td><td>${c.id}</td><td>${c.name}</td><td>${c.credit}</td><td>${c.time}</td><td>${c.enrolled}/${c.capacity}</td><td>${btn}</td></tr>`;
             });
 
-            // 2. 已選列表
             const mtb = document.getElementById('my-course-body'); mtb.innerHTML='';
             myCourses.forEach(c => {
-                // 檢查是否為固定必修 (導師灌檔的 isFixed=true)
                 let lock = c.isFixed === true;
                 mtb.innerHTML+=`<tr><td><span class="tag ${lock?'tag-fixed':'tag-elective'}">${lock?'必修':'選修'}</span></td><td>${c.name}</td><td>${c.credit}</td><td>${c.time}</td><td>${c.location||''}</td><td>${lock?'<span style="color:#e65100;font-weight:bold;font-size:12px;">🔒 班定</span>':`<button class="btn btn-drop" onclick="drop('${c.id}')">退選</button>`}</td></tr>`;
             });
-
             document.getElementById('current-credits').innerText = myCourses.reduce((a,b)=>a+b.credit,0);
             
-            // 3. 課表與成績
+            // Render Grid & History
             renderGrid();
             renderHistory();
         }
 
         async function add(id) {
             const c = allCourses.find(x=>x.id===id);
-            const conflict = checkConflict(c);
-            if(conflict) return alert(`❌ 加選失敗！與必修/已選課程【${conflict}】衝堂。`);
+            if(checkConflict(c)) return alert("衝堂！");
             myCourses.push(c); await saveMyData(); render(); alert(`✅ 加選成功：${c.name}`);
         }
-
         async function drop(id) {
             const c = myCourses.find(x=>x.id===id);
-            if(c && c.isFixed) return alert("⚠️ 這是班定必修，無法退選！");
+            if(c && c.isFixed) return alert("⚠️ 班定必修無法退選");
             if(confirm("確定退選？")) { myCourses=myCourses.filter(x=>x.id!==id); await saveMyData(); render(); }
         }
-
-        // 衝堂檢查 (包含導師灌入的必修)
         function checkConflict(nc) {
             if(!nc.time) return null;
             let [d1,p1] = nc.time.split('/'); let pp1 = p1.split(',');
@@ -276,23 +309,22 @@
             return null;
         }
 
-        // --- 職涯 ---
-        function selectTrack(t) { selectedTrack=t; document.querySelectorAll('.radio-card').forEach(x=>x.classList.remove('selected')); document.getElementById('track-'+t).classList.add('selected'); }
-        async function saveCareer() {
-            if(!selectedTrack) return alert("請選擇方向");
-            currentUser.interests = Array.from(document.querySelectorAll('.interest-check:checked')).map(x=>x.value);
-            await saveMyData();
-            alert("設定已儲存"); genRec();
+        // --- 背景切換邏輯 ---
+        function setTheme(theme) {
+            const card = document.getElementById('visual-card');
+            card.className = 'card'; // 清除舊主題
+            if(theme !== 'white') card.classList.add(`card-theme-${theme}`);
         }
+
+        // --- 職涯, 課表, AI... (同前) ---
+        function selectTrack(t) { selectedTrack=t; document.querySelectorAll('.radio-card').forEach(x=>x.classList.remove('selected')); document.getElementById('track-'+t).classList.add('selected'); }
+        async function saveCareer() { currentUser.interests = Array.from(document.querySelectorAll('.interest-check:checked')).map(x=>x.value); await saveMyData(); alert("設定已儲存"); genRec(); }
         function genRec() {
             if(!selectedTrack) return;
             const kws = selectedTrack==='pilot'?['飛行','空氣','體育','英文']:['資安','維修','無人機','管理'];
             const recs = allCourses.filter(c => !myCourses.some(m=>m.id===c.id) && kws.some(k=>c.name.includes(k)));
-            const list = document.getElementById('rec-list');
-            list.innerHTML = recs.length ? recs.map(c=>`<div style="margin-bottom:8px;">👉 <b>${c.name}</b> <button class="btn btn-add" style="padding:2px 8px;font-size:12px;" onclick="add('${c.id}')">加選</button></div>`).join('') : '暫無推薦課程';
+            document.getElementById('rec-list').innerHTML = recs.length ? recs.map(c=>`<div style="margin-bottom:8px;">👉 <b>${c.name}</b> <button class="btn btn-add" style="padding:2px 8px;font-size:12px;" onclick="add('${c.id}')">加選</button></div>`).join('') : '暫無推薦';
         }
-
-        // --- 視覺化課表 ---
         function renderGrid() {
             const t = document.getElementById('visual-schedule-body'); t.innerHTML='';
             const times = ["08:10", "09:10", "10:10", "11:10", "13:30", "14:30", "15:30", "16:30", "17:30", "19:00"];
@@ -307,13 +339,10 @@
                 });
             });
         }
-        
         function renderHistory() {
-            let h = '';
-            myCourses.filter(c=>c.score).forEach(c => h+=`<div style="padding:10px; border-bottom:1px solid #eee;"><b>${c.name}</b>: <span style="color:${c.score<60?'red':'green'}">${c.score}</span></div>`);
+            let h = ''; myCourses.filter(c=>c.score).forEach(c => h+=`<div style="padding:10px; border-bottom:1px solid #eee;"><b>${c.name}</b>: <span style="color:${c.score<60?'red':'green'}">${c.score}</span></div>`);
             document.getElementById('history-content').innerHTML = h || '<div style="padding:20px;text-align:center;color:#999">尚無成績</div>';
         }
-
         function switchTab(t) {
             ['selection','schedule','career','visual','history'].forEach(x=>document.getElementById(x+'-view').style.display='none');
             document.getElementById(t+'-view').style.display='block';
@@ -321,8 +350,6 @@
             const map={'selection':0,'schedule':1,'visual':2,'career':3,'history':4};
             if(map[t]!==undefined) document.querySelectorAll('.menu-item')[map[t]].classList.add('active');
         }
-
-        // --- AI Chat ---
         function toggleChat() { const w=document.getElementById('chat-window'); w.style.display=w.style.display==='flex'?'none':'flex'; }
         function sendMessage() {
             const inp=document.getElementById('chat-input'); const txt=inp.value.trim();
@@ -330,22 +357,18 @@
             addMsg(txt,'user'); inp.value='';
             setTimeout(()=>addMsg(getAIResponse(txt),'ai'), 600);
         }
-        function addMsg(txt, type) {
-            const b=document.getElementById('chat-body');
-            b.innerHTML+=`<div class="msg msg-${type}">${txt}</div>`;
-            b.scrollTop=b.scrollHeight;
-        }
+        function addMsg(txt, type) { const b=document.getElementById('chat-body'); b.innerHTML+=`<div class="msg msg-${type}">${txt}</div>`; b.scrollTop=b.scrollHeight; }
         function getAIResponse(q) {
-            if(q.includes('衝堂')) return "如果衝堂，必須先退掉原本的課才能加選喔！";
-            if(q.includes('必修')) return "班定必修是強制灌檔的，無法退選。";
-            if(q.includes('飛行')) return "想飛嗎？建議多修空氣動力學與英文！";
-            if(q.includes('地勤')) return "地勤很重要！資安與無人機是現在的趨勢。";
-            if(q.includes('你好')) return "你好！我是空軍官校選課小幫手 ✈️";
-            return "這個問題建議詢問教務處課務組喔！";
+            if(q.includes('衝堂')) return "衝堂需先退掉原課程";
+            if(q.includes('必修')) return "班定必修無法退選";
+            if(q.includes('飛行')) return "建議修空氣動力學與英文";
+            if(q.includes('地勤')) return "建議修資安與無人機";
+            return "請洽教務處";
         }
     </script>
 </body>
 </html>
+
 
 
 
