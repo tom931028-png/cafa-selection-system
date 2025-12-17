@@ -23,27 +23,20 @@
 
         .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-top: 4px solid var(--admin-blue); box-shadow: 0 5px 20px rgba(0,0,0,0.05); overflow-x: auto; transition: all 0.3s ease; position: relative; }
         
-        /* --- 主題樣式 (Theme Styles) --- */
+        /* --- 主題樣式 --- */
         .theme-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
         .theme-btn { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid #ddd; transition: 0.2s; position: relative; }
         .theme-btn:hover { transform: scale(1.1); }
-        .tb-white { background: white; }
-        .tb-blue { background: #e3f2fd; }
-        .tb-dark { background: #333; }
-        .tb-warm { background: #fff8e1; }
+        .tb-white { background: white; } .tb-blue { background: #e3f2fd; } .tb-dark { background: #333; } .tb-warm { background: #fff8e1; }
 
-        /* 1. 空軍藍 */
+        /* 主題定義 */
         .card-theme-blue { background: linear-gradient(to bottom right, #f0f7ff, #dbeafe) !important; border-color: #1e88e5 !important; }
         .card-theme-blue::before { content: '✈'; position: absolute; font-size: 150px; color: rgba(0,0,0,0.03); bottom: 20px; right: 20px; pointer-events: none; transform: rotate(-15deg); z-index: 0; }
-        
-        /* 2. 極簡黑 */
         .card-theme-dark { background: #2c3e50 !important; color: #ecf0f1 !important; border-color: #34495e !important; }
         .card-theme-dark th { background: #34495e !important; color: white !important; border-color: #465c71 !important; }
         .card-theme-dark td { border-color: #465c71 !important; }
         .card-theme-dark .schedule-table th:first-child, .card-theme-dark .schedule-table td:first-child { background-color: #34495e !important; color: #ecf0f1; border-color: #465c71; }
         .card-theme-dark select { background: #34495e; color: white; border-color: #555; }
-
-        /* 3. 暖陽黃 */
         .card-theme-warm { background: #fffdeb !important; border-color: #fdd835 !important; }
 
         /* 表格優化 */
@@ -55,9 +48,15 @@
         input, select { width: 100%; padding: 10px; border: 2px solid #dae1e7; border-radius: 6px; box-sizing: border-box; }
         .btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; color: white; display: inline-flex; align-items: center; justify-content: center; width: auto; margin-left: 5px; }
         .btn:hover { opacity: 0.9; }
-        .btn-submit { background-color: var(--admin-blue); width: 100%; margin-left:0; margin-top:5px; } .btn-add { background-color: #00695c; width: 100%; margin-left:0; } .btn-del { background-color: #dc3545; }
+        .btn-submit { background-color: var(--admin-blue); width: 100%; margin-left:0; margin-top:5px; } 
+        .btn-add { background-color: #00695c; width: 100%; margin-left:0; } 
+        .btn-del { background-color: #dc3545; padding: 6px 12px; font-size: 12px; }
         .btn-print { background-color: #607d8b; }
+        .btn-create { background-color: #28a745; margin-bottom: 15px; width: auto; padding: 10px 20px; }
         
+        /* 徽章預覽 */
+        .rank-badge { padding: 5px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 60px; text-align: center; }
+
         /* 課表樣式 */
         .schedule-table { min-width: 800px; table-layout: fixed; border-collapse: collapse; }
         .schedule-table th, .schedule-table td { border: 1px solid #eee; text-align: center; }
@@ -83,19 +82,13 @@
             .header-bar { box-shadow: none; border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 20px; display: block; }
             .header-title { border: none; padding: 0; text-align: center; font-size: 24px; color: black; }
             .card { box-shadow: none; border: 1px solid #ccc; padding: 10px; page-break-inside: avoid; margin-bottom: 20px; }
-            
-            /* 強制移除主題背景，改為白底黑字 */
             .card-theme-blue, .card-theme-dark, .card-theme-warm { background: white !important; color: black !important; border-color: #ccc !important; }
             .card-theme-blue::before { display: none; }
             .card-theme-dark select { background: white; color: black; border: 1px solid #ccc; }
             .card-theme-dark th { background: #f1f3f5 !important; color: black !important; border: 1px solid #000 !important; }
             .card-theme-dark td { border: 1px solid #000 !important; }
-
-            /* 只顯示當前 View */
             .main-content > div { display: none; }
             .main-content > div[style*="display: block"] { display: block !important; }
-
-            /* 表格修正 */
             table { min-width: 100%; width: 100%; table-layout: auto; }
             .schedule-table { width: 100%; border: 1px solid black; }
             .schedule-table th, .schedule-table td { border: 1px solid black; color: black; }
@@ -157,10 +150,18 @@
         </div>
 
         <div id="ranks-view" style="display: none;">
-            <div class="header-bar"><div class="header-title">獎懲規則</div></div>
+            <div class="header-bar"><div class="header-title">獎懲與段位設定</div></div>
             <div class="card">
-                <table><thead><tr><th>牌位</th><th>最低分</th><th>顏色</th><th>獎勵</th><th>懲罰</th></tr></thead><tbody id="rank-rules-body"></tbody></table>
-                <button class="btn btn-submit" style="width:200px; margin-top:20px;" onclick="saveRankRules()">儲存設定</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div>請設定各段位的 GPA 門檻，系統將自動依分數高低排序。</div>
+                    <button class="btn btn-create" onclick="addNewRankRow()">＋ 新增段位</button>
+                </div>
+                <table>
+                    <thead><tr><th style="width:15%">段位名稱</th><th style="width:10%">最低GPA</th><th style="width:10%">代表色</th><th style="width:10%">預覽</th><th>獎勵內容</th><th>懲罰內容</th><th style="width:50px">操作</th></tr></thead>
+                    <tbody id="rank-rules-body">
+                        </tbody>
+                </table>
+                <button class="btn btn-submit" style="width:200px; margin-top:20px;" onclick="saveRankRules()">💾 儲存並套用設定</button>
             </div>
         </div>
 
@@ -218,22 +219,17 @@
             document.getElementById('loading').style.display='none'; 
             setInterval(refreshAll, 10000);
             
-            // 讀取主題設定
             const savedTheme = localStorage.getItem('cafa_admin_theme');
             if(savedTheme) setTheme(savedTheme);
         };
 
-        // 主題切換功能
         window.setTheme = (t) => {
             const c = document.getElementById('schedule-card');
-            c.className = 'card'; // reset
+            c.className = 'card';
             if(t !== 'white') c.classList.add(`card-theme-${t}`);
-            localStorage.setItem('cafa_admin_theme', t); // 記憶
-            
-            // 如果是深色模式，調整文字顏色
+            localStorage.setItem('cafa_admin_theme', t);
             const title = document.getElementById('schedule-title');
-            if(t === 'dark') title.style.color = '#fff';
-            else title.style.color = '#00308F';
+            if(t === 'dark') title.style.color = '#fff'; else title.style.color = '#00308F';
         };
         
         window.switchTab = (id) => {
@@ -241,22 +237,103 @@
             document.getElementById(id+'-view').style.display='block';
             document.querySelector('.sidebar').classList.remove('open');
             if(id === 'schedule') renderTeacherSchedule();
+            if(id === 'ranks') renderRankSettings();
         };
 
-        // 綁定全域函數
-        window.saveRankRules=saveRankRules; window.renderTeacherSchedule=renderTeacherSchedule;
         window.addStudent=addStudent; window.deleteStudent=deleteStudent;
         window.addCourse=addCourse; window.delCourse=delCourse; window.loadGrades=loadGrades; window.saveGrades=saveGrades; window.toggleStatus=toggleStatus;
+        // 獎懲相關綁定
+        window.addNewRankRow = addNewRankRow;
+        window.deleteRankRow = deleteRankRow;
+        window.saveRankRules = saveRankRules;
+        window.updateRankPreview = updateRankPreview;
+        window.renderTeacherSchedule = renderTeacherSchedule;
 
         async function refreshAll() {
             studentDB = (await loadFromCloud(KEYS.STUDENTS))||[];
             fixedCourses = (await loadFromCloud(KEYS.FIXED))||[];
             electiveCourses = (await loadFromCloud(KEYS.ELECTIVE))||[];
-            rankRules = (await loadFromCloud(KEYS.RANKS))||[{name:'王者', min:90, color:'#ffe0b2', reward:'', punishment:''}];
+            rankRules = (await loadFromCloud(KEYS.RANKS))||getDefaultRanks();
             
             renderMonitor(); renderRankSettings(); renderStudents(); renderCourses(); updateSels();
         }
 
+        // --- 優化後的獎懲設定邏輯 ---
+        function renderRankSettings() {
+            const t = document.getElementById('rank-rules-body');
+            t.innerHTML = '';
+            // 確保顯示時是按照 GPA 排序的
+            rankRules.sort((a,b) => b.min - a.min);
+
+            rankRules.forEach((r, i) => {
+                t.innerHTML += `
+                <tr class="rank-row">
+                    <td><input class="r-name" value="${r.name}" placeholder="名稱"></td>
+                    <td><input class="r-min" type="number" value="${r.min}" style="width:60px"></td>
+                    <td><input class="r-color" type="color" value="${r.color}" oninput="updateRankPreview(this)"></td>
+                    <td><span class="rank-badge" style="background-color:${r.color};">${r.name}</span></td>
+                    <td><input class="r-reward" value="${r.reward||''}" placeholder="無"></td>
+                    <td><input class="r-punish" value="${r.punish||''}" placeholder="無"></td>
+                    <td><button class="btn btn-del" onclick="deleteRankRow(this)">✕</button></td>
+                </tr>`;
+            });
+        }
+
+        function addNewRankRow() {
+            const t = document.getElementById('rank-rules-body');
+            const row = document.createElement('tr');
+            row.className = 'rank-row';
+            row.innerHTML = `
+                <td><input class="r-name" value="新段位" placeholder="名稱"></td>
+                <td><input class="r-min" type="number" value="60" style="width:60px"></td>
+                <td><input class="r-color" type="color" value="#cccccc" oninput="updateRankPreview(this)"></td>
+                <td><span class="rank-badge" style="background-color:#cccccc;">新段位</span></td>
+                <td><input class="r-reward" placeholder="無"></td>
+                <td><input class="r-punish" placeholder="無"></td>
+                <td><button class="btn btn-del" onclick="deleteRankRow(this)">✕</button></td>
+            `;
+            t.insertBefore(row, t.firstChild); // 新增在最上面方便看到
+        }
+
+        function deleteRankRow(btn) {
+            if(confirm("確定刪除此段位規則嗎？")) {
+                btn.closest('tr').remove();
+            }
+        }
+
+        function updateRankPreview(input) {
+            const row = input.closest('tr');
+            const badge = row.querySelector('.rank-badge');
+            const nameInput = row.querySelector('.r-name');
+            badge.style.backgroundColor = input.value;
+            badge.innerText = nameInput.value;
+        }
+
+        async function saveRankRules() {
+            const rows = document.querySelectorAll('.rank-row');
+            const newRules = [];
+            rows.forEach(row => {
+                const name = row.querySelector('.r-name').value;
+                const min = parseInt(row.querySelector('.r-min').value);
+                const color = row.querySelector('.r-color').value;
+                const reward = row.querySelector('.r-reward').value;
+                const punishment = row.querySelector('.r-punish').value; // 修正變數名稱
+                if(name && !isNaN(min)) {
+                    newRules.push({ name, min, color, reward, punishment });
+                }
+            });
+            // 關鍵優化：存檔前自動由大到小排序，確保邏輯正確
+            newRules.sort((a,b) => b.min - a.min);
+            
+            rankRules = newRules;
+            await saveToCloud(KEYS.RANKS, rankRules);
+            alert("✅ 設定已儲存！系統已自動依 GPA 高低排序規則。");
+            renderRankSettings(); // 重新渲染以顯示排序後的結果
+        }
+
+        function getDefaultRanks() { return [{name:'王者', min:90, color:'#ffe0b2', reward:'禮券', punishment:''}, {name:'鑽石', min:80, color:'#b3e5fc', reward:'', punishment:''}, {name:'黃金', min:70, color:'#fff9c4', reward:'', punishment:''}, {name:'白銀', min:60, color:'#f5f5f5', reward:'', punishment:''}, {name:'青銅', min:0, color:'#ffccbc', reward:'', punishment:''}]; }
+
+        // --- 其他功能 ---
         function renderTeacherSchedule() {
             const tea = document.getElementById('teacher-schedule-selector').value;
             const tbody = document.getElementById('teacher-schedule-body'); tbody.innerHTML = ''; 
@@ -284,15 +361,6 @@
             });
         }
 
-        function renderRankSettings() {
-            const t = document.getElementById('rank-rules-body'); t.innerHTML='';
-            rankRules.forEach((r, i) => { t.innerHTML += `<tr><td><input value="${r.name}" id="rk-n-${i}"></td><td><input type="number" value="${r.min}" id="rk-m-${i}" style="width:60px"></td><td><input type="color" value="${r.color}" id="rk-c-${i}"></td><td><input value="${r.reward}" id="rk-r-${i}"></td><td><input value="${r.punishment}" id="rk-p-${i}"></td></tr>`; });
-        }
-        async function saveRankRules() {
-            rankRules = rankRules.map((r, i) => ({ name: document.getElementById(`rk-n-${i}`).value, min: parseInt(document.getElementById(`rk-m-${i}`).value), color: document.getElementById(`rk-c-${i}`).value, reward: document.getElementById(`rk-r-${i}`).value, punishment: document.getElementById(`rk-p-${i}`).value })).sort((a,b) => b.min - a.min);
-            await saveToCloud(KEYS.RANKS, rankRules); alert("已存");
-        }
-
         async function addStudent() { const id=document.getElementById('s_id').value; const idx=studentDB.findIndex(s=>s.id===id); const obj={id, name:document.getElementById('s_name').value, classId:document.getElementById('s_class').value, password:document.getElementById('s_pass').value, dept:'-', courses:[], totalCredits:0}; if(idx>-1){Object.assign(studentDB[idx], obj);}else{studentDB.push(obj);} await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents(); }
         async function deleteStudent(id) { if(confirm('刪除?')){studentDB=studentDB.filter(s=>s.id!==id); await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents();} }
         function renderStudents() { document.getElementById('account-list-body').innerHTML = studentDB.map(s=>`<tr><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td><button class="btn btn-del" onclick="deleteStudent('${s.id}')">刪</button></td></tr>`).join(''); }
@@ -314,4 +382,5 @@
     </script>
 </body>
 </html>
+
 
