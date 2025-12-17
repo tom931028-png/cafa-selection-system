@@ -69,6 +69,7 @@
         
         /* Excel 匯入區塊 */
         .import-section { background: #e8eaf6; padding: 15px; border-radius: 10px; border: 2px dashed #9fa8da; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .grade-import-section { background: #e0f2f1; border-color: #80cbc4; } /* 成績匯入區換個顏色 */
         .btn-import { background: #3f51b5; color: white; }
         .btn-template { background: #7986cb; color: white; }
 
@@ -185,9 +186,9 @@
                     <div style="font-size:12px; color:#666; margin-top:5px;">請上傳 .xlsx 或 .csv 檔案，系統將自動建立帳號 (預設狀態為正常)。</div>
                 </div>
                 <div style="display:flex; gap:10px;">
-                    <button class="btn btn-template" onclick="downloadTemplate()">📥 下載範本</button>
-                    <button class="btn btn-import" onclick="document.getElementById('import-file').click()">📤 上傳檔案</button>
-                    <input type="file" id="import-file" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleFileImport(event)">
+                    <button class="btn btn-template" onclick="downloadStudentTemplate()">📥 下載帳號範本</button>
+                    <button class="btn btn-import" onclick="document.getElementById('import-student-file').click()">📤 上傳帳號表</button>
+                    <input type="file" id="import-student-file" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleStudentImport(event)">
                 </div>
             </div>
 
@@ -242,10 +243,23 @@
 
         <div id="grades-view" style="display:none;">
             <div class="header-bar"><div class="header-title">成績管理</div></div>
+            
+            <div class="import-section grade-import-section">
+                <div>
+                    <strong>📊 批次匯入成績 (Excel)</strong>
+                    <div style="font-size:12px; color:#00695c; margin-top:5px;">系統將依據「學號」與「課程代碼」自動填入分數。</div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-template" onclick="downloadGradeTemplate()">📥 下載成績範本</button>
+                    <button class="btn btn-import" style="background:#00695c;" onclick="document.getElementById('import-grade-file').click()">📤 上傳成績表</button>
+                    <input type="file" id="import-grade-file" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleGradeImport(event)">
+                </div>
+            </div>
+
             <div class="card">
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
                     <select id="g_stu" onchange="loadGrades()" style="flex:3"></select>
-                    <button class="btn btn-submit" style="flex:1" onclick="saveGrades()">儲存成績</button>
+                    <button class="btn btn-submit" style="flex:1" onclick="saveGrades()">儲存單筆修改</button>
                 </div>
                 <table id="grade-table"><thead><tr><th>課程</th><th>學分</th><th>分數輸入</th></tr></thead><tbody id="grade-body"></tbody></table>
             </div>
@@ -283,7 +297,8 @@
         window.addCourse=addCourse; window.delCourse=delCourse; window.loadGrades=loadGrades; window.saveGrades=saveGrades; window.toggleStatus=toggleStatus;
         window.addNewRankRow=addNewRankRow; window.deleteRankRow=deleteRankRow; window.saveRankRules=saveRankRules; window.updateRankPreview=updateRankPreview; window.renderTeacherSchedule=renderTeacherSchedule;
         window.batchApprove=batchApprove; window.batchDelete=batchDelete; window.toggleSelectAll=toggleSelectAll;
-        window.downloadTemplate=downloadTemplate; window.handleFileImport=handleFileImport;
+        window.downloadStudentTemplate=downloadStudentTemplate; window.handleStudentImport=handleStudentImport;
+        window.downloadGradeTemplate=downloadGradeTemplate; window.handleGradeImport=handleGradeImport;
 
         async function refreshAll() {
             studentDB = (await loadFromCloud(KEYS.STUDENTS))||[];
@@ -372,22 +387,21 @@
             await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents();
         }
 
-        // --- Excel 匯入功能 ---
-        function downloadTemplate() {
+        // --- Excel 匯入功能 (帳號) ---
+        function downloadStudentTemplate() {
             const ws = XLSX.utils.aoa_to_sheet([["學號","姓名","班級","密碼"],["114001","王小明","114-航太","1234"],["114002","李大華","114-航管","1234"]]);
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "學生名單");
-            XLSX.writeFile(wb, "學生匯入範本.xlsx");
+            XLSX.writeFile(wb, "學生帳號範本.xlsx");
         }
 
-        function handleFileImport(e) {
+        function handleStudentImport(e) {
             const file = e.target.files[0];
             if(!file) return;
             const reader = new FileReader();
             reader.onload = async function(e) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 
                 let addedCount = 0;
                 jsonData.forEach(row => {
@@ -395,25 +409,61 @@
                     const name = String(row['姓名'] || row['name']).trim();
                     const cls = String(row['班級'] || row['classId']).trim();
                     const pwd = String(row['密碼'] || row['password']).trim();
-                    
                     if(id && !studentDB.some(s => s.id === id)) {
-                        studentDB.push({
-                            id: id, name: name, classId: cls, password: pwd,
-                            status: 'active', // 匯入的直接啟用
-                            courses: [], careerTrack: '', interests: []
-                        });
+                        studentDB.push({ id, name, classId: cls, password: pwd, status: 'active', courses: [], careerTrack: '', interests: [] });
                         addedCount++;
                     }
                 });
+                if(addedCount > 0) { await saveToCloud(KEYS.STUDENTS, studentDB); alert(`✅ 成功匯入 ${addedCount} 筆學生資料！`); renderStudents(); } 
+                else { alert("沒有新增任何資料 (可能學號重複或格式錯誤)"); }
+                document.getElementById('import-student-file').value = '';
+            };
+            reader.readAsArrayBuffer(file);
+        }
 
-                if(addedCount > 0) {
-                    await saveToCloud(KEYS.STUDENTS, studentDB);
-                    alert(`✅ 成功匯入 ${addedCount} 筆學生資料！`);
-                    renderStudents();
-                } else {
-                    alert("沒有新增任何資料 (可能學號重複或格式錯誤)");
+        // --- Excel 匯入功能 (成績) ---
+        function downloadGradeTemplate() {
+            const ws = XLSX.utils.aoa_to_sheet([["學號","課程代碼","分數"],["114001","C001","85"],["114001","C002","90"],["114002","C001","70"]]);
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "成績匯入");
+            XLSX.writeFile(wb, "成績匯入範本.xlsx");
+        }
+
+        function handleGradeImport(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+                
+                let updatedCount = 0;
+                jsonData.forEach(row => {
+                    const sid = String(row['學號'] || row['Student_ID']).trim();
+                    const cid = String(row['課程代碼'] || row['Course_ID']).trim();
+                    const score = parseInt(row['分數'] || row['Score']);
+                    
+                    if(sid && cid && !isNaN(score)) {
+                        const student = studentDB.find(s => s.id === sid);
+                        if(student && student.courses) {
+                            // 嘗試用 ID 找，找不到則用 Name 找 (增加容錯)
+                            const course = student.courses.find(c => c.id === cid || c.name === cid);
+                            if(course) {
+                                course.score = score;
+                                updatedCount++;
+                            }
+                        }
+                    }
+                });
+
+                if(updatedCount > 0) { 
+                    await saveToCloud(KEYS.STUDENTS, studentDB); 
+                    alert(`✅ 成功匯入/更新了 ${updatedCount} 筆成績資料！`); 
+                    loadGrades(); // 如果當前有選學生，刷新顯示
+                } else { 
+                    alert("未更新任何成績。請確認學號與課程代碼是否正確，且學生已選修該課程。"); 
                 }
-                document.getElementById('import-file').value = ''; // 重置
+                document.getElementById('import-grade-file').value = '';
             };
             reader.readAsArrayBuffer(file);
         }
@@ -443,6 +493,7 @@
     </script>
 </body>
 </html>
+
 
 
 
