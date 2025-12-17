@@ -287,6 +287,7 @@
         }
 
         function render() {
+            // Rank
             let tot=0, cr=0; myC.forEach(c=>{if(c.score){tot+=parseInt(c.score)*parseInt(c.credit); cr+=parseInt(c.credit);}});
             let gpa = cr>0 ? (tot/cr).toFixed(1) : 0;
             let rank = rules.find(r=>gpa>=r.min) || rules[rules.length-1];
@@ -294,10 +295,42 @@
             document.getElementById('my-rank-name').innerText = rank.name; document.getElementById('my-rank-name').style.color = rank.color;
             document.getElementById('my-reward').innerText = rank.reward ? `🎁 ${rank.reward}` : ''; document.getElementById('my-punish').innerText = rank.punishment ? `⚠️ ${rank.punishment}` : '';
 
+            // 計算所有課程的目前選課人數
+            const counts = {};
+            sDB.forEach(s => {
+                if(s.courses) {
+                    s.courses.forEach(c => {
+                        counts[c.id] = (counts[c.id] || 0) + 1;
+                    });
+                }
+            });
+
+            // 渲染選課列表 (含人數檢查)
             const tb = document.getElementById('course-list'); tb.innerHTML='';
             allC.filter(c => !c.isFixed && c.isOpen).forEach(c => {
                 const has = myC.some(x=>x.id===c.id);
-                tb.innerHTML += `<tr><td><span class="tag tag-elective">選修</span></td><td><div style="font-weight:bold;">${c.name}</div><div style="font-size:12px;color:#666;">${c.time} | ${c.credit}學分</div></td><td style="text-align:right;">${has ? '<span style="color:green;font-weight:bold;">已選</span>' : `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`}</td></tr>`;
+                const current = counts[c.id] || 0;
+                const max = c.max || 999;
+                const isFull = current >= max;
+
+                let btnHtml = '';
+                if(has) {
+                    btnHtml = '<span style="color:green;font-weight:bold;">已選</span>';
+                } else if(isFull) {
+                    btnHtml = '<button class="btn" style="background:#ccc;cursor:not-allowed;" disabled>🚫 額滿</button>';
+                } else {
+                    btnHtml = `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`;
+                }
+
+                tb.innerHTML += `
+                    <tr>
+                        <td><span class="tag tag-elective">選修</span></td>
+                        <td>
+                            <div style="font-weight:bold;">${c.name}</div>
+                            <div style="font-size:12px;color:#666;">${c.time} | ${c.credit}學分 | <span style="color:${isFull?'red':'#00308F'}">${current} / ${max} 人</span></div>
+                        </td>
+                        <td style="text-align:right;">${btnHtml}</td>
+                    </tr>`;
             });
 
             const mtb = document.getElementById('my-courses'); mtb.innerHTML='';
@@ -353,7 +386,25 @@
         };
 
         window.logout = () => { sessionStorage.removeItem('cafa_user'); location.href='index.html'; };
-        window.add = async (id) => { const c=allC.find(x=>x.id===id); if(checkConflict(c))return alert("衝堂！"); myC.push(c); await save(); alert("加選成功"); render(); };
+        
+        // 加選邏輯 (含人數檢查)
+        window.add = async (id) => { 
+            await sync(); // 先同步最新資料，避免人數誤差
+            const c = allC.find(x=>x.id===id); 
+            
+            // 人數檢查
+            let currentCount = 0;
+            sDB.forEach(s => { if(s.courses && s.courses.some(sc => sc.id === id)) currentCount++; });
+            if(currentCount >= (c.max || 999)) return alert("來晚了一步！該課程剛剛額滿了。");
+
+            if(checkConflict(c)) return alert("衝堂！該時段已有課程。"); 
+            
+            myC.push(c); 
+            await save(); 
+            alert("加選成功！"); 
+            render(); 
+        };
+        
         window.drop = async (id) => { if(!confirm("確定退選?"))return; myC=myC.filter(x=>x.id!==id); await save(); render(); };
         window.saveCareer = async () => { await save(); alert("設定已儲存！"); };
         async function save() { const idx = sDB.findIndex(s=>s.id===cur.id); if(idx>-1){ sDB[idx].courses=myC; sDB[idx].careerTrack=cur.careerTrack; sDB[idx].interests=cur.interests; await saveToCloud(KEYS.STUDENTS, sDB); } }
