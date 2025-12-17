@@ -9,7 +9,7 @@
         :root { --admin-blue: #00308F; --admin-dark: #002266; --admin-gold: #FFD700; --admin-bg: #f4f7fa; }
         body { font-family: "Microsoft JhengHei", Arial, sans-serif; background-color: var(--admin-bg); margin: 0; display: flex; height: 100vh; overflow: hidden; color: #333; }
         
-        /* --- 側邊欄 (RWD) --- */
+        /* --- 側邊欄 --- */
         .sidebar { width: 260px; background: linear-gradient(180deg, var(--admin-blue) 0%, var(--admin-dark) 100%); color: white; display: flex; flex-direction: column; padding-top: 25px; box-shadow: 4px 0 15px rgba(0,0,0,0.1); z-index: 100; transition: transform 0.3s; }
         .sidebar-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
         .menu-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; color: rgba(255,255,255,0.8); display: flex; align-items: center; font-size: 15px; border-left: 5px solid transparent; }
@@ -18,11 +18,34 @@
         
         /* --- 主內容區 --- */
         .main-content { flex: 1; padding: 30px; overflow-y: auto; background-image: linear-gradient(to bottom, #eef2f7, #f4f7fa); position: relative; }
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 10px; }
         .header-title { font-size: 24px; font-weight: bold; color: var(--admin-blue); border-left: 8px solid var(--admin-gold); padding-left: 15px; }
 
-        .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-top: 4px solid var(--admin-blue); box-shadow: 0 5px 20px rgba(0,0,0,0.05); overflow-x: auto; }
+        .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-top: 4px solid var(--admin-blue); box-shadow: 0 5px 20px rgba(0,0,0,0.05); overflow-x: auto; transition: all 0.3s ease; position: relative; }
         
+        /* --- 主題樣式 (Theme Styles) --- */
+        .theme-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+        .theme-btn { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid #ddd; transition: 0.2s; position: relative; }
+        .theme-btn:hover { transform: scale(1.1); }
+        .tb-white { background: white; }
+        .tb-blue { background: #e3f2fd; }
+        .tb-dark { background: #333; }
+        .tb-warm { background: #fff8e1; }
+
+        /* 1. 空軍藍 */
+        .card-theme-blue { background: linear-gradient(to bottom right, #f0f7ff, #dbeafe) !important; border-color: #1e88e5 !important; }
+        .card-theme-blue::before { content: '✈'; position: absolute; font-size: 150px; color: rgba(0,0,0,0.03); bottom: 20px; right: 20px; pointer-events: none; transform: rotate(-15deg); z-index: 0; }
+        
+        /* 2. 極簡黑 */
+        .card-theme-dark { background: #2c3e50 !important; color: #ecf0f1 !important; border-color: #34495e !important; }
+        .card-theme-dark th { background: #34495e !important; color: white !important; border-color: #465c71 !important; }
+        .card-theme-dark td { border-color: #465c71 !important; }
+        .card-theme-dark .schedule-table th:first-child, .card-theme-dark .schedule-table td:first-child { background-color: #34495e !important; color: #ecf0f1; border-color: #465c71; }
+        .card-theme-dark select { background: #34495e; color: white; border-color: #555; }
+
+        /* 3. 暖陽黃 */
+        .card-theme-warm { background: #fffdeb !important; border-color: #fdd835 !important; }
+
         /* 表格優化 */
         table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0; font-size: 14px; margin-top: 10px; }
         th { background-color: #f1f3f5; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap; }
@@ -30,9 +53,10 @@
         
         /* 輸入與按鈕 */
         input, select { width: 100%; padding: 10px; border: 2px solid #dae1e7; border-radius: 6px; box-sizing: border-box; }
-        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; color: white; display: inline-flex; align-items: center; justify-content: center; width: 100%; margin-top: 5px; }
+        .btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; color: white; display: inline-flex; align-items: center; justify-content: center; width: auto; margin-left: 5px; }
         .btn:hover { opacity: 0.9; }
-        .btn-submit { background-color: var(--admin-blue); } .btn-add { background-color: #00695c; } .btn-del { background-color: #dc3545; width: auto; }
+        .btn-submit { background-color: var(--admin-blue); width: 100%; margin-left:0; margin-top:5px; } .btn-add { background-color: #00695c; width: 100%; margin-left:0; } .btn-del { background-color: #dc3545; }
+        .btn-print { background-color: #607d8b; }
         
         /* 課表樣式 */
         .schedule-table { min-width: 800px; table-layout: fixed; border-collapse: collapse; }
@@ -49,7 +73,34 @@
             .sidebar.open { transform: translateX(0); }
             .main-content { padding: 60px 15px 15px 15px; }
             .header-bar { flex-direction: column; align-items: flex-start; gap: 10px; }
-            .form-row { flex-direction: column; }
+            .theme-controls { width: 100%; justify-content: flex-end; margin-top: 10px; }
+        }
+
+        /* --- 列印專用樣式 --- */
+        @media print {
+            .sidebar, .mobile-toggle, .btn, .theme-controls, .header-title::before { display: none !important; }
+            body, .main-content { margin: 0; padding: 0; background: white; overflow: visible; }
+            .header-bar { box-shadow: none; border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 20px; display: block; }
+            .header-title { border: none; padding: 0; text-align: center; font-size: 24px; color: black; }
+            .card { box-shadow: none; border: 1px solid #ccc; padding: 10px; page-break-inside: avoid; margin-bottom: 20px; }
+            
+            /* 強制移除主題背景，改為白底黑字 */
+            .card-theme-blue, .card-theme-dark, .card-theme-warm { background: white !important; color: black !important; border-color: #ccc !important; }
+            .card-theme-blue::before { display: none; }
+            .card-theme-dark select { background: white; color: black; border: 1px solid #ccc; }
+            .card-theme-dark th { background: #f1f3f5 !important; color: black !important; border: 1px solid #000 !important; }
+            .card-theme-dark td { border: 1px solid #000 !important; }
+
+            /* 只顯示當前 View */
+            .main-content > div { display: none; }
+            .main-content > div[style*="display: block"] { display: block !important; }
+
+            /* 表格修正 */
+            table { min-width: 100%; width: 100%; table-layout: auto; }
+            .schedule-table { width: 100%; border: 1px solid black; }
+            .schedule-table th, .schedule-table td { border: 1px solid black; color: black; }
+            .course-block { border: 1px solid black; color: black; background: none !important; }
+            select { border: none; appearance: none; font-weight: bold; color: black; }
         }
         
         #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 999; }
@@ -71,15 +122,27 @@
 
     <div class="main-content">
         <div id="monitor-view">
-            <div class="header-bar"><div class="header-title">全校監控</div></div>
+            <div class="header-bar"><div class="header-title">全校監控</div><button class="btn btn-print" onclick="window.print()">🖨️ 列印報表</button></div>
             <div class="card">
                 <table><thead><tr><th>學號/姓名</th><th>班級</th><th>職涯</th><th>GPA</th><th>狀態</th></tr></thead><tbody id="student-list-body"></tbody></table>
             </div>
         </div>
 
         <div id="schedule-view" style="display: none;">
-            <div class="header-bar"><div class="header-title">教師課表</div></div>
-            <div class="card">
+            <div class="header-bar">
+                <div class="header-title">教師課表</div>
+                <div style="display:flex; align-items:center; flex-wrap:wrap;">
+                    <div class="theme-controls">
+                        <span style="font-size:12px;margin-right:5px;color:#666;">風格:</span>
+                        <div class="theme-btn tb-white" onclick="setTheme('white')" title="標準白"></div>
+                        <div class="theme-btn tb-blue" onclick="setTheme('blue')" title="空軍藍"></div>
+                        <div class="theme-btn tb-warm" onclick="setTheme('warm')" title="護眼黃"></div>
+                        <div class="theme-btn tb-dark" onclick="setTheme('dark')" title="極簡黑"></div>
+                    </div>
+                    <button class="btn btn-print" onclick="window.print()" style="margin-left:15px;">🖨️ 列印</button>
+                </div>
+            </div>
+            <div class="card" id="schedule-card">
                 <select id="teacher-schedule-selector" onchange="renderTeacherSchedule()" style="margin-bottom:15px; padding:10px;">
                     <option value="">-- 請選擇教官 --</option>
                 </select>
@@ -150,12 +213,33 @@
         const KEYS = { STUDENTS:'cafa_all_students_db', FIXED:'cafa_fixed_courses', ELECTIVE:'cafa_public_electives', RANKS:'cafa_rank_rules' };
         let studentDB=[], fixedCourses=[], electiveCourses=[], rankRules=[];
 
-        window.onload = async () => { await refreshAll(); document.getElementById('loading').style.display='none'; setInterval(refreshAll, 10000); };
+        window.onload = async () => { 
+            await refreshAll(); 
+            document.getElementById('loading').style.display='none'; 
+            setInterval(refreshAll, 10000);
+            
+            // 讀取主題設定
+            const savedTheme = localStorage.getItem('cafa_admin_theme');
+            if(savedTheme) setTheme(savedTheme);
+        };
+
+        // 主題切換功能
+        window.setTheme = (t) => {
+            const c = document.getElementById('schedule-card');
+            c.className = 'card'; // reset
+            if(t !== 'white') c.classList.add(`card-theme-${t}`);
+            localStorage.setItem('cafa_admin_theme', t); // 記憶
+            
+            // 如果是深色模式，調整文字顏色
+            const title = document.getElementById('schedule-title');
+            if(t === 'dark') title.style.color = '#fff';
+            else title.style.color = '#00308F';
+        };
         
         window.switchTab = (id) => {
             ['monitor','schedule','ranks','students','courses','grades'].forEach(v=>document.getElementById(v+'-view').style.display='none');
             document.getElementById(id+'-view').style.display='block';
-            document.querySelector('.sidebar').classList.remove('open'); // 手機版自動關閉選單
+            document.querySelector('.sidebar').classList.remove('open');
             if(id === 'schedule') renderTeacherSchedule();
         };
 
@@ -176,7 +260,7 @@
         function renderTeacherSchedule() {
             const tea = document.getElementById('teacher-schedule-selector').value;
             const tbody = document.getElementById('teacher-schedule-body'); tbody.innerHTML = ''; 
-            for(let i=1;i<=10;i++) tbody.innerHTML+=`<tr><td style="background:#f8f9fa;">${i}</td><td id="t1-${i}"></td><td id="t2-${i}"></td><td id="t3-${i}"></td><td id="t4-${i}"></td><td id="t5-${i}"></td></tr>`;
+            for(let i=1;i<=10;i++) tbody.innerHTML+=`<tr><td style="background:#f8f9fa; color:#333;">${i}</td><td id="t1-${i}"></td><td id="t2-${i}"></td><td id="t3-${i}"></td><td id="t4-${i}"></td><td id="t5-${i}"></td></tr>`;
             
             if(!tea) return document.getElementById('schedule-title').innerText = "請選擇教官";
             document.getElementById('schedule-title').innerText = `📅 ${tea} 教官課表`;
@@ -230,3 +314,4 @@
     </script>
 </body>
 </html>
+
