@@ -5,12 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>導師管理系統 | CAFA Admin</title>
     <style>
-        /* --- 核心主題 --- */
-        :root { --admin-blue: #00308F; --admin-dark: #002266; --admin-gold: #FFD700; --admin-bg: #f4f7fa; }
+        /* --- 核心主題色系 --- */
+        :root {
+            --admin-blue: #00308F;
+            --admin-dark: #002266;
+            --admin-gold: #FFD700;
+            --admin-bg: #f4f7fa;
+            --admin-card-bg: #ffffff;
+        }
         body { font-family: "Microsoft JhengHei", Arial, sans-serif; background-color: var(--admin-bg); margin: 0; display: flex; height: 100vh; overflow: hidden; color: #333; }
         
-        /* 側邊欄 */
-        .sidebar { width: 260px; background: linear-gradient(180deg, var(--admin-blue) 0%, var(--admin-dark) 100%); color: white; display: flex; flex-direction: column; padding-top: 25px; box-shadow: 4px 0 15px rgba(0,0,0,0.1); z-index: 10; }
+        /* --- 側邊欄 --- */
+        .sidebar { width: 260px; background: linear-gradient(180deg, var(--admin-blue) 0%, var(--admin-dark) 100%); color: white; display: flex; flex-direction: column; padding-top: 25px; box-shadow: 4px 0 15px rgba(0,0,0,0.1); position: relative; z-index: 10; }
         .sidebar-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
         .menu-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; color: rgba(255,255,255,0.8); display: flex; align-items: center; font-size: 15px; border-left: 5px solid transparent; }
         .menu-item:hover { background: rgba(255,255,255,0.1); color: white; }
@@ -18,84 +24,175 @@
         .menu-item span { margin-right: 12px; font-size: 20px; }
         .admin-info { margin-top: auto; padding: 20px; background: rgba(0,0,0,0.25); font-size: 13px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; }
 
-        /* 主內容 */
+        /* --- 主內容區 --- */
         .main-content { flex: 1; padding: 30px; overflow-y: auto; background-image: linear-gradient(to bottom, #eef2f7, #f4f7fa); }
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .header-title { font-size: 24px; font-weight: bold; color: var(--admin-blue); border-left: 8px solid var(--admin-gold); padding-left: 15px; }
-        .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-top: 4px solid var(--admin-blue); box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+
+        .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-top: 4px solid var(--admin-blue); box-shadow: 0 5px 20px rgba(0,0,0,0.05); transition: 0.3s; }
         .card h3 { margin-top: 0; color: var(--admin-blue); border-bottom: 1px solid #eee; padding-bottom: 10px; font-size: 18px; }
 
         /* 面板與表單 */
         .control-panel { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef; }
         .student-panel { background-color: #e3f2fd; border-color: #bbdefb; }
+        .batch-panel { background-color: #e0f2f1; border-color: #b2dfdb; }
+        .stats-panel { background-color: #fff8e1; border: 1px solid #ffe0b2; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-around; font-weight: bold; color: #e65100; }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
         .form-group { flex: 1; min-width: 150px; }
         label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input, select { width: 100%; padding: 10px; border: 2px solid #dae1e7; border-radius: 6px; box-sizing: border-box; }
-        
-        /* 按鈕 */
-        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; width: 100%; }
-        .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        .btn-submit { background-color: var(--admin-blue); } 
-        .btn-add { background-color: #00695c; }
-        .btn-save { background-color: #2e7d32; }
-        .btn-reset { background-color: #546e7a; margin-top: 10px; }
-        .btn-del { background-color: #dc3545; width: auto; padding: 5px 12px; font-size: 12px; }
+        input, select { width: 100%; padding: 10px; border: 2px solid #dae1e7; border-radius: 6px; transition: 0.3s; box-sizing: border-box; }
 
-        /* 表格 */
+        /* 按鈕 */
+        .btn { padding: 10px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s; color: white; display: inline-flex; align-items: center; justify-content: center; width: 100%; }
+        .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-submit { background-color: var(--admin-blue); padding: 12px; } 
+        .btn-add { background-color: #00695c; padding: 12px; }
+        .btn-batch { background-color: #00796b; font-size: 15px; padding: 12px; }
+        .btn-del { background-color: #dc3545; width: auto; padding: 5px 12px; font-size: 12px; } 
+        .btn-save { background-color: #2e7d32; padding: 12px; }
+        .btn-toggle { width: auto; font-size: 12px; padding: 5px 10px; } .btn-toggle-on { background-color: #2e7d32; } .btn-toggle-off { background-color: #ff9800; }
+        .btn-reset { background-color: #546e7a; margin-top: 10px; }
+        .btn-print { background: #607d8b; width: auto; margin-left: 10px; }
+
+        /* 表格與標籤 */
         table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; margin-top: 10px; }
-        th { background-color: #f1f3f5; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; }
+        th { background-color: #f1f3f5; color: #495057; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; font-weight: bold; }
         td { padding: 12px; border-bottom: 1px solid #eee; background: white; vertical-align: middle; }
-        .tag { padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; margin: 2px; display:inline-block;}
+        .tag { padding: 3px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; margin: 2px; }
         .tag-class { background: #673ab7; color: white; border-radius: 12px; }
-        
-        /* 排位樣式 */
+        .tag-fixed { background: #ffebee; color: #c62828; } .tag-elective { background: #e3f2fd; color: #0d47a1; }
+        .tag-interest { background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; }
+        .status-badge { padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+        .status-open { background: #e8f5e9; color: green; } .status-closed { background: #ffebee; color: red; }
+        .score-input { width: 60px; text-align: center; border: 2px solid #ccc; padding: 5px; border-radius: 4px; }
+        .score-fail { color: red; font-weight: bold; }
         .rank-badge { padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 12px; color: #333; display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(0,0,0,0.1); }
+
+        /* --- 課表專用樣式 (美化版) --- */
+        .schedule-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .schedule-table th { text-align: center; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); padding: 10px; font-size: 14px; }
+        .schedule-table td { height: 70px; border: 1px solid rgba(0,0,0,0.1); padding: 4px; vertical-align: top; text-align: center; font-size: 13px; }
         
-        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 999; flex-direction: column; color: var(--admin-blue); font-size: 20px; }
+        /* 課程卡片 */
+        .course-block { 
+            padding: 6px; border-radius: 6px; color: white; font-size: 12px; 
+            margin-bottom: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+            display: flex; flex-direction: column; justify-content: center; height: 90%;
+            transition: transform 0.2s;
+        }
+        .course-block:hover { transform: scale(1.05); z-index: 5; }
+        .block-fixed { background: linear-gradient(135deg, #e65100, #ff9800); border-left: 4px solid #bf360c; }
+        .block-normal { background: linear-gradient(135deg, var(--admin-blue), #4a7bd1); border-left: 4px solid #002266; }
+
+        /* 背景主題按鈕 */
+        .theme-controls { display: flex; gap: 10px; align-items: center; margin-right: auto; }
+        .theme-btn { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid #ddd; transition: 0.2s; }
+        .theme-btn:hover { transform: scale(1.2); }
+        .tb-white { background: white; } .tb-blue { background: #e3f2fd; } .tb-warm { background: #fff8e1; } .tb-dark { background: #333; }
+
+        /* 主題樣式定義 */
+        .card-theme-blue { background: linear-gradient(to bottom right, #f0f7ff, #dbeafe) !important; border-color: #1e88e5 !important; position: relative; }
+        .card-theme-blue::before { content: '✈'; position: absolute; font-size: 200px; color: rgba(0,0,0,0.03); top: 50px; left: 100px; pointer-events: none; transform: rotate(-15deg); }
+        .card-theme-warm { background: #fffdeb !important; border-color: #fdd835 !important; }
+        .card-theme-dark { background: #2c3e50 !important; color: #ecf0f1 !important; border-color: #34495e !important; }
+        .card-theme-dark th { background: #34495e !important; color: white !important; border-color: #465c71 !important; }
+        .card-theme-dark td { border-color: #465c71 !important; }
+
+        /* Loading */
+        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 18px; color: var(--admin-blue); z-index: 999; }
+
+        /* 列印樣式 */
+        @media print {
+            @page { size: landscape; margin: 1cm; }
+            .sidebar, .header-bar, .theme-controls, .btn { display: none !important; }
+            .main-content { padding: 0; margin: 0; background: white; }
+            body { background: white; height: auto; overflow: visible; }
+            .card { box-shadow: none; border: 1px solid #ccc; margin: 0; padding: 10px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .card-theme-dark { background: white !important; color: black !important; border-color: #ccc !important; }
+            .card-theme-dark th { background: #f8f9fa !important; color: black !important; }
+        }
     </style>
 </head>
 <body>
-    <div id="loading"><div>☁️</div><div>資料同步中...</div></div>
+    <div id="loading">
+        <div style="font-size:40px; margin-bottom:10px;">☁️</div>
+        <div>資料同步中...</div>
+    </div>
 
     <div class="sidebar">
-        <div class="sidebar-header"><h2>✈️ 管理系統</h2><div style="font-size:12px;opacity:0.7;">空軍官校課務組</div></div>
+        <div class="sidebar-header">
+            <h2>✈️ 管理系統</h2>
+            <div style="font-size:12px; opacity:0.7; margin-top:5px;">空軍官校課務組</div>
+        </div>
+        
         <div class="menu-item active" onclick="switchTab('monitor')"><span>🌐</span> 全校監控</div>
-        <div class="menu-item" onclick="switchTab('ranks')"><span>🏆</span> 獎懲設定</div> <div class="menu-item" onclick="switchTab('schedule')"><span>📅</span> 教師課表</div>
+        <div class="menu-item" onclick="switchTab('schedule')"><span>📅</span> 教師課表</div>
+        <div class="menu-item" onclick="switchTab('ranks')"><span>🏆</span> 獎懲設定</div>
         <div class="menu-item" onclick="switchTab('students')"><span>👥</span> 學生與班級</div>
         <div class="menu-item" onclick="switchTab('courses')"><span>👨‍🏫</span> 課程管理</div>
         <div class="menu-item" onclick="switchTab('grades')"><span>📝</span> 成績與分析</div>
-        <div class="admin-info"><button class="btn btn-reset" onclick="resetSystem()">⚠️ 初始化系統</button></div>
+        
+        <div class="admin-info">
+            <div>身分：教官/管理者</div>
+            <button class="btn btn-reset" onclick="resetSystem()">⚠️ 初始化系統</button>
+        </div>
     </div>
 
     <div class="main-content">
+        
         <div id="monitor-view">
-            <div class="header-bar"><div class="header-title">全校學生 排位/選課 監控</div></div>
+            <div class="header-bar"><div class="header-title">全校學生選課與職涯監控</div></div>
             <div class="card">
                 <h3>學生狀態總覽</h3>
-                <table><thead><tr><th>學號/姓名</th><th>班級</th><th>目前排位 (GPA)</th><th>職涯</th><th>學分</th><th>選課明細</th></tr></thead><tbody id="student-list-body"></tbody></table>
+                <table><thead><tr><th style="width:180px;">學號 / 姓名</th><th>班級</th><th style="width:100px;">職涯</th><th>興趣</th><th style="width:60px;">學分</th><th>選課明細</th></tr></thead><tbody id="student-list-body"></tbody></table>
+            </div>
+        </div>
+
+        <div id="schedule-view" style="display: none;">
+            <div class="header-bar">
+                <div class="header-title">教師課表查詢</div>
+                <div class="theme-controls">
+                    <span style="font-size:12px; color:#666; margin-left:20px;">切換背景:</span>
+                    <div class="theme-btn tb-white" onclick="setTheme('white')" title="標準白"></div>
+                    <div class="theme-btn tb-blue" onclick="setTheme('blue')" title="空軍藍"></div>
+                    <div class="theme-btn tb-warm" onclick="setTheme('warm')" title="護眼黃"></div>
+                    <div class="theme-btn tb-dark" onclick="setTheme('dark')" title="極簡黑"></div>
+                </div>
+                <button class="btn btn-print" onclick="window.print()">🖨️ 列印</button>
+            </div>
+            
+            <div class="card" id="teacher-schedule-card">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:15px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <h3 style="margin:0; border:none; padding:0;">查詢對象：</h3>
+                        <select id="teacher-schedule-selector" onchange="renderTeacherSchedule()" style="padding:8px; font-size:16px; min-width:200px; border:2px solid var(--admin-blue); border-radius:6px;">
+                            <option value="">-- 請選擇教官/教授 --</option>
+                        </select>
+                    </div>
+                    <div id="schedule-info" style="font-size:14px; color:#666;"></div>
+                </div>
+                
+                <h4 style="text-align:center; margin-bottom:15px; font-size:18px; color:var(--admin-blue);" id="schedule-title">請選擇一位教官以顯示課表</h4>
+                
+                <table class="schedule-table">
+                    <thead>
+                        <tr>
+                            <th style="width:60px;">節次</th>
+                            <th>星期一</th><th>星期二</th><th>星期三</th><th>星期四</th><th>星期五</th>
+                        </tr>
+                    </thead>
+                    <tbody id="teacher-schedule-body">
+                        </tbody>
+                </table>
             </div>
         </div>
 
         <div id="ranks-view" style="display: none;">
             <div class="header-bar"><div class="header-title">🏆 牌位獎勵與懲罰設定</div></div>
             <div class="card">
-                <p style="color:#666; font-size:14px;">在此設定各個成績區段對應的「稱號」、「顏色」以及「獎懲內容」。學生端將會同步顯示。</p>
-                <table>
-                    <thead><tr><th width="15%">牌位名稱</th><th width="10%">最低分</th><th width="10%">代表色</th><th>🎁 獎勵內容 (Reward)</th><th>⚠️ 懲罰內容 (Punishment)</th></tr></thead>
-                    <tbody id="rank-rules-body"></tbody>
-                </table>
-                <div style="margin-top:20px; text-align:right;">
-                    <button class="btn btn-save" style="width:200px;" onclick="saveRankRules()">💾 儲存獎懲設定</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="schedule-view" style="display: none;">
-            <div class="header-bar"><div class="header-title">教師課表查詢</div><button class="btn btn-submit" style="width:auto;" onclick="window.print()">列印</button></div>
-            <div class="card">
-                <div class="form-row"><div class="form-group"><select id="teacher-selector" onchange="renderTeacherSchedule()"><option value="">-- 選教官 --</option></select></div></div>
-                <table id="teacher-schedule-table"><thead><tr><th>節</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr></thead><tbody id="teacher-schedule-body"></tbody></table>
+                <p style="color:#666; font-size:14px;">設定各排位的獎懲內容，將同步至學生端顯示。</p>
+                <table><thead><tr><th width="15%">牌位名稱</th><th width="10%">最低分</th><th width="10%">顏色</th><th>🎁 獎勵內容</th><th>⚠️ 懲罰內容</th></tr></thead><tbody id="rank-rules-body"></tbody></table>
+                <div style="margin-top:20px;text-align:right;"><button class="btn btn-save" style="width:200px;" onclick="saveRankRules()">💾 儲存設定</button></div>
             </div>
         </div>
 
@@ -112,13 +209,11 @@
                     </div>
                     <button class="btn btn-add" onclick="addStudent()">新增 / 更新</button>
                 </div>
-                <div style="max-height:300px;overflow-y:auto;">
-                    <table id="acc-table"><thead><tr><th>學號</th><th>姓名</th><th>班級</th><th>密碼</th><th>操作</th></tr></thead><tbody id="account-list-body"></tbody></table>
-                </div>
+                <div style="max-height:300px;overflow-y:auto;"><table id="acc-table"><thead><tr><th>學號</th><th>姓名</th><th>班級</th><th>密碼</th><th>操作</th></tr></thead><tbody id="account-list-body"></tbody></table></div>
             </div>
             <div class="card">
                 <h3>班級批次灌檔</h3>
-                <div class="control-panel"><div class="form-row"><select id="batch-class" class="form-group"></select><select id="batch-course" class="form-group"></select></div><button class="btn btn-submit" onclick="batchAssign()">🚀 執行灌檔</button></div>
+                <div class="control-panel batch-panel"><div class="form-row"><select id="batch-class" class="form-group"></select><select id="batch-course" class="form-group"></select></div><button class="btn btn-batch" onclick="batchAssign()">🚀 執行灌檔</button></div>
             </div>
         </div>
 
@@ -135,99 +230,102 @@
         window.onload = async () => { showLoading(true); await refreshAll(); showLoading(false); setInterval(refreshAll, 10000); };
         
         window.switchTab = (id) => {
-            ['monitor','ranks','schedule','students','courses','grades'].forEach(v=>document.getElementById(v+'-view').style.display='none');
+            ['monitor','schedule','ranks','students','courses','grades'].forEach(v=>document.getElementById(v+'-view').style.display='none');
             document.getElementById(id+'-view').style.display='block';
             document.querySelectorAll('.menu-item').forEach(e=>e.classList.remove('active'));
-            const m={'monitor':0,'ranks':1,'schedule':2,'students':3,'courses':4,'grades':5};
+            const m={'monitor':0,'schedule':1,'ranks':2,'students':3,'courses':4,'grades':5};
             document.querySelectorAll('.menu-item')[m[id]].classList.add('active');
+            
+            // 如果切換到課表，重新渲染一下
+            if(id === 'schedule') renderTeacherSchedule();
         };
+
+        // --- 主題切換 (JS) ---
+        window.setTheme = function(theme) {
+            const card = document.getElementById('teacher-schedule-card');
+            card.className = 'card'; // 清除舊主題
+            if(theme !== 'white') card.classList.add(`card-theme-${theme}`);
+        }
 
         // 綁定
         window.resetSystem=resetSystem; window.saveRankRules=saveRankRules; window.renderTeacherSchedule=renderTeacherSchedule;
         window.addStudent=addStudent; window.deleteStudent=deleteStudent; window.batchAssign=batchAssign;
-        window.addCourse=addCourse; window.delCourse=delCourse; window.loadGrades=loadGrades; window.saveGrades=saveGrades;
+        window.addCourse=addCourse; window.delCourse=delCourse; window.loadGrades=loadGrades; window.saveGrades=saveGrades; window.toggleStatus=toggleStatus;
 
         async function refreshAll() {
             studentDB = (await loadFromCloud(KEYS.STUDENTS))||[];
             fixedCourses = (await loadFromCloud(KEYS.FIXED))||[];
             electiveCourses = (await loadFromCloud(KEYS.ELECTIVE))||[];
-            rankRules = (await loadFromCloud(KEYS.RANKS))||getDefaultRanks(); // 載入牌位規則
+            rankRules = (await loadFromCloud(KEYS.RANKS))||getDefaultRanks();
             
             renderMonitor(); renderRankSettings(); renderStudents(); renderCourses(); updateSels();
         }
 
-        function getDefaultRanks() {
-            return [
-                {name:'王者 (Challenger)', min:90, color:'#ffe0b2', reward:'榮譽假一日 + 禮券', punishment:'無'},
-                {name:'鑽石 (Diamond)', min:80, color:'#b3e5fc', reward:'嘉獎一次', punishment:'無'},
-                {name:'黃金 (Gold)', min:70, color:'#fff9c4', reward:'無', punishment:'無'},
-                {name:'白銀 (Silver)', min:60, color:'#f5f5f5', reward:'無', punishment:'需參加晚自習'},
-                {name:'青銅 (Bronze)', min:0, color:'#ffccbc', reward:'無', punishment:'禁足 + 留校輔導'}
-            ];
+        // --- 核心優化：教師課表 ---
+        function renderTeacherSchedule() {
+            const tea = document.getElementById('teacher-schedule-selector').value;
+            const title = document.getElementById('schedule-title');
+            const tbody = document.getElementById('teacher-schedule-body');
+            tbody.innerHTML = ''; 
+
+            // 繪製空網格
+            const times = ["08:10", "09:10", "10:10", "11:10", "13:30", "14:30", "15:30", "16:30", "17:30", "19:00"];
+            for(let i=1;i<=10;i++) tbody.innerHTML+=`<tr><td style="background:#f8f9fa;color:#666;font-weight:bold;">${i}</td><td id="t1-${i}"></td><td id="t2-${i}"></td><td id="t3-${i}"></td><td id="t4-${i}"></td><td id="t5-${i}"></td></tr>`;
+
+            if(!tea) { title.innerText = "請選擇一位教官以顯示課表"; return; }
+            title.innerText = `📅 【${tea}】教官授課時間表`;
+
+            // 抓取課程
+            const allC=[...fixedCourses,...electiveCourses].filter(c=>c.teacher===tea);
+            const dMap={"一":1,"二":2,"三":3,"四":4,"五":5};
+            
+            let totalHours = 0;
+            allC.forEach(c => {
+                if(!c.time) return; 
+                let [d,p]=c.time.split('/'); let dy=dMap[d];
+                p.split(',').forEach(x => { 
+                    totalHours++;
+                    let el = document.getElementById(`t${dy}-${x}`);
+                    if(el) {
+                        // 判斷是必修還是選修，給不同顏色
+                        let blockClass = c.isFixed ? 'block-fixed' : 'block-normal';
+                        el.innerHTML = `
+                            <div class="course-block ${blockClass}">
+                                <div style="font-weight:bold;font-size:13px;">${c.name}</div>
+                                <div style="opacity:0.9;">${c.location||'未定地點'}</div>
+                                <div style="font-size:11px;opacity:0.8;margin-top:2px;">${c.type}</div>
+                            </div>`;
+                    }
+                });
+            });
+            document.getElementById('schedule-info').innerText = `本學期授課時數：${totalHours} 小時`;
         }
 
-        // --- 1. 全校監控 (含牌位計算) ---
+        // --- 其他功能 (保持不變) ---
+        function getDefaultRanks() { return [{name:'王者', min:90, color:'#ffe0b2', reward:'禮券', punishment:'無'}, {name:'鑽石', min:80, color:'#b3e5fc', reward:'嘉獎', punishment:'無'}, {name:'黃金', min:70, color:'#fff9c4', reward:'無', punishment:'無'}, {name:'白銀', min:60, color:'#f5f5f5', reward:'無', punishment:'晚自習'}, {name:'青銅', min:0, color:'#ffccbc', reward:'無', punishment:'禁足'}]; }
+        
         function renderMonitor() {
             const t = document.getElementById('student-list-body'); t.innerHTML='';
             studentDB.forEach(s => {
-                // 計算 GPA
-                let total=0, credit=0;
-                (s.courses||[]).forEach(c => { if(c.score){ total+=c.score*c.credit; credit+=c.credit; } });
-                let gpa = credit>0 ? (total/credit).toFixed(1) : 0;
-                
-                // 決定牌位
+                let tot=0, cr=0; (s.courses||[]).forEach(c => { if(c.score){ tot+=c.score*c.credit; cr+=c.credit; } });
+                let gpa = cr>0 ? (tot/cr).toFixed(1) : 0;
                 let rank = rankRules.find(r => gpa >= r.min) || rankRules[rankRules.length-1];
                 let rankBadge = `<span class="rank-badge" style="background:${rank.color}">${rank.name} (${gpa})</span>`;
-                if(credit===0) rankBadge = '<span style="color:#ccc">無成績</span>';
-
+                if(cr===0) rankBadge = '<span style="color:#ccc">無成績</span>';
                 let track = s.careerTrack==='pilot'?'🦅 飛行':(s.careerTrack==='ground'?'🛠️ 地勤':'未定');
                 t.innerHTML += `<tr><td>${s.name}<br><small>${s.id}</small></td><td><span class="tag tag-class" style="background:#673ab7;color:white;border-radius:10px;padding:2px 6px;">${s.classId||'-'}</span></td><td>${rankBadge}</td><td>${track}</td><td>${s.totalCredits||0}</td><td>${(s.courses||[]).length} 科</td></tr>`;
             });
         }
 
-        // --- 2. 牌位設定 ---
         function renderRankSettings() {
             const t = document.getElementById('rank-rules-body'); t.innerHTML='';
-            rankRules.forEach((r, i) => {
-                t.innerHTML += `
-                    <tr>
-                        <td><input value="${r.name}" id="rk-n-${i}" style="width:100%"></td>
-                        <td><input type="number" value="${r.min}" id="rk-m-${i}" style="width:100%"></td>
-                        <td><input type="color" value="${r.color}" id="rk-c-${i}"></td>
-                        <td><input value="${r.reward}" id="rk-r-${i}" style="width:100%"></td>
-                        <td><input value="${r.punishment}" id="rk-p-${i}" style="width:100%"></td>
-                    </tr>
-                `;
-            });
+            rankRules.forEach((r, i) => { t.innerHTML += `<tr><td><input value="${r.name}" id="rk-n-${i}" style="width:100%"></td><td><input type="number" value="${r.min}" id="rk-m-${i}" style="width:100%"></td><td><input type="color" value="${r.color}" id="rk-c-${i}"></td><td><input value="${r.reward}" id="rk-r-${i}" style="width:100%"></td><td><input value="${r.punishment}" id="rk-p-${i}" style="width:100%"></td></tr>`; });
         }
         async function saveRankRules() {
-            rankRules = rankRules.map((r, i) => ({
-                name: document.getElementById(`rk-n-${i}`).value,
-                min: parseInt(document.getElementById(`rk-m-${i}`).value),
-                color: document.getElementById(`rk-c-${i}`).value,
-                reward: document.getElementById(`rk-r-${i}`).value,
-                punishment: document.getElementById(`rk-p-${i}`).value
-            })).sort((a,b) => b.min - a.min); // 確保按分數高低排序
-            
-            showLoading(true); await saveToCloud(KEYS.RANKS, rankRules); showLoading(false); alert("獎懲設定已更新！"); renderMonitor();
+            rankRules = rankRules.map((r, i) => ({ name: document.getElementById(`rk-n-${i}`).value, min: parseInt(document.getElementById(`rk-m-${i}`).value), color: document.getElementById(`rk-c-${i}`).value, reward: document.getElementById(`rk-r-${i}`).value, punishment: document.getElementById(`rk-p-${i}`).value })).sort((a,b) => b.min - a.min);
+            showLoading(true); await saveToCloud(KEYS.RANKS, rankRules); showLoading(false); alert("已存"); renderMonitor();
         }
 
-        // --- 3. 教師課表 ---
-        function renderTeacherSchedule() {
-            const tea = document.getElementById('teacher-selector').value;
-            const t = document.getElementById('teacher-schedule-body');
-            t.innerHTML = ''; 
-            for(let i=1;i<=10;i++) t.innerHTML+=`<tr><td style="background:#eee">${i}</td><td id="t1-${i}"></td><td id="t2-${i}"></td><td id="t3-${i}"></td><td id="t4-${i}"></td><td id="t5-${i}"></td></tr>`;
-            if(!tea) return;
-            const allC=[...fixedCourses,...electiveCourses].filter(c=>c.teacher===tea);
-            const dMap={"一":1,"二":2,"三":3,"四":4,"五":5};
-            allC.forEach(c => {
-                if(!c.time) return; let [d,p]=c.time.split('/'); let dy=dMap[d];
-                p.split(',').forEach(x => { document.getElementById(`t${dy}-${x}`).innerHTML=`<div style="background:#00308F;color:white;padding:5px;border-radius:4px;font-size:12px;">${c.name}<br>${c.location||''}</div>`; });
-            });
-        }
-
-        // --- 4. 學生, 課程, 成績 (精簡版) ---
         async function addStudent() { const id=document.getElementById('s_id').value; const idx=studentDB.findIndex(s=>s.id===id); const obj={id, name:document.getElementById('s_name').value, classId:document.getElementById('s_class').value, password:document.getElementById('s_pass').value, dept:'-', courses:[], totalCredits:0}; if(idx>-1){Object.assign(studentDB[idx], obj);}else{studentDB.push(obj);} await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents(); }
         async function deleteStudent(id) { if(confirm('刪除?')){studentDB=studentDB.filter(s=>s.id!==id); await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents();} }
         function renderStudents() { document.getElementById('account-list-body').innerHTML = studentDB.map(s=>`<tr><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td>${s.password}</td><td><button class="btn btn-del" onclick="deleteStudent('${s.id}')">刪</button></td></tr>`).join(''); }
@@ -239,30 +337,31 @@
             await saveToCloud(KEYS.STUDENTS, studentDB); alert("完成");
         }
 
-        async function addCourse() { const t=document.getElementById('c_type').value; const c={id:document.getElementById('c_id').value, name:document.getElementById('c_name').value, credit:parseInt(document.getElementById('c_cr').value), time:document.getElementById('c_time').value, location:document.getElementById('c_loc').value, teacher:document.getElementById('c_tea').value, type:t==='fixed'?'必修':'選修', isFixed:t==='fixed', isOpen:true}; if(t==='fixed')fixedCourses.push(c);else electiveCourses.push(c); await saveToCloud(KEYS.FIXED,fixedCourses); await saveToCloud(KEYS.ELECTIVE,electiveCourses); renderCourses(); }
+        async function addCourse() { const t=document.getElementById('c_type').value; const c={id:document.getElementById('c_id').value, name:document.getElementById('c_name').value, credit:parseInt(document.getElementById('c_cr').value), time:document.getElementById('c_time').value, location:document.getElementById('c_loc').value, teacher:document.getElementById('c_teacher').value, type:t==='fixed'?'必修':'選修', isFixed:t==='fixed', isOpen:true}; if(t==='fixed')fixedCourses.push(c);else electiveCourses.push(c); await saveToCloud(KEYS.FIXED,fixedCourses); await saveToCloud(KEYS.ELECTIVE,electiveCourses); renderCourses(); }
         async function delCourse(t,i) { if(t==='fixed')fixedCourses.splice(i,1);else electiveCourses.splice(i,1); await saveToCloud(KEYS.FIXED,fixedCourses); await saveToCloud(KEYS.ELECTIVE,electiveCourses); renderCourses(); }
-        function renderCourses() { document.getElementById('course-list').innerHTML = [...fixedCourses.map((c,i)=>`<tr><td>必修</td><td>${c.name}</td><td>${c.time}</td><td><button class="btn btn-del" onclick="delCourse('fixed',${i})">刪</button></td></tr>`), ...electiveCourses.map((c,i)=>`<tr><td>選修</td><td>${c.name}</td><td>${c.time}</td><td><button class="btn btn-del" onclick="delCourse('elect',${i})">刪</button></td></tr>`)].join(''); }
+        async function toggleStatus(i) { electiveCourses[i].isOpen=!electiveCourses[i].isOpen; await saveToCloud(KEYS.ELECTIVE,electiveCourses); renderCourses(); }
+        function renderCourses() { document.getElementById('course-list').innerHTML = [...fixedCourses.map((c,i)=>`<tr><td>必修</td><td>${c.name}</td><td>${c.time}</td><td><button class="btn btn-del" onclick="delCourse('fixed',${i})">刪</button></td></tr>`), ...electiveCourses.map((c,i)=>`<tr><td>選修</td><td>${c.name}</td><td>${c.time}</td><td><button class="btn btn-toggle ${c.isOpen?'btn-toggle-on':'btn-toggle-off'}" onclick="toggleStatus(${i})">${c.isOpen?'開':'關'}</button> <button class="btn btn-del" onclick="delCourse('elect',${i})">刪</button></td></tr>`)].join(''); }
 
         function loadGrades() { const sid=document.getElementById('g_stu').value; const t=document.getElementById('grade-body'); t.innerHTML=''; const s=studentDB.find(x=>x.id===sid); if(!s)return; s.courses.forEach(c=>{ t.innerHTML+=`<tr><td>${c.name}</td><td>${c.credit}</td><td><input type="number" id="sc-${c.id}" value="${c.score||''}" style="width:50px"></td></tr>`; }); }
         async function saveGrades() { const sid=document.getElementById('g_stu').value; const idx=studentDB.findIndex(x=>x.id===sid); studentDB[idx].courses=studentDB[idx].courses.map(c=>{const v=document.getElementById(`sc-${c.id}`).value; if(v)c.score=parseInt(v); return c;}); await saveToCloud(KEYS.STUDENTS, studentDB); alert("存檔"); }
 
         function updateSels() {
-            const tea = document.getElementById('teacher-selector'); const allC=[...fixedCourses,...electiveCourses]; 
-            const ts=[...new Set(allC.map(c=>c.teacher).filter(x=>x))]; tea.innerHTML='<option value="">-- 選教官 --</option>'; ts.forEach(t=>tea.add(new Option(t,t)));
+            const tea = document.getElementById('teacher-schedule-selector'); 
+            const allC=[...fixedCourses,...electiveCourses]; 
+            const ts=[...new Set(allC.map(c=>c.teacher).filter(x=>x))].sort(); 
+            const savedT = tea.value; tea.innerHTML='<option value="">-- 請選擇教官/教授 --</option>'; ts.forEach(t=>tea.add(new Option(t,t))); tea.value = savedT;
+
             const stu = document.getElementById('g_stu'); stu.innerHTML='<option value="">-- 選學生 --</option>'; studentDB.forEach(s=>stu.add(new Option(s.name,s.id)));
             const cls = document.getElementById('batch-class'); const cs=[...new Set(studentDB.map(s=>s.classId).filter(x=>x))]; cls.innerHTML='<option value="">-- 班級 --</option>'; cs.forEach(c=>cls.add(new Option(c,c)));
             const bco = document.getElementById('batch-course'); bco.innerHTML='<option value="">-- 課程 --</option>'; allC.forEach(c=>bco.add(new Option(c.name,c.id)));
         }
 
-        async function resetSystem() { 
-            if(!confirm("重置?"))return; 
-            const s=[{id:'11401',name:'李大維',classId:'114-航太',password:'1234',courses:[],careerTrack:'pilot'},{id:'11402',name:'王小美',classId:'114-航管',password:'1234',courses:[],careerTrack:'ground'}]; 
-            await saveToCloud(KEYS.STUDENTS,s); await saveToCloud(KEYS.RANKS,getDefaultRanks()); alert("完成"); refreshAll(); 
-        }
+        async function resetSystem() { if(!confirm("重置?"))return; const s=[{id:'11401',name:'李大維',classId:'114-航太',password:'1234',courses:[],careerTrack:'pilot'},{id:'11402',name:'王小美',classId:'114-航管',password:'1234',courses:[],careerTrack:'ground'}]; const f=[{id:'AE101',name:'空氣動力學',credit:3,time:'一/3,4',location:'理工一',teacher:'陳志豪',type:'必修',isFixed:true}]; await saveToCloud(KEYS.STUDENTS,s); await saveToCloud(KEYS.FIXED,f); await saveToCloud(KEYS.ELECTIVE,[]); await saveToCloud(KEYS.RANKS, getDefaultRanks()); alert("完成"); refreshAll(); }
         function showLoading(s) { document.getElementById('loading').style.display=s?'flex':'none'; }
     </script>
 </body>
 </html>
+
 
 
 
