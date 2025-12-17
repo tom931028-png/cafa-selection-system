@@ -32,11 +32,19 @@
         
         .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-top: 3px solid var(--cafa-blue-light); box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto; }
         
-        /* --- 興趣標籤樣式 (新增部分) --- */
-        .interest-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
-        .interest-tag { padding: 8px 16px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; transition: 0.2s; background: white; font-size: 14px; color: #666; user-select: none; }
+        /* --- 興趣標籤與輸入框 (新) --- */
+        .interest-section { margin-bottom: 15px; }
+        .interest-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+        .interest-tag { padding: 6px 14px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; transition: 0.2s; background: white; font-size: 13px; color: #666; user-select: none; display: flex; align-items: center; }
         .interest-tag:hover { background: #f0f0f0; }
-        .interest-tag.active { background: var(--cafa-gold); color: #002266; border-color: var(--cafa-gold); font-weight: bold; transform: scale(1.05); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .interest-tag.active { background: var(--cafa-gold); color: #002266; border-color: var(--cafa-gold); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tag-remove { margin-left: 5px; font-size: 14px; opacity: 0.6; padding: 0 4px; border-radius: 50%; }
+        .tag-remove:hover { background: rgba(0,0,0,0.1); opacity: 1; }
+
+        .custom-input-group { display: flex; gap: 8px; max-width: 400px; margin-top: 10px; }
+        .custom-input-group input { flex: 1; padding: 8px 15px; border: 1px solid #ccc; border-radius: 20px; outline: none; font-size: 14px; }
+        .custom-input-group input:focus { border-color: var(--cafa-blue-main); }
+        .btn-small-add { background: var(--cafa-blue-main); color: white; border: none; border-radius: 20px; padding: 0 15px; cursor: pointer; font-weight: bold; }
 
         /* --- 表格與元件 --- */
         table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0; font-size: 14px; }
@@ -156,19 +164,24 @@
                     </button>
                 </div>
 
-                <h3>步驟 2: 選擇有興趣的領域 (可多選)</h3>
-                <div class="interest-container">
-                    <div class="interest-tag" onclick="toggleInterest(this, '空氣動力')">空氣動力</div>
-                    <div class="interest-tag" onclick="toggleInterest(this, '機械')">機械工程</div>
-                    <div class="interest-tag" onclick="toggleInterest(this, '英文')">英文檢定</div>
-                    <div class="interest-tag" onclick="toggleInterest(this, '管理')">領導統御</div>
-                    <div class="interest-tag" onclick="toggleInterest(this, '程式')">資訊程式</div>
-                    <div class="interest-tag" onclick="toggleInterest(this, '氣象')">大氣科學</div>
-                    <div class="interest-tag" onclick="toggleInterest(this, '歷史')">軍事歷史</div>
-                    <div class="interest-tag" onclick="toggleInterest(this, '心理')">心理素質</div>
+                <h3>步驟 2: 選擇或新增興趣</h3>
+                <div class="interest-section">
+                    <div style="font-size:12px; color:#666; margin-bottom:5px;">常見標籤 (點擊選擇):</div>
+                    <div class="interest-container" id="preset-tags-container">
+                        </div>
+                </div>
+                
+                <div class="interest-section">
+                    <div style="font-size:12px; color:#666; margin-bottom:5px;">自定義標籤:</div>
+                    <div class="interest-container" id="custom-tags-container">
+                        </div>
+                    <div class="custom-input-group">
+                        <input type="text" id="new-interest-input" placeholder="輸入其他興趣 (如: 無人機、AI)">
+                        <button class="btn-small-add" onclick="addCustomInterest()">＋ 新增</button>
+                    </div>
                 </div>
 
-                <div id="rec-msg" style="color:var(--cafa-blue-main); font-weight:bold; margin-top:15px; border-top:1px solid #eee; padding-top:10px;"></div>
+                <div id="rec-msg" style="color:var(--cafa-blue-main); font-weight:bold; margin-top:20px; border-top:1px solid #eee; padding-top:15px;"></div>
                 <button class="btn btn-save" onclick="saveCareer()">💾 儲存所有設定</button>
             </div>
             <div class="card">
@@ -195,12 +208,13 @@
         const KEYS = { STUDENTS:'cafa_all_students_db', FIXED:'cafa_fixed_courses', ELECTIVE:'cafa_public_electives', RANKS:'cafa_rank_rules' };
         
         let allC=[], myC=[], cur=null, sDB=[], rules=[];
+        const PRESET_TAGS = ['空氣動力', '機械', '英文', '管理', '程式', '氣象', '歷史', '心理'];
 
         window.onload = async () => {
             const u = sessionStorage.getItem('cafa_user'); 
             if(!u) return location.href='index.html';
             cur = JSON.parse(u);
-            if(!cur.interests) cur.interests = []; // 初始化興趣陣列
+            if(!cur.interests) cur.interests = []; 
             
             try { await sync(); } catch (e) { console.error(e); alert("連線異常"); } finally { document.getElementById('loading').style.display = 'none'; }
         };
@@ -213,12 +227,12 @@
             const me = sDB.find(s=>s.id===cur.id); 
             if(me){ 
                 cur = me; 
-                if(!cur.interests) cur.interests = []; // 確保同步後有此欄位
+                if(!cur.interests) cur.interests = [];
                 myC = (me.courses||[]).filter(my => allC.some(school => school.id === my.id));
             }
             render();
             updateTrackUI();
-            restoreInterestTags(); // 還原按鈕狀態
+            renderInterestTags(); // 渲染標籤
         }
 
         function render() {
@@ -253,34 +267,56 @@
             renderRecommendations();
         }
 
-        // --- 職涯與興趣系統 ---
+        // --- 職涯與興趣系統 (升級版) ---
         window.setTrack = (t) => { cur.careerTrack = t; updateTrackUI(); renderRecommendations(); };
         
-        // 興趣標籤切換功能
-        window.toggleInterest = (el, tag) => {
-            if(cur.interests.includes(tag)) {
-                cur.interests = cur.interests.filter(t => t !== tag);
-                el.classList.remove('active');
-            } else {
-                cur.interests.push(tag);
-                el.classList.add('active');
-            }
-            renderRecommendations(); // 即時更新推薦
-        };
+        // 渲染標籤介面
+        function renderInterestTags() {
+            const pCont = document.getElementById('preset-tags-container');
+            const cCont = document.getElementById('custom-tags-container');
+            pCont.innerHTML = ''; cCont.innerHTML = '';
 
-        function restoreInterestTags() {
-            const tags = document.querySelectorAll('.interest-tag');
-            tags.forEach(el => {
-                const tagText = el.innerText.trim();
-                // 模糊比對，例如 "空氣動力" 包含 "空氣動力"
-                if(cur.interests.some(i => tagText.includes(i) || i.includes(tagText))) {
-                    el.classList.add('active');
-                } else {
-                    el.classList.remove('active');
-                }
+            // 1. 渲染常見預設標籤
+            PRESET_TAGS.forEach(tag => {
+                const isActive = cur.interests.includes(tag);
+                pCont.innerHTML += `<div class="interest-tag ${isActive?'active':''}" onclick="toggleInterest('${tag}')">${tag}</div>`;
+            });
+
+            // 2. 渲染使用者自訂標籤 (排除預設的)
+            const customTags = cur.interests.filter(i => !PRESET_TAGS.includes(i));
+            if(customTags.length === 0) cCont.innerHTML = '<span style="font-size:12px;color:#999;padding:5px;">尚無自定義標籤</span>';
+            
+            customTags.forEach(tag => {
+                cCont.innerHTML += `<div class="interest-tag active" onclick="toggleInterest('${tag}')">${tag} <span class="tag-remove">✕</span></div>`;
             });
         }
-        
+
+        // 新增/刪除 興趣邏輯
+        window.toggleInterest = (tag) => {
+            if(cur.interests.includes(tag)) {
+                cur.interests = cur.interests.filter(t => t !== tag);
+            } else {
+                cur.interests.push(tag);
+            }
+            renderInterestTags();
+            updateTrackUI();
+            renderRecommendations();
+        };
+
+        // 新增自定義按鈕邏輯
+        window.addCustomInterest = () => {
+            const input = document.getElementById('new-interest-input');
+            const val = input.value.trim();
+            if(!val) return;
+            if(cur.interests.includes(val)) return alert("此興趣已經在清單中囉！");
+            
+            cur.interests.push(val);
+            input.value = ''; // 清空輸入框
+            renderInterestTags();
+            updateTrackUI();
+            renderRecommendations();
+        };
+
         function updateTrackUI() {
             const t = cur.careerTrack;
             const b1 = document.getElementById('btn-track-pilot'), b2 = document.getElementById('btn-track-ground');
@@ -288,8 +324,8 @@
             if(t === 'pilot') { b1.style.borderColor='#00308F'; b1.style.background='#e3f2fd'; }
             if(t === 'ground') { b2.style.borderColor='#e65100'; b2.style.background='#fff3e0'; }
             
-            const intTxt = cur.interests.length > 0 ? ` + 興趣: ${cur.interests.join('、')}` : '';
-            document.getElementById('rec-msg').innerText = `當前設定：${t==='pilot'?'飛行生':'地勤生'}${intTxt}`;
+            const count = cur.interests.length;
+            document.getElementById('rec-msg').innerText = `當前設定：${t==='pilot'?'飛行生':'地勤生'} (已設定 ${count} 個興趣關鍵字)`;
         }
 
         function renderRecommendations() {
@@ -310,7 +346,7 @@
             });
 
             if(recs.length === 0) {
-                container.innerHTML = `<div style="padding:10px;text-align:center;">目前沒有符合您設定條件的推薦選修課。</div>`;
+                container.innerHTML = `<div style="padding:10px;text-align:center;">根據您的「${cur.interests.join('、')}」等興趣，目前沒有相符的選修課。</div>`;
             } else {
                 container.innerHTML = recs.map(c => `
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
