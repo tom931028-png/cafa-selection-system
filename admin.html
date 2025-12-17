@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>導師管理系統 | CAFA Admin</title>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         /* --- 核心主題色系 --- */
         :root { --admin-blue: #00308F; --admin-dark: #002266; --admin-gold: #FFD700; --admin-bg: #f4f7fa; }
@@ -16,12 +17,19 @@
         .menu-item:hover, .menu-item.active { background: rgba(0,0,0,0.2); border-left-color: var(--admin-gold); color: white; font-weight: bold; }
         .menu-item span { margin-right: 12px; font-size: 20px; }
         
+        /* 紅點通知 */
+        .badge { background: #ff5252; color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: auto; font-weight: bold; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .badge.show { display: inline-block; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
         /* --- 主內容區 --- */
         .main-content { flex: 1; padding: 30px; overflow-y: auto; background-image: linear-gradient(to bottom, #eef2f7, #f4f7fa); position: relative; }
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 10px; }
         .header-title { font-size: 24px; font-weight: bold; color: var(--admin-blue); border-left: 8px solid var(--admin-gold); padding-left: 15px; }
 
         .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-top: 4px solid var(--admin-blue); box-shadow: 0 5px 20px rgba(0,0,0,0.05); overflow-x: auto; transition: all 0.3s ease; position: relative; }
+        .card-pending { border-top: 4px solid #ff9800; background: #fff8e1; }
+        .card-pending h3 { color: #e65100; margin-top: 0; display: flex; align-items: center; gap: 10px; }
         
         /* --- 主題樣式 --- */
         .theme-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
@@ -34,6 +42,7 @@
         .card-theme-dark { background: #2c3e50 !important; color: #ecf0f1 !important; border-color: #34495e !important; }
         .card-theme-dark th { background: #34495e !important; color: white !important; border-color: #465c71 !important; }
         .card-theme-dark td { border-color: #465c71 !important; }
+        .card-theme-dark .schedule-table th:first-child, .card-theme-dark .schedule-table td:first-child { background-color: #34495e !important; color: #ecf0f1; border-color: #465c71; }
         .card-theme-dark select { background: #34495e; color: white; border-color: #555; }
         .card-theme-warm { background: #fffdeb !important; border-color: #fdd835 !important; }
 
@@ -53,15 +62,19 @@
         .btn-print { background-color: #607d8b; }
         .btn-create { background-color: #28a745; margin-bottom: 15px; width: auto; padding: 10px 20px; }
         .rank-badge { padding: 5px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 60px; text-align: center; }
-        .status-pending { color: #d32f2f; font-weight: bold; background: #ffebee; padding: 4px 8px; border-radius: 12px; }
-        .status-active { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 4px 8px; border-radius: 12px; }
-
-        /* 批次操作工具列 */
-        .batch-toolbar { background: #e3f2fd; padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #bbdefb; }
-        .checkbox-cell { width: 40px; text-align: center; }
+        
+        /* 批次按鈕與工具列 */
         .btn-batch-approve { background: linear-gradient(135deg, #28a745, #20c997); box-shadow: 0 4px 10px rgba(40,167,69,0.3); padding: 8px 20px; font-size: 14px; }
         .btn-batch-del { background: #ef5350; padding: 8px 15px; font-size: 14px; }
-        .filter-toggle { display: flex; align-items: center; gap: 5px; font-weight: bold; color: #555; cursor: pointer; user-select: none; }
+        
+        /* Excel 匯入區塊 */
+        .import-section { background: #e8eaf6; padding: 15px; border-radius: 10px; border: 2px dashed #9fa8da; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .btn-import { background: #3f51b5; color: white; }
+        .btn-template { background: #7986cb; color: white; }
+
+        .checkbox-cell { width: 40px; text-align: center; }
+        .status-pending { color: #d32f2f; font-weight: bold; background: #ffebee; padding: 4px 8px; border-radius: 12px; }
+        .status-active { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 4px 8px; border-radius: 12px; }
 
         .schedule-table { min-width: 800px; table-layout: fixed; border-collapse: collapse; }
         .schedule-table th, .schedule-table td { border: 1px solid #eee; text-align: center; }
@@ -76,11 +89,11 @@
             .main-content { padding: 60px 15px 15px 15px; }
             .header-bar { flex-direction: column; align-items: flex-start; gap: 10px; }
             .theme-controls { width: 100%; justify-content: flex-end; margin-top: 10px; }
-            .batch-toolbar { flex-direction: column; gap: 10px; align-items: stretch; }
+            .import-section { flex-direction: column; align-items: stretch; text-align: center; }
         }
 
         @media print {
-            .sidebar, .mobile-toggle, .btn, .theme-controls, .header-title::before, .batch-toolbar { display: none !important; }
+            .sidebar, .mobile-toggle, .btn, .theme-controls, .header-title::before, #pending-zone, .import-section, .batch-toolbar { display: none !important; }
             body, .main-content { margin: 0; padding: 0; background: white; overflow: visible; }
             .header-bar { box-shadow: none; border-bottom: 2px solid black; padding: 10px 0; margin-bottom: 20px; display: block; }
             .header-title { border: none; padding: 0; text-align: center; font-size: 24px; color: black; }
@@ -89,7 +102,6 @@
             .main-content > div { display: none; }
             .main-content > div[style*="display: block"] { display: block !important; }
             table { min-width: 100%; width: 100%; table-layout: auto; }
-            /* 隱藏核取方塊列印 */
             th:first-child, td:first-child { display: none; }
         }
         
@@ -105,7 +117,10 @@
         <div class="menu-item active" onclick="switchTab('monitor')"><span>🌐</span> 全校監控</div>
         <div class="menu-item" onclick="switchTab('schedule')"><span>📅</span> 教師課表</div>
         <div class="menu-item" onclick="switchTab('ranks')"><span>🏆</span> 獎懲設定</div>
-        <div class="menu-item" onclick="switchTab('students')"><span>👥</span> 學生管理</div>
+        <div class="menu-item" onclick="switchTab('students')">
+            <span>👥</span> 學生與審核
+            <span id="pending-badge" class="badge">0</span>
+        </div>
         <div class="menu-item" onclick="switchTab('courses')"><span>👨‍🏫</span> 課程管理</div>
         <div class="menu-item" onclick="switchTab('grades')"><span>📝</span> 成績輸入</div>
     </div>
@@ -163,42 +178,47 @@
 
         <div id="students-view" style="display: none;">
             <div class="header-bar"><div class="header-title">學生資料與審核</div></div>
-            <div class="card">
-                <div class="batch-toolbar">
-                    <label class="filter-toggle">
-                        <input type="checkbox" id="filter-pending" onchange="renderStudents()"> 只顯示待審核 (Pending Only)
-                    </label>
-                    <div style="display:flex; gap:10px;">
-                        <button class="btn btn-batch-approve" onclick="batchApprove()">⚡ 一鍵審核選取項目</button>
-                        <button class="btn btn-batch-del" onclick="batchDelete()">🗑️ 批次刪除</button>
-                    </div>
+            
+            <div class="import-section">
+                <div>
+                    <strong>📂 批次匯入帳號 (Excel)</strong>
+                    <div style="font-size:12px; color:#666; margin-top:5px;">請上傳 .xlsx 或 .csv 檔案，系統將自動建立帳號 (預設狀態為正常)。</div>
                 </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-template" onclick="downloadTemplate()">📥 下載範本</button>
+                    <button class="btn btn-import" onclick="document.getElementById('import-file').click()">📤 上傳檔案</button>
+                    <input type="file" id="import-file" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleFileImport(event)">
+                </div>
+            </div>
 
-                <div style="max-height:500px; overflow-y:auto;">
+            <div id="pending-zone" class="card card-pending" style="display:none;">
+                <h3>⚠️ 待審核申請 (Pending Requests)</h3>
+                <div style="margin-bottom:10px; display:flex; gap:10px;">
+                    <button class="btn btn-batch-approve" onclick="batchApprove()">⚡ 核准選取項目</button>
+                    <button class="btn btn-batch-del" onclick="batchDelete()">🗑️ 拒絕/刪除</button>
+                </div>
+                <div style="max-height:300px; overflow-y:auto;">
                     <table>
-                        <thead>
-                            <tr>
-                                <th class="checkbox-cell"><input type="checkbox" id="select-all" onclick="toggleSelectAll(this)"></th>
-                                <th>狀態</th>
-                                <th>學號</th>
-                                <th>姓名</th>
-                                <th>班級</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="account-list-body"></tbody>
+                        <thead><tr><th class="checkbox-cell"><input type="checkbox" onclick="toggleSelectAll(this, 'pending')"></th><th>學號</th><th>姓名</th><th>班級</th><th>操作</th></tr></thead>
+                        <tbody id="pending-list-body"></tbody>
                     </table>
                 </div>
-                
-                <div style="margin-top:20px; border-top:1px solid #eee; padding-top:15px;">
-                    <h4>手動新增學生</h4>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <input id="s_id" placeholder="學號" style="flex:1">
-                        <input id="s_name" placeholder="姓名" style="flex:1">
-                        <input id="s_class" placeholder="班級" style="flex:1">
-                        <input id="s_pass" placeholder="密碼" style="flex:1">
-                        <button class="btn btn-add" style="flex:1" onclick="addStudent()">新增</button>
-                    </div>
+            </div>
+
+            <div class="card">
+                <h3>✅ 正式學員名單 (Active Students)</h3>
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <input id="s_id" placeholder="學號" style="flex:1">
+                    <input id="s_name" placeholder="姓名" style="flex:1">
+                    <input id="s_class" placeholder="班級" style="flex:1">
+                    <input id="s_pass" placeholder="密碼" style="flex:1">
+                    <button class="btn btn-add" style="flex:1" onclick="addStudent()">手動新增</button>
+                </div>
+                <div style="max-height:500px; overflow-y:auto;">
+                    <table>
+                        <thead><tr><th class="checkbox-cell">#</th><th>學號</th><th>姓名</th><th>班級</th><th>操作</th></tr></thead>
+                        <tbody id="active-list-body"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -258,15 +278,12 @@
             if(id === 'ranks') renderRankSettings();
         };
 
+        // 綁定全域
         window.addStudent=addStudent; window.deleteStudent=deleteStudent; window.approveStudent=approveStudent;
         window.addCourse=addCourse; window.delCourse=delCourse; window.loadGrades=loadGrades; window.saveGrades=saveGrades; window.toggleStatus=toggleStatus;
         window.addNewRankRow=addNewRankRow; window.deleteRankRow=deleteRankRow; window.saveRankRules=saveRankRules; window.updateRankPreview=updateRankPreview; window.renderTeacherSchedule=renderTeacherSchedule;
-        
-        // 批次操作綁定
-        window.renderStudents = renderStudents;
-        window.toggleSelectAll = toggleSelectAll;
-        window.batchApprove = batchApprove;
-        window.batchDelete = batchDelete;
+        window.batchApprove=batchApprove; window.batchDelete=batchDelete; window.toggleSelectAll=toggleSelectAll;
+        window.downloadTemplate=downloadTemplate; window.handleFileImport=handleFileImport;
 
         async function refreshAll() {
             studentDB = (await loadFromCloud(KEYS.STUDENTS))||[];
@@ -299,69 +316,106 @@
             await saveToCloud(KEYS.RANKS, rankRules); alert("✅ 設定已儲存！"); renderRankSettings();
         }
 
-        // --- 學生管理 (批次審核核心) ---
+        // --- 學生管理 (優化：獨立審核區) ---
         function renderStudents() {
-            const onlyPending = document.getElementById('filter-pending').checked;
-            let displayList = studentDB;
+            const pendingList = studentDB.filter(s => s.status === 'pending');
+            const activeList = studentDB.filter(s => s.status !== 'pending');
             
-            if (onlyPending) {
-                displayList = studentDB.filter(s => s.status === 'pending');
+            const badge = document.getElementById('pending-badge');
+            if(pendingList.length > 0) {
+                badge.innerText = pendingList.length;
+                badge.classList.add('show');
+                document.getElementById('pending-zone').style.display = 'block';
             } else {
-                displayList = [...studentDB].sort((a,b) => (a.status==='pending' ? -1 : 1));
+                badge.classList.remove('show');
+                document.getElementById('pending-zone').style.display = 'none';
             }
-            
-            document.getElementById('account-list-body').innerHTML = displayList.map(s=> {
-                let statusBadge = s.status === 'pending' ? '<span class="status-pending">🔴 待審核</span>' : '<span class="status-active">🟢 正常</span>';
-                let actionBtn = s.status === 'pending' ? `<button class="btn btn-approve" onclick="approveStudent('${s.id}')">✔</button>` : '';
-                return `<tr>
-                    <td class="checkbox-cell"><input type="checkbox" class="stu-checkbox" value="${s.id}"></td>
-                    <td>${statusBadge}</td>
-                    <td>${s.id}</td>
-                    <td>${s.name}</td>
-                    <td>${s.classId}</td>
-                    <td>${actionBtn} <button class="btn btn-del" onclick="deleteStudent('${s.id}')">刪</button></td>
-                </tr>`;
-            }).join(''); 
+
+            const pBody = document.getElementById('pending-list-body');
+            pBody.innerHTML = pendingList.length === 0 ? '' : pendingList.map(s => `
+                <tr style="background:white;">
+                    <td class="checkbox-cell"><input type="checkbox" class="pending-checkbox" value="${s.id}"></td>
+                    <td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td>
+                    <td><button class="btn btn-approve" onclick="approveStudent('${s.id}')">核准</button></td>
+                </tr>
+            `).join('');
+
+            const aBody = document.getElementById('active-list-body');
+            aBody.innerHTML = activeList.map(s => `
+                <tr>
+                    <td>🟢</td>
+                    <td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td>
+                    <td><button class="btn btn-del" onclick="deleteStudent('${s.id}')">刪</button></td>
+                </tr>
+            `).join('');
         }
 
-        function toggleSelectAll(source) {
-            const checkboxes = document.querySelectorAll('.stu-checkbox');
+        function toggleSelectAll(source, type) {
+            const checkboxes = document.querySelectorAll(`.${type}-checkbox`);
             checkboxes.forEach(cb => cb.checked = source.checked);
         }
 
         async function batchApprove() {
-            const checkboxes = document.querySelectorAll('.stu-checkbox:checked');
-            if(checkboxes.length === 0) return alert("請先勾選學生！");
-            
+            const checkboxes = document.querySelectorAll('.pending-checkbox:checked');
+            if(checkboxes.length === 0) return alert("請先勾選要核准的申請！");
             let count = 0;
-            checkboxes.forEach(cb => {
-                const s = studentDB.find(x => x.id === cb.value);
-                if(s && s.status === 'pending') {
-                    s.status = 'active';
-                    count++;
-                }
-            });
-            
-            if(count > 0) {
-                await saveToCloud(KEYS.STUDENTS, studentDB);
-                alert(`✅ 已成功一鍵核准 ${count} 位學生！`);
-                renderStudents();
-            } else {
-                alert("選取的學生都已經是正常狀態囉。");
-            }
+            checkboxes.forEach(cb => { const s = studentDB.find(x => x.id === cb.value); if(s) { s.status = 'active'; count++; } });
+            if(count > 0) { await saveToCloud(KEYS.STUDENTS, studentDB); alert(`✅ 已一鍵核准 ${count} 位學生！`); renderStudents(); }
         }
 
         async function batchDelete() {
-            const checkboxes = document.querySelectorAll('.stu-checkbox:checked');
-            if(checkboxes.length === 0) return alert("請先勾選學生！");
-            if(!confirm(`確定要刪除這 ${checkboxes.length} 位學生嗎？此動作無法復原！`)) return;
-
+            const checkboxes = document.querySelectorAll('.pending-checkbox:checked');
+            if(checkboxes.length === 0) return alert("請先勾選要刪除的項目！");
+            if(!confirm(`確定要拒絕/刪除這 ${checkboxes.length} 筆申請嗎？`)) return;
             const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
             studentDB = studentDB.filter(s => !idsToDelete.includes(s.id));
-            
-            await saveToCloud(KEYS.STUDENTS, studentDB);
-            renderStudents();
-            alert("🗑️ 批次刪除完成。");
+            await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents();
+        }
+
+        // --- Excel 匯入功能 ---
+        function downloadTemplate() {
+            const ws = XLSX.utils.aoa_to_sheet([["學號","姓名","班級","密碼"],["114001","王小明","114-航太","1234"],["114002","李大華","114-航管","1234"]]);
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "學生名單");
+            XLSX.writeFile(wb, "學生匯入範本.xlsx");
+        }
+
+        function handleFileImport(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                let addedCount = 0;
+                jsonData.forEach(row => {
+                    const id = String(row['學號'] || row['id']).trim();
+                    const name = String(row['姓名'] || row['name']).trim();
+                    const cls = String(row['班級'] || row['classId']).trim();
+                    const pwd = String(row['密碼'] || row['password']).trim();
+                    
+                    if(id && !studentDB.some(s => s.id === id)) {
+                        studentDB.push({
+                            id: id, name: name, classId: cls, password: pwd,
+                            status: 'active', // 匯入的直接啟用
+                            courses: [], careerTrack: '', interests: []
+                        });
+                        addedCount++;
+                    }
+                });
+
+                if(addedCount > 0) {
+                    await saveToCloud(KEYS.STUDENTS, studentDB);
+                    alert(`✅ 成功匯入 ${addedCount} 筆學生資料！`);
+                    renderStudents();
+                } else {
+                    alert("沒有新增任何資料 (可能學號重複或格式錯誤)");
+                }
+                document.getElementById('import-file').value = ''; // 重置
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         async function addStudent() { const id=document.getElementById('s_id').value; const idx=studentDB.findIndex(s=>s.id===id); const obj={id, name:document.getElementById('s_name').value, classId:document.getElementById('s_class').value, password:document.getElementById('s_pass').value, status:'active', courses:[], totalCredits:0}; if(idx>-1){Object.assign(studentDB[idx], obj);}else{studentDB.push(obj);} await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents(); }
@@ -389,6 +443,7 @@
     </script>
 </body>
 </html>
+
 
 
 
