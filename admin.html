@@ -29,13 +29,11 @@
         .theme-btn:hover { transform: scale(1.1); }
         .tb-white { background: white; } .tb-blue { background: #e3f2fd; } .tb-dark { background: #333; } .tb-warm { background: #fff8e1; }
 
-        /* 主題定義 */
         .card-theme-blue { background: linear-gradient(to bottom right, #f0f7ff, #dbeafe) !important; border-color: #1e88e5 !important; }
         .card-theme-blue::before { content: '✈'; position: absolute; font-size: 150px; color: rgba(0,0,0,0.03); bottom: 20px; right: 20px; pointer-events: none; transform: rotate(-15deg); z-index: 0; }
         .card-theme-dark { background: #2c3e50 !important; color: #ecf0f1 !important; border-color: #34495e !important; }
         .card-theme-dark th { background: #34495e !important; color: white !important; border-color: #465c71 !important; }
         .card-theme-dark td { border-color: #465c71 !important; }
-        .card-theme-dark .schedule-table th:first-child, .card-theme-dark .schedule-table td:first-child { background-color: #34495e !important; color: #ecf0f1; border-color: #465c71; }
         .card-theme-dark select { background: #34495e; color: white; border-color: #555; }
         .card-theme-warm { background: #fffdeb !important; border-color: #fdd835 !important; }
 
@@ -51,19 +49,17 @@
         .btn-submit { background-color: var(--admin-blue); width: 100%; margin-left:0; margin-top:5px; } 
         .btn-add { background-color: #00695c; width: 100%; margin-left:0; } 
         .btn-del { background-color: #dc3545; padding: 6px 12px; font-size: 12px; }
+        .btn-approve { background-color: #28a745; padding: 6px 12px; font-size: 12px; }
         .btn-print { background-color: #607d8b; }
         .btn-create { background-color: #28a745; margin-bottom: 15px; width: auto; padding: 10px 20px; }
-        
-        /* 徽章預覽 */
         .rank-badge { padding: 5px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; min-width: 60px; text-align: center; }
+        .status-pending { color: #d32f2f; font-weight: bold; background: #ffebee; padding: 4px 8px; border-radius: 12px; }
+        .status-active { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 4px 8px; border-radius: 12px; }
 
-        /* 課表樣式 */
         .schedule-table { min-width: 800px; table-layout: fixed; border-collapse: collapse; }
         .schedule-table th, .schedule-table td { border: 1px solid #eee; text-align: center; }
         .schedule-table td { height: 60px; vertical-align: top; padding: 2px; }
         .course-block { padding: 4px; border-radius: 4px; color: white; font-size: 12px; margin-bottom: 2px; }
-        
-        /* 手機版 Toggle 按鈕 */
         .mobile-toggle { display: none; position: fixed; top: 10px; left: 10px; z-index: 200; background: var(--admin-blue); color: white; border: none; padding: 10px; border-radius: 5px; }
 
         @media (max-width: 768px) {
@@ -75,7 +71,6 @@
             .theme-controls { width: 100%; justify-content: flex-end; margin-top: 10px; }
         }
 
-        /* --- 列印專用樣式 --- */
         @media print {
             .sidebar, .mobile-toggle, .btn, .theme-controls, .header-title::before { display: none !important; }
             body, .main-content { margin: 0; padding: 0; background: white; overflow: visible; }
@@ -83,17 +78,9 @@
             .header-title { border: none; padding: 0; text-align: center; font-size: 24px; color: black; }
             .card { box-shadow: none; border: 1px solid #ccc; padding: 10px; page-break-inside: avoid; margin-bottom: 20px; }
             .card-theme-blue, .card-theme-dark, .card-theme-warm { background: white !important; color: black !important; border-color: #ccc !important; }
-            .card-theme-blue::before { display: none; }
-            .card-theme-dark select { background: white; color: black; border: 1px solid #ccc; }
-            .card-theme-dark th { background: #f1f3f5 !important; color: black !important; border: 1px solid #000 !important; }
-            .card-theme-dark td { border: 1px solid #000 !important; }
             .main-content > div { display: none; }
             .main-content > div[style*="display: block"] { display: block !important; }
             table { min-width: 100%; width: 100%; table-layout: auto; }
-            .schedule-table { width: 100%; border: 1px solid black; }
-            .schedule-table th, .schedule-table td { border: 1px solid black; color: black; }
-            .course-block { border: 1px solid black; color: black; background: none !important; }
-            select { border: none; appearance: none; font-weight: bold; color: black; }
         }
         
         #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 999; }
@@ -158,25 +145,27 @@
                 </div>
                 <table>
                     <thead><tr><th style="width:15%">段位名稱</th><th style="width:10%">最低GPA</th><th style="width:10%">代表色</th><th style="width:10%">預覽</th><th>獎勵內容</th><th>懲罰內容</th><th style="width:50px">操作</th></tr></thead>
-                    <tbody id="rank-rules-body">
-                        </tbody>
+                    <tbody id="rank-rules-body"></tbody>
                 </table>
                 <button class="btn btn-submit" style="width:200px; margin-top:20px;" onclick="saveRankRules()">💾 儲存並套用設定</button>
             </div>
         </div>
 
         <div id="students-view" style="display: none;">
-            <div class="header-bar"><div class="header-title">學生資料</div></div>
+            <div class="header-bar"><div class="header-title">學生資料與審核</div></div>
             <div class="card">
+                <div style="background:#fff3e0; padding:10px; border-radius:8px; margin-bottom:15px; color:#e65100; font-size:14px;">
+                    💡 提示：註冊的學生預設為「待審核」，請點擊「核准」以開通其登入權限。
+                </div>
                 <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:15px;">
                     <input id="s_id" placeholder="學號" style="flex:1">
                     <input id="s_name" placeholder="姓名" style="flex:1">
                     <input id="s_class" placeholder="班級" style="flex:1">
                     <input id="s_pass" placeholder="密碼" style="flex:1">
-                    <button class="btn btn-add" style="flex:1" onclick="addStudent()">新增/更新</button>
+                    <button class="btn btn-add" style="flex:1" onclick="addStudent()">手動新增</button>
                 </div>
                 <div style="max-height:400px; overflow-y:auto;">
-                    <table><thead><tr><th>學號</th><th>姓名</th><th>班級</th><th>操作</th></tr></thead><tbody id="account-list-body"></tbody></table>
+                    <table><thead><tr><th>狀態</th><th>學號</th><th>姓名</th><th>班級</th><th>操作</th></tr></thead><tbody id="account-list-body"></tbody></table>
                 </div>
             </div>
         </div>
@@ -184,16 +173,17 @@
         <div id="courses-view" style="display:none;">
             <div class="header-bar"><div class="header-title">課程管理</div></div>
             <div class="card">
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-bottom:15px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:15px;">
                     <select id="c_type"><option value="fixed">必修</option><option value="elective">選修</option></select>
                     <input id="c_id" placeholder="代碼">
                     <input id="c_name" placeholder="名稱">
                     <input id="c_cr" type="number" placeholder="學分" value="2">
                     <input id="c_time" placeholder="時間 (一/3,4)">
                     <input id="c_tea" placeholder="教官">
+                    <input id="c_max" type="number" placeholder="人數" value="40" title="人數上限">
                     <button class="btn btn-submit" onclick="addCourse()">發布課程</button>
                 </div>
-                <table id="course-table"><thead><tr><th>類別</th><th>名稱</th><th>時間</th><th>操作</th></tr></thead><tbody id="course-list"></tbody></table>
+                <table id="course-table"><thead><tr><th>類別</th><th>名稱</th><th>時間</th><th>人數</th><th>操作</th></tr></thead><tbody id="course-list"></tbody></table>
             </div>
         </div>
 
@@ -215,17 +205,12 @@
         let studentDB=[], fixedCourses=[], electiveCourses=[], rankRules=[];
 
         window.onload = async () => { 
-            await refreshAll(); 
-            document.getElementById('loading').style.display='none'; 
-            setInterval(refreshAll, 10000);
-            
-            const savedTheme = localStorage.getItem('cafa_admin_theme');
-            if(savedTheme) setTheme(savedTheme);
+            await refreshAll(); document.getElementById('loading').style.display='none'; setInterval(refreshAll, 10000);
+            const savedTheme = localStorage.getItem('cafa_admin_theme'); if(savedTheme) setTheme(savedTheme);
         };
 
         window.setTheme = (t) => {
-            const c = document.getElementById('schedule-card');
-            c.className = 'card';
+            const c = document.getElementById('schedule-card'); c.className = 'card';
             if(t !== 'white') c.classList.add(`card-theme-${t}`);
             localStorage.setItem('cafa_admin_theme', t);
             const title = document.getElementById('schedule-title');
@@ -240,14 +225,9 @@
             if(id === 'ranks') renderRankSettings();
         };
 
-        window.addStudent=addStudent; window.deleteStudent=deleteStudent;
+        window.addStudent=addStudent; window.deleteStudent=deleteStudent; window.approveStudent=approveStudent;
         window.addCourse=addCourse; window.delCourse=delCourse; window.loadGrades=loadGrades; window.saveGrades=saveGrades; window.toggleStatus=toggleStatus;
-        // 獎懲相關綁定
-        window.addNewRankRow = addNewRankRow;
-        window.deleteRankRow = deleteRankRow;
-        window.saveRankRules = saveRankRules;
-        window.updateRankPreview = updateRankPreview;
-        window.renderTeacherSchedule = renderTeacherSchedule;
+        window.addNewRankRow=addNewRankRow; window.deleteRankRow=deleteRankRow; window.saveRankRules=saveRankRules; window.updateRankPreview=updateRankPreview; window.renderTeacherSchedule=renderTeacherSchedule;
 
         async function refreshAll() {
             studentDB = (await loadFromCloud(KEYS.STUDENTS))||[];
@@ -258,127 +238,59 @@
             renderMonitor(); renderRankSettings(); renderStudents(); renderCourses(); updateSels();
         }
 
-        // --- 優化後的獎懲設定邏輯 ---
         function renderRankSettings() {
-            const t = document.getElementById('rank-rules-body');
-            t.innerHTML = '';
-            // 確保顯示時是按照 GPA 排序的
+            const t = document.getElementById('rank-rules-body'); t.innerHTML = '';
             rankRules.sort((a,b) => b.min - a.min);
-
             rankRules.forEach((r, i) => {
-                t.innerHTML += `
-                <tr class="rank-row">
-                    <td><input class="r-name" value="${r.name}" placeholder="名稱"></td>
-                    <td><input class="r-min" type="number" value="${r.min}" style="width:60px"></td>
-                    <td><input class="r-color" type="color" value="${r.color}" oninput="updateRankPreview(this)"></td>
-                    <td><span class="rank-badge" style="background-color:${r.color};">${r.name}</span></td>
-                    <td><input class="r-reward" value="${r.reward||''}" placeholder="無"></td>
-                    <td><input class="r-punish" value="${r.punish||''}" placeholder="無"></td>
-                    <td><button class="btn btn-del" onclick="deleteRankRow(this)">✕</button></td>
-                </tr>`;
+                t.innerHTML += `<tr class="rank-row"><td><input class="r-name" value="${r.name}" placeholder="名稱"></td><td><input class="r-min" type="number" value="${r.min}" style="width:60px"></td><td><input class="r-color" type="color" value="${r.color}" oninput="updateRankPreview(this)"></td><td><span class="rank-badge" style="background-color:${r.color};">${r.name}</span></td><td><input class="r-reward" value="${r.reward||''}" placeholder="無"></td><td><input class="r-punish" value="${r.punish||''}" placeholder="無"></td><td><button class="btn btn-del" onclick="deleteRankRow(this)">✕</button></td></tr>`;
             });
         }
-
         function addNewRankRow() {
             const t = document.getElementById('rank-rules-body');
-            const row = document.createElement('tr');
-            row.className = 'rank-row';
-            row.innerHTML = `
-                <td><input class="r-name" value="新段位" placeholder="名稱"></td>
-                <td><input class="r-min" type="number" value="60" style="width:60px"></td>
-                <td><input class="r-color" type="color" value="#cccccc" oninput="updateRankPreview(this)"></td>
-                <td><span class="rank-badge" style="background-color:#cccccc;">新段位</span></td>
-                <td><input class="r-reward" placeholder="無"></td>
-                <td><input class="r-punish" placeholder="無"></td>
-                <td><button class="btn btn-del" onclick="deleteRankRow(this)">✕</button></td>
-            `;
-            t.insertBefore(row, t.firstChild); // 新增在最上面方便看到
+            const row = document.createElement('tr'); row.className = 'rank-row';
+            row.innerHTML = `<td><input class="r-name" value="新段位" placeholder="名稱"></td><td><input class="r-min" type="number" value="60" style="width:60px"></td><td><input class="r-color" type="color" value="#cccccc" oninput="updateRankPreview(this)"></td><td><span class="rank-badge" style="background-color:#cccccc;">新段位</span></td><td><input class="r-reward" placeholder="無"></td><td><input class="r-punish" placeholder="無"></td><td><button class="btn btn-del" onclick="deleteRankRow(this)">✕</button></td>`;
+            t.insertBefore(row, t.firstChild);
         }
-
-        function deleteRankRow(btn) {
-            if(confirm("確定刪除此段位規則嗎？")) {
-                btn.closest('tr').remove();
-            }
-        }
-
-        function updateRankPreview(input) {
-            const row = input.closest('tr');
-            const badge = row.querySelector('.rank-badge');
-            const nameInput = row.querySelector('.r-name');
-            badge.style.backgroundColor = input.value;
-            badge.innerText = nameInput.value;
-        }
-
+        function deleteRankRow(btn) { if(confirm("刪除?")) btn.closest('tr').remove(); }
+        function updateRankPreview(input) { const r = input.closest('tr'); const b = r.querySelector('.rank-badge'); const n = r.querySelector('.r-name'); b.style.backgroundColor = input.value; b.innerText = n.value; }
         async function saveRankRules() {
-            const rows = document.querySelectorAll('.rank-row');
-            const newRules = [];
-            rows.forEach(row => {
-                const name = row.querySelector('.r-name').value;
-                const min = parseInt(row.querySelector('.r-min').value);
-                const color = row.querySelector('.r-color').value;
-                const reward = row.querySelector('.r-reward').value;
-                const punishment = row.querySelector('.r-punish').value; // 修正變數名稱
-                if(name && !isNaN(min)) {
-                    newRules.push({ name, min, color, reward, punishment });
-                }
-            });
-            // 關鍵優化：存檔前自動由大到小排序，確保邏輯正確
-            newRules.sort((a,b) => b.min - a.min);
-            
-            rankRules = newRules;
-            await saveToCloud(KEYS.RANKS, rankRules);
-            alert("✅ 設定已儲存！系統已自動依 GPA 高低排序規則。");
-            renderRankSettings(); // 重新渲染以顯示排序後的結果
+            const rows = document.querySelectorAll('.rank-row'); const newRules = [];
+            rows.forEach(row => { const name = row.querySelector('.r-name').value; const min = parseInt(row.querySelector('.r-min').value); const color = row.querySelector('.r-color').value; const reward = row.querySelector('.r-reward').value; const punishment = row.querySelector('.r-punish').value; if(name && !isNaN(min)) newRules.push({ name, min, color, reward, punishment }); });
+            newRules.sort((a,b) => b.min - a.min); rankRules = newRules;
+            await saveToCloud(KEYS.RANKS, rankRules); alert("✅ 設定已儲存！"); renderRankSettings();
         }
 
-        function getDefaultRanks() { return [{name:'王者', min:90, color:'#ffe0b2', reward:'禮券', punishment:''}, {name:'鑽石', min:80, color:'#b3e5fc', reward:'', punishment:''}, {name:'黃金', min:70, color:'#fff9c4', reward:'', punishment:''}, {name:'白銀', min:60, color:'#f5f5f5', reward:'', punishment:''}, {name:'青銅', min:0, color:'#ffccbc', reward:'', punishment:''}]; }
-
-        // --- 其他功能 ---
-        function renderTeacherSchedule() {
-            const tea = document.getElementById('teacher-schedule-selector').value;
-            const tbody = document.getElementById('teacher-schedule-body'); tbody.innerHTML = ''; 
-            for(let i=1;i<=10;i++) tbody.innerHTML+=`<tr><td style="background:#f8f9fa; color:#333;">${i}</td><td id="t1-${i}"></td><td id="t2-${i}"></td><td id="t3-${i}"></td><td id="t4-${i}"></td><td id="t5-${i}"></td></tr>`;
-            
-            if(!tea) return document.getElementById('schedule-title').innerText = "請選擇教官";
-            document.getElementById('schedule-title').innerText = `📅 ${tea} 教官課表`;
-            
-            [...fixedCourses,...electiveCourses].filter(c=>c.teacher===tea).forEach(c => {
-                if(!c.time) return; 
-                let [d,p]=c.time.split('/'); const dMap={"一":1,"二":2,"三":3,"四":4,"五":5};
-                p.split(',').forEach(x => { 
-                    let el = document.getElementById(`t${dMap[d]}-${x}`);
-                    if(el) el.innerHTML = `<div class="course-block" style="background:${c.isFixed?'#e65100':'#00308F'}">${c.name}<br>${c.location||''}</div>`;
-                });
-            });
-        }
-
-        function renderMonitor() {
-            const t = document.getElementById('student-list-body'); t.innerHTML='';
-            studentDB.forEach(s => {
-                let tot=0, cr=0; (s.courses||[]).forEach(c => { if(c.score){ tot+=c.score*c.credit; cr+=c.credit; } });
-                let gpa = cr>0 ? (tot/cr).toFixed(1) : 0;
-                t.innerHTML += `<tr><td>${s.name} (${s.id})</td><td>${s.classId||'-'}</td><td>${s.careerTrack==='pilot'?'飛行':'地勤'}</td><td>${gpa}</td><td>${(s.courses||[]).length} 科</td></tr>`;
-            });
-        }
-
-        async function addStudent() { const id=document.getElementById('s_id').value; const idx=studentDB.findIndex(s=>s.id===id); const obj={id, name:document.getElementById('s_name').value, classId:document.getElementById('s_class').value, password:document.getElementById('s_pass').value, dept:'-', courses:[], totalCredits:0}; if(idx>-1){Object.assign(studentDB[idx], obj);}else{studentDB.push(obj);} await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents(); }
+        async function addStudent() { const id=document.getElementById('s_id').value; const idx=studentDB.findIndex(s=>s.id===id); const obj={id, name:document.getElementById('s_name').value, classId:document.getElementById('s_class').value, password:document.getElementById('s_pass').value, status:'active', courses:[], totalCredits:0}; if(idx>-1){Object.assign(studentDB[idx], obj);}else{studentDB.push(obj);} await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents(); }
         async function deleteStudent(id) { if(confirm('刪除?')){studentDB=studentDB.filter(s=>s.id!==id); await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents();} }
-        function renderStudents() { document.getElementById('account-list-body').innerHTML = studentDB.map(s=>`<tr><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td><button class="btn btn-del" onclick="deleteStudent('${s.id}')">刪</button></td></tr>`).join(''); }
+        async function approveStudent(id) { const idx = studentDB.findIndex(s=>s.id===id); if(idx > -1) { studentDB[idx].status = 'active'; await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents(); alert(`已核准學號 ${id}`); } }
 
-        async function addCourse() { const t=document.getElementById('c_type').value; const c={id:document.getElementById('c_id').value, name:document.getElementById('c_name').value, credit:parseInt(document.getElementById('c_cr').value), time:document.getElementById('c_time').value, teacher:document.getElementById('c_tea').value, type:t==='fixed'?'必修':'選修', isFixed:t==='fixed', isOpen:true}; if(t==='fixed')fixedCourses.push(c);else electiveCourses.push(c); await saveToCloud(KEYS.FIXED,fixedCourses); await saveToCloud(KEYS.ELECTIVE,electiveCourses); renderCourses(); }
+        function renderStudents() { 
+            studentDB.sort((a,b) => (a.status==='pending' ? -1 : 1));
+            document.getElementById('account-list-body').innerHTML = studentDB.map(s=> {
+                let statusBadge = s.status === 'pending' ? '<span class="status-pending">🔴 待審核</span>' : '<span class="status-active">🟢 正常</span>';
+                let actionBtn = s.status === 'pending' ? `<button class="btn btn-approve" onclick="approveStudent('${s.id}')">✔ 核准</button>` : '';
+                return `<tr><td>${statusBadge}</td><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td>${actionBtn} <button class="btn btn-del" onclick="deleteStudent('${s.id}')">刪</button></td></tr>`;
+            }).join(''); 
+        }
+
+        function renderTeacherSchedule() {
+            const tea = document.getElementById('teacher-schedule-selector').value; const tbody = document.getElementById('teacher-schedule-body'); tbody.innerHTML = ''; 
+            for(let i=1;i<=10;i++) tbody.innerHTML+=`<tr><td style="background:#f8f9fa; color:#333;">${i}</td><td id="t1-${i}"></td><td id="t2-${i}"></td><td id="t3-${i}"></td><td id="t4-${i}"></td><td id="t5-${i}"></td></tr>`;
+            if(!tea) return document.getElementById('schedule-title').innerText = "請選擇教官"; document.getElementById('schedule-title').innerText = `📅 ${tea} 教官課表`;
+            [...fixedCourses,...electiveCourses].filter(c=>c.teacher===tea).forEach(c => { if(!c.time) return; let [d,p]=c.time.split('/'); const dMap={"一":1,"二":2,"三":3,"四":4,"五":5}; p.split(',').forEach(x => { let el = document.getElementById(`t${dMap[d]}-${x}`); if(el) el.innerHTML = `<div class="course-block" style="background:${c.isFixed?'#e65100':'#00308F'}">${c.name}<br>${c.location||''}</div>`; }); });
+        }
+        function renderMonitor() { const t = document.getElementById('student-list-body'); t.innerHTML=''; studentDB.forEach(s => { let tot=0, cr=0; (s.courses||[]).forEach(c => { if(c.score){ tot+=c.score*c.credit; cr+=c.credit; } }); let gpa = cr>0 ? (tot/cr).toFixed(1) : 0; t.innerHTML += `<tr><td>${s.name} (${s.id})</td><td>${s.classId||'-'}</td><td>${s.careerTrack==='pilot'?'飛行':'地勤'}</td><td>${gpa}</td><td>${(s.courses||[]).length} 科</td></tr>`; }); }
+        function getDefaultRanks() { return [{name:'王者', min:90, color:'#ffe0b2', reward:'禮券', punishment:''}, {name:'鑽石', min:80, color:'#b3e5fc', reward:'', punishment:''}, {name:'黃金', min:70, color:'#fff9c4', reward:'', punishment:''}, {name:'白銀', min:60, color:'#f5f5f5', reward:'', punishment:''}, {name:'青銅', min:0, color:'#ffccbc', reward:'', punishment:''}]; }
+        
+        async function addCourse() { const t=document.getElementById('c_type').value; const max=parseInt(document.getElementById('c_max').value)||40; const c={id:document.getElementById('c_id').value, name:document.getElementById('c_name').value, credit:parseInt(document.getElementById('c_cr').value), time:document.getElementById('c_time').value, teacher:document.getElementById('c_tea').value, max:max, type:t==='fixed'?'必修':'選修', isFixed:t==='fixed', isOpen:true}; if(t==='fixed')fixedCourses.push(c);else electiveCourses.push(c); await saveToCloud(KEYS.FIXED,fixedCourses); await saveToCloud(KEYS.ELECTIVE,electiveCourses); renderCourses(); }
         async function delCourse(t,i) { if(t==='fixed')fixedCourses.splice(i,1);else electiveCourses.splice(i,1); await saveToCloud(KEYS.FIXED,fixedCourses); await saveToCloud(KEYS.ELECTIVE,electiveCourses); renderCourses(); }
         async function toggleStatus(i) { electiveCourses[i].isOpen=!electiveCourses[i].isOpen; await saveToCloud(KEYS.ELECTIVE,electiveCourses); renderCourses(); }
-        function renderCourses() { document.getElementById('course-list').innerHTML = [...fixedCourses.map((c,i)=>`<tr><td>必修</td><td>${c.name}</td><td>${c.time}</td><td><button class="btn btn-del" onclick="delCourse('fixed',${i})">刪</button></td></tr>`), ...electiveCourses.map((c,i)=>`<tr><td>選修</td><td>${c.name}</td><td>${c.time}</td><td><button class="btn" onclick="toggleStatus(${i})" style="background:${c.isOpen?'green':'grey'};width:auto;margin-right:5px;">${c.isOpen?'開':'關'}</button><button class="btn btn-del" onclick="delCourse('elect',${i})">刪</button></td></tr>`)].join(''); }
-
+        
+        function renderCourses() { document.getElementById('course-list').innerHTML = [...fixedCourses.map((c,i)=>`<tr><td>必修</td><td>${c.name}</td><td>${c.time}</td><td>-</td><td><button class="btn btn-del" onclick="delCourse('fixed',${i})">刪</button></td></tr>`), ...electiveCourses.map((c,i)=>`<tr><td>選修</td><td>${c.name}</td><td>${c.time}</td><td>${c.max||40}</td><td><button class="btn" onclick="toggleStatus(${i})" style="background:${c.isOpen?'green':'grey'};width:auto;margin-right:5px;">${c.isOpen?'開':'關'}</button><button class="btn btn-del" onclick="delCourse('elect',${i})">刪</button></td></tr>`)].join(''); }
+        
         function loadGrades() { const sid=document.getElementById('g_stu').value; const t=document.getElementById('grade-body'); t.innerHTML=''; const s=studentDB.find(x=>x.id===sid); if(!s)return; s.courses.forEach(c=>{ t.innerHTML+=`<tr><td>${c.name}</td><td>${c.credit}</td><td><input type="number" id="sc-${c.id}" value="${c.score||''}" style="width:80px"></td></tr>`; }); }
         async function saveGrades() { const sid=document.getElementById('g_stu').value; const idx=studentDB.findIndex(x=>x.id===sid); studentDB[idx].courses=studentDB[idx].courses.map(c=>{const v=document.getElementById(`sc-${c.id}`).value; if(v)c.score=parseInt(v); return c;}); await saveToCloud(KEYS.STUDENTS, studentDB); alert("成績已儲存"); }
-
-        function updateSels() {
-            const tea = document.getElementById('teacher-schedule-selector'); 
-            const ts=[...new Set([...fixedCourses,...electiveCourses].map(c=>c.teacher).filter(x=>x))].sort(); 
-            const savedT = tea.value; tea.innerHTML='<option value="">-- 請選擇教官 --</option>'; ts.forEach(t=>tea.add(new Option(t,t))); tea.value = savedT;
-            const stu = document.getElementById('g_stu'); stu.innerHTML='<option value="">-- 請選擇學生輸入成績 --</option>'; studentDB.forEach(s=>stu.add(new Option(`${s.id} ${s.name}`,s.id)));
-        }
+        function updateSels() { const tea = document.getElementById('teacher-schedule-selector'); const ts=[...new Set([...fixedCourses,...electiveCourses].map(c=>c.teacher).filter(x=>x))].sort(); const savedT = tea.value; tea.innerHTML='<option value="">-- 請選擇教官 --</option>'; ts.forEach(t=>tea.add(new Option(t,t))); tea.value = savedT; const stu = document.getElementById('g_stu'); stu.innerHTML='<option value="">-- 請選擇學生輸入成績 --</option>'; studentDB.forEach(s=>stu.add(new Option(`${s.id} ${s.name}`,s.id))); }
     </script>
 </body>
 </html>
