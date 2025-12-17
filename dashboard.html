@@ -13,7 +13,7 @@
         /* --- 手機版漢堡選單按鈕 --- */
         .mobile-menu-btn { display: none; position: fixed; top: 15px; left: 15px; z-index: 1100; background: var(--cafa-blue-main); color: white; border: none; padding: 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; font-size: 20px; }
         
-        /* --- 側邊欄 (優化版) --- */
+        /* --- 側邊欄 --- */
         .sidebar { width: 260px; background: linear-gradient(180deg, var(--cafa-blue-main) 0%, var(--cafa-blue-dark) 100%); color: white; display: flex; flex-direction: column; padding-top: 25px; box-shadow: 4px 0 15px rgba(0,0,0,0.1); position: relative; z-index: 1000; transition: transform 0.3s ease; }
         .sidebar-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
         .menu-item { padding: 15px 25px; cursor: pointer; transition: 0.2s; color: rgba(255,255,255,0.8); display: flex; align-items: center; font-size: 15px; }
@@ -21,31 +21,36 @@
         .menu-item.active { background: rgba(0,0,0,0.2); border-left: 5px solid var(--cafa-gold); color: white; font-weight: bold; }
         .menu-item span { margin-right: 12px; font-size: 18px; width: 25px; text-align: center; }
         
-        /* --- 排位卡 (個人) --- */
+        /* --- 排位卡 --- */
         .rank-card { background: rgba(0,0,0,0.2); margin: 10px 15px; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
         .rank-name { font-size: 20px; font-weight: 800; color: var(--cafa-gold); text-shadow: 0 2px 4px rgba(0,0,0,0.3); margin: 5px 0; letter-spacing: 1px; }
         
-        /* --- 主內容區 (RWD) --- */
+        /* --- 主內容區 --- */
         .main-content { flex: 1; padding: 20px; overflow-y: auto; background-image: linear-gradient(to bottom, #eef2f7, #f4f7fa); position: relative; width: 100%; }
         .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); flex-wrap: wrap; gap: 10px; }
         .header-title { font-size: 22px; font-weight: bold; color: var(--cafa-blue-main); border-left: 6px solid var(--cafa-gold); padding-left: 12px; }
         
-        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-top: 3px solid var(--cafa-blue-light); box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto; /* 讓表格可滑動 */ }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-top: 3px solid var(--cafa-blue-light); box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto; }
         
-        /* --- 表格與標籤 --- */
-        table { width: 100%; min-width: 600px; /* 強制表格最小寬度，觸發滑動 */ border-collapse: separate; border-spacing: 0; font-size: 14px; }
+        /* --- 興趣標籤樣式 (新增部分) --- */
+        .interest-container { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .interest-tag { padding: 8px 16px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; transition: 0.2s; background: white; font-size: 14px; color: #666; user-select: none; }
+        .interest-tag:hover { background: #f0f0f0; }
+        .interest-tag.active { background: var(--cafa-gold); color: #002266; border-color: var(--cafa-gold); font-weight: bold; transform: scale(1.05); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        /* --- 表格與元件 --- */
+        table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0; font-size: 14px; }
         th { background: #f8f9fa; color: var(--cafa-blue-dark); padding: 12px; text-align: left; border-bottom: 2px solid var(--cafa-blue-main); white-space: nowrap; }
         td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
         .tag { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; white-space: nowrap; }
         .tag-compulsory { background: #e3f2fd; color: #0d47a1; } .tag-elective { background: #e8f5e9; color: #1b5e20; } .tag-fixed { background: #fff3e0; color: #e65100; }
         
-        /* --- 按鈕 --- */
         .btn { padding: 8px 16px; border-radius: 30px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; white-space: nowrap; }
         .btn:active { transform: scale(0.95); }
         .btn-add { background: #28a745; color: white; } .btn-drop { background: #dc3545; color: white; }
         .btn-save { background: var(--cafa-blue-main); color: white; width: 100%; padding: 14px; margin-top:20px; font-size: 16px; box-shadow: 0 4px 10px rgba(0,48,143,0.3); }
 
-        /* --- 課表 (Grid System) --- */
+        /* --- 課表 --- */
         .schedule-table { min-width: 800px; table-layout: fixed; }
         .schedule-table th { text-align: center; }
         .schedule-table td { height: 60px; padding: 2px; text-align: center; vertical-align: top; border: 1px solid #eee; }
@@ -53,9 +58,8 @@
         .block-fixed { background: linear-gradient(135deg, #e65100, #ff9800); }
         .block-normal { background: linear-gradient(135deg, var(--cafa-blue-main), var(--cafa-blue-light)); }
 
-        /* --- AI Chat (浮動按鈕) --- */
+        /* --- AI Chat --- */
         .ai-fab { position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px; background: linear-gradient(45deg, #00308F, #0055ff); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 2000; transition: transform 0.2s; }
-        .ai-fab:active { transform: scale(0.9); }
         .chat-window { position: fixed; bottom: 85px; right: 20px; width: 90%; max-width: 350px; height: 50vh; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.25); display: none; flex-direction: column; z-index: 2000; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; }
         .chat-header { padding: 15px; background: var(--cafa-blue-main); color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .chat-body { flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; font-size: 14px; }
@@ -65,20 +69,17 @@
         .chat-input { padding: 10px; border-top: 1px solid #eee; display: flex; gap: 10px; background: white; }
         .chat-input input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
 
-        /* --- RWD Media Queries (關鍵優化) --- */
+        /* --- RWD --- */
         @media (max-width: 768px) {
             .mobile-menu-btn { display: block; }
             .sidebar { position: fixed; top: 0; left: 0; height: 100%; transform: translateX(-100%); width: 80%; max-width: 300px; }
             .sidebar.open { transform: translateX(0); }
             .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 900; }
             .sidebar-overlay.show { display: block; }
-            
-            .main-content { padding: 70px 15px 15px 15px; /* 上方留給漢堡選單 */ }
+            .main-content { padding: 70px 15px 15px 15px; }
             .header-bar { flex-direction: column; align-items: flex-start; }
-            .theme-controls { display: none; /* 手機版隱藏主題切換以節省空間 */ }
-            .rank-card { margin-top: 50px; /* 避開關閉按鈕 */ }
-            
-            /* 卡片優化 */
+            .theme-controls { display: none; }
+            .rank-card { margin-top: 50px; }
             .card { padding: 15px; border-radius: 10px; }
         }
 
@@ -86,11 +87,7 @@
     </style>
 </head>
 <body>
-    <div id="loading">
-        <div style="font-size:40px; margin-bottom:10px;">☁️</div>
-        <div>資料同步中...</div>
-    </div>
-
+    <div id="loading"><div style="font-size:40px; margin-bottom:10px;">☁️</div><div>資料同步中...</div></div>
     <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
     <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
 
@@ -128,13 +125,8 @@
         <div id="leaderboard-view" style="display:none">
             <div class="header-bar"><div class="header-title">🏆 全校榮譽英雄榜</div></div>
             <div class="card">
-                <p style="color:#666; font-size:13px; text-align:center; padding-bottom:10px; border-bottom:1px solid #eee;">
-                    說明：依照平均積分(GPA)排序，僅顯示排位稱號以保障隱私。
-                </p>
-                <table>
-                    <thead><tr><th width="15%">排名</th><th>班級</th><th>姓名</th><th>榮譽排位</th></tr></thead>
-                    <tbody id="leaderboard-body"></tbody>
-                </table>
+                <p style="color:#666; font-size:13px; text-align:center; padding-bottom:10px; border-bottom:1px solid #eee;">依照平均積分(GPA)排序，僅顯示排位稱號以保障隱私。</p>
+                <table><thead><tr><th width="15%">排名</th><th>班級</th><th>姓名</th><th>榮譽排位</th></tr></thead><tbody id="leaderboard-body"></tbody></table>
             </div>
         </div>
 
@@ -143,41 +135,45 @@
                 <div class="header-title">週課表</div>
                 <div class="theme-controls">
                     <span style="font-size:12px;margin:0 10px;">背景:</span>
-                    <div class="theme-btn tb-white" onclick="setTheme('white')"></div>
-                    <div class="theme-btn tb-blue" onclick="setTheme('blue')"></div>
-                    <div class="theme-btn tb-dark" onclick="setTheme('dark')"></div>
+                    <div class="theme-btn tb-white" onclick="setTheme('white')"></div><div class="theme-btn tb-blue" onclick="setTheme('blue')"></div><div class="theme-btn tb-dark" onclick="setTheme('dark')"></div>
                 </div>
             </div>
             <div class="card" id="visual-card">
-                <table class="schedule-table">
-                    <thead><tr><th style="width:40px">節</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr></thead>
-                    <tbody id="visual-body"></tbody>
-                </table>
+                <table class="schedule-table"><thead><tr><th style="width:40px">節</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr></thead><tbody id="visual-body"></tbody></table>
             </div>
         </div>
 
         <div id="career-view" style="display:none">
             <div class="header-bar"><div class="header-title">職涯與推薦系統</div></div>
             <div class="card">
-                <h3>步驟 1: 設定你的未來志向</h3>
+                <h3>步驟 1: 設定未來志向</h3>
                 <div style="display:flex;gap:15px;margin-bottom:20px; flex-wrap:wrap;">
                     <button id="btn-track-pilot" class="btn" style="flex:1; padding:20px; border:2px solid #ddd; background:white; color:#333;" onclick="setTrack('pilot')">
-                        <div style="font-size:24px;">🦅</div>
-                        <div>飛行生 (Pilot)</div>
-                        <div style="font-size:11px;color:#999;margin-top:5px;">重視空氣動力學、英文</div>
+                        <div style="font-size:24px;">🦅</div><div>飛行生 (Pilot)</div>
                     </button>
                     <button id="btn-track-ground" class="btn" style="flex:1; padding:20px; border:2px solid #ddd; background:white; color:#333;" onclick="setTrack('ground')">
-                        <div style="font-size:24px;">🛠️</div>
-                        <div>地勤生 (Ground)</div>
-                        <div style="font-size:11px;color:#999;margin-top:5px;">重視機械結構、管理</div>
+                        <div style="font-size:24px;">🛠️</div><div>地勤生 (Ground)</div>
                     </button>
                 </div>
-                <div id="rec-msg" style="color:var(--cafa-blue-main); font-weight:bold; text-align:center; margin-bottom:10px;">尚未設定</div>
-                <button class="btn btn-save" onclick="saveCareer()">💾 儲存職涯設定</button>
+
+                <h3>步驟 2: 選擇有興趣的領域 (可多選)</h3>
+                <div class="interest-container">
+                    <div class="interest-tag" onclick="toggleInterest(this, '空氣動力')">空氣動力</div>
+                    <div class="interest-tag" onclick="toggleInterest(this, '機械')">機械工程</div>
+                    <div class="interest-tag" onclick="toggleInterest(this, '英文')">英文檢定</div>
+                    <div class="interest-tag" onclick="toggleInterest(this, '管理')">領導統御</div>
+                    <div class="interest-tag" onclick="toggleInterest(this, '程式')">資訊程式</div>
+                    <div class="interest-tag" onclick="toggleInterest(this, '氣象')">大氣科學</div>
+                    <div class="interest-tag" onclick="toggleInterest(this, '歷史')">軍事歷史</div>
+                    <div class="interest-tag" onclick="toggleInterest(this, '心理')">心理素質</div>
+                </div>
+
+                <div id="rec-msg" style="color:var(--cafa-blue-main); font-weight:bold; margin-top:15px; border-top:1px solid #eee; padding-top:10px;"></div>
+                <button class="btn btn-save" onclick="saveCareer()">💾 儲存所有設定</button>
             </div>
             <div class="card">
-                <h3>🎯 系統推薦課程</h3>
-                <div id="rec-list-container" style="color:#666; font-size:14px;">請先選擇職涯方向，系統將自動分析...</div>
+                <h3>🎯 智能推薦課程</h3>
+                <div id="rec-list-container" style="color:#666; font-size:14px;">請設定上方志向與興趣，系統將自動分析...</div>
             </div>
         </div>
 
@@ -190,325 +186,165 @@
     <div class="ai-fab" onclick="toggleChat()">🤖</div>
     <div class="chat-window" id="chat-win">
         <div class="chat-header">CAFA AI 助教 <span style="cursor:pointer" onclick="toggleChat()">✕</span></div>
-        <div class="chat-body" id="chat-body">
-            <div class="chat-msg msg-ai">同學你好！我是選課小幫手。你可以問我：<br>「推薦選什麼課？」<br>「空氣動力學在什麼時候？」<br>「我有幾學分？」</div>
-        </div>
-        <div class="chat-input">
-            <input id="chat-in" placeholder="輸入問題..." onkeypress="if(event.key=='Enter')send()">
-            <button class="btn btn-add" style="width:auto; padding:0 15px;" onclick="send()">➤</button>
-        </div>
+        <div class="chat-body" id="chat-body"><div class="chat-msg msg-ai">同學你好！我是選課小幫手。你可以問我：「推薦選什麼課？」、「我有幾學分？」</div></div>
+        <div class="chat-input"><input id="chat-in" placeholder="輸入問題..." onkeypress="if(event.key=='Enter')send()"><button class="btn btn-add" style="width:auto; padding:0 15px;" onclick="send()">➤</button></div>
     </div>
 
     <script type="module">
         import { loadFromCloud, saveToCloud } from './firebase-connect.js';
         const KEYS = { STUDENTS:'cafa_all_students_db', FIXED:'cafa_fixed_courses', ELECTIVE:'cafa_public_electives', RANKS:'cafa_rank_rules' };
         
-        // 全域變數
         let allC=[], myC=[], cur=null, sDB=[], rules=[];
-        let isPilot = false;
 
-        // --- 初始化 ---
         window.onload = async () => {
             const u = sessionStorage.getItem('cafa_user'); 
             if(!u) return location.href='index.html';
             cur = JSON.parse(u);
+            if(!cur.interests) cur.interests = []; // 初始化興趣陣列
             
-            try {
-                await sync();
-            } catch (e) {
-                console.error(e);
-                alert("網路不穩，請重新整理");
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
+            try { await sync(); } catch (e) { console.error(e); alert("連線異常"); } finally { document.getElementById('loading').style.display = 'none'; }
         };
 
-        // --- 核心同步 (邏輯修正：清除幽靈課程) ---
         async function sync() {
-            // 1. 載入資料
             sDB = (await loadFromCloud(KEYS.STUDENTS))||[];
             rules = (await loadFromCloud(KEYS.RANKS))||getDefaultRanks();
-            const fixed = (await loadFromCloud(KEYS.FIXED))||[];
-            const elective = (await loadFromCloud(KEYS.ELECTIVE))||[];
-            
-            // 合併所有課程資料庫
-            allC = [...fixed, ...elective];
+            allC = [...((await loadFromCloud(KEYS.FIXED))||[]), ...((await loadFromCloud(KEYS.ELECTIVE))||[])];
 
-            // 2. 找到自己並更新
             const me = sDB.find(s=>s.id===cur.id); 
             if(me){ 
                 cur = me; 
-                // BUG FIX: 過濾掉已經不存在於學校課表中的課程 (幽靈課程)
+                if(!cur.interests) cur.interests = []; // 確保同步後有此欄位
                 myC = (me.courses||[]).filter(my => allC.some(school => school.id === my.id));
-                // 如果有刪除幽靈課程，順便更新回資料庫
-                if(myC.length !== (me.courses||[]).length) {
-                    await save(); 
-                    console.log("已自動清除無效課程");
-                }
-            } else {
-                myC = []; // 預防錯誤
             }
-
             render();
             updateTrackUI();
+            restoreInterestTags(); // 還原按鈕狀態
         }
 
-        // --- 畫面渲染 ---
         function render() {
-            // 1. 排位計算 (GPA)
-            let tot=0, cr=0; 
-            myC.forEach(c => {
-                if(c.score !== undefined && c.score !== null && c.score !== "") {
-                    tot += parseInt(c.score) * parseInt(c.credit); 
-                    cr += parseInt(c.credit);
-                }
-            });
+            // Rank
+            let tot=0, cr=0; myC.forEach(c=>{if(c.score){tot+=parseInt(c.score)*parseInt(c.credit); cr+=parseInt(c.credit);}});
             let gpa = cr>0 ? (tot/cr).toFixed(1) : 0;
-            let rank = rules.find(r => gpa >= r.min) || rules[rules.length-1];
+            let rank = rules.find(r=>gpa>=r.min) || rules[rules.length-1];
             if(cr===0) rank = {name:'新進學員', color:'#ccc', reward:'-', punishment:'-'};
-            
-            document.getElementById('my-rank-name').innerText = rank.name;
-            document.getElementById('my-rank-name').style.color = rank.color;
-            document.getElementById('my-reward').innerText = rank.reward ? `🎁 ${rank.reward}` : '';
-            document.getElementById('my-punish').innerText = rank.punishment ? `⚠️ ${rank.punishment}` : '';
+            document.getElementById('my-rank-name').innerText = rank.name; document.getElementById('my-rank-name').style.color = rank.color;
+            document.getElementById('my-reward').innerText = rank.reward ? `🎁 ${rank.reward}` : ''; document.getElementById('my-punish').innerText = rank.punishment ? `⚠️ ${rank.punishment}` : '';
 
-            // 2. 課程列表 (加退選)
+            // Courses
             const tb = document.getElementById('course-list'); tb.innerHTML='';
-            // 只顯示選修，必修通常是教官灌檔
-            const electiveOnly = allC.filter(c => !c.isFixed && c.isOpen);
-            
-            if(electiveOnly.length === 0) tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#999;">目前無開放選修課程</td></tr>';
-
-            electiveOnly.forEach(c => {
+            allC.filter(c => !c.isFixed && c.isOpen).forEach(c => {
                 const has = myC.some(x=>x.id===c.id);
-                tb.innerHTML += `
-                    <tr>
-                        <td><span class="tag tag-elective">選修</span></td>
-                        <td>
-                            <div style="font-weight:bold;">${c.name}</div>
-                            <div style="font-size:12px;color:#666;">${c.time} | ${c.credit}學分</div>
-                        </td>
-                        <td style="text-align:right;">
-                            ${has ? '<span style="color:green;font-weight:bold;">已選</span>' : `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`}
-                        </td>
-                    </tr>`;
+                tb.innerHTML += `<tr><td><span class="tag tag-elective">選修</span></td><td><div style="font-weight:bold;">${c.name}</div><div style="font-size:12px;color:#666;">${c.time} | ${c.credit}學分</div></td><td style="text-align:right;">${has ? '<span style="color:green;font-weight:bold;">已選</span>' : `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`}</td></tr>`;
             });
 
-            // 3. 我的課表清單
+            // My List
             const mtb = document.getElementById('my-courses'); mtb.innerHTML='';
-            if(myC.length === 0) mtb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#999;">尚未選課</td></tr>';
-            
             myC.forEach(c => {
-                mtb.innerHTML += `
-                    <tr>
-                        <td><span class="tag ${c.isFixed?'tag-fixed':'tag-elective'}">${c.isFixed?'必修':'選修'}</span></td>
-                        <td>
-                            <div style="font-weight:bold;">${c.name}</div>
-                            <div style="font-size:12px;color:#666;">${c.location||'地點未定'}</div>
-                        </td>
-                        <td>${c.time}</td>
-                        <td style="text-align:right;">
-                            ${c.isFixed ? '<span style="opacity:0.5">🔒</span>' : `<button class="btn btn-drop" onclick="drop('${c.id}')">退選</button>`}
-                        </td>
-                    </tr>`;
+                mtb.innerHTML += `<tr><td><span class="tag ${c.isFixed?'tag-fixed':'tag-elective'}">${c.isFixed?'必修':'選修'}</span></td><td><div style="font-weight:bold;">${c.name}</div><div style="font-size:12px;color:#666;">${c.location||''}</div></td><td>${c.time}</td><td style="text-align:right;">${c.isFixed ? '🔒' : `<button class="btn btn-drop" onclick="drop('${c.id}')">退</button>`}</td></tr>`;
             });
             document.getElementById('credits').innerText = `已選學分: ${myC.reduce((a,b)=>a+parseInt(b.credit||0),0)}`;
 
-            // 4. 英雄榜 (排名邏輯)
-            renderLeaderboard();
-
-            // 5. 視覺化週課表
-            renderGrid();
-
-            // 6. 歷年成績
-            let hHTML = '<table style="width:100%"><thead><tr><th>課程</th><th>學分</th><th>分數</th></tr></thead><tbody>';
-            let hasScore = false;
-            myC.forEach(c => {
-                if(c.score) {
-                    hasScore = true;
-                    let color = c.score < 60 ? 'red' : 'green';
-                    hHTML += `<tr><td>${c.name}</td><td>${c.credit}</td><td style="color:${color};font-weight:bold;">${c.score}</td></tr>`;
-                }
-            });
-            hHTML += '</tbody></table>';
-            document.getElementById('history-list').innerHTML = hasScore ? hHTML : '<div style="text-align:center;padding:20px;color:#999">尚無成績紀錄</div>';
+            renderLeaderboard(); renderGrid();
             
-            // 7. 推薦課程列表
+            let hHTML = '<table style="width:100%"><thead><tr><th>課程</th><th>學分</th><th>分數</th></tr></thead><tbody>';
+            let hasScore = false; myC.forEach(c=>{if(c.score){hasScore=true; hHTML+=`<tr><td>${c.name}</td><td>${c.credit}</td><td style="color:${c.score<60?'red':'green'}">${c.score}</td></tr>`;}});
+            document.getElementById('history-list').innerHTML = hasScore ? hHTML+'</tbody></table>' : '<div style="text-align:center;padding:20px;color:#999">尚無成績紀錄</div>';
+            
             renderRecommendations();
         }
 
-        // --- 職涯與推薦系統 ---
-        window.setTrack = (t) => {
-            cur.careerTrack = t; 
-            updateTrackUI();
-            renderRecommendations(); // 立即刷新推薦
+        // --- 職涯與興趣系統 ---
+        window.setTrack = (t) => { cur.careerTrack = t; updateTrackUI(); renderRecommendations(); };
+        
+        // 興趣標籤切換功能
+        window.toggleInterest = (el, tag) => {
+            if(cur.interests.includes(tag)) {
+                cur.interests = cur.interests.filter(t => t !== tag);
+                el.classList.remove('active');
+            } else {
+                cur.interests.push(tag);
+                el.classList.add('active');
+            }
+            renderRecommendations(); // 即時更新推薦
         };
+
+        function restoreInterestTags() {
+            const tags = document.querySelectorAll('.interest-tag');
+            tags.forEach(el => {
+                const tagText = el.innerText.trim();
+                // 模糊比對，例如 "空氣動力" 包含 "空氣動力"
+                if(cur.interests.some(i => tagText.includes(i) || i.includes(tagText))) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+        }
         
         function updateTrackUI() {
             const t = cur.careerTrack;
-            const b1 = document.getElementById('btn-track-pilot');
-            const b2 = document.getElementById('btn-track-ground');
-            b1.style.borderColor = '#ddd'; b1.style.background = 'white';
-            b2.style.borderColor = '#ddd'; b2.style.background = 'white';
-
-            if(t === 'pilot') {
-                b1.style.borderColor = '#00308F'; b1.style.background = '#e3f2fd';
-                document.getElementById('rec-msg').innerText = "當前目標：飛行生 (Pilot)";
-            } else if(t === 'ground') {
-                b2.style.borderColor = '#e65100'; b2.style.background = '#fff3e0';
-                document.getElementById('rec-msg').innerText = "當前目標：地勤生 (Ground)";
-            }
+            const b1 = document.getElementById('btn-track-pilot'), b2 = document.getElementById('btn-track-ground');
+            b1.style.borderColor='#ddd'; b1.style.background='white'; b2.style.borderColor='#ddd'; b2.style.background='white';
+            if(t === 'pilot') { b1.style.borderColor='#00308F'; b1.style.background='#e3f2fd'; }
+            if(t === 'ground') { b2.style.borderColor='#e65100'; b2.style.background='#fff3e0'; }
+            
+            const intTxt = cur.interests.length > 0 ? ` + 興趣: ${cur.interests.join('、')}` : '';
+            document.getElementById('rec-msg').innerText = `當前設定：${t==='pilot'?'飛行生':'地勤生'}${intTxt}`;
         }
 
         function renderRecommendations() {
             const container = document.getElementById('rec-list-container');
             if(!cur.careerTrack) return;
             
-            // 簡單的關鍵字推薦邏輯
-            const keywords = cur.careerTrack === 'pilot' ? ['空氣', '飛行', '英文', '氣象'] : ['管理', '後勤', '機械', '維修', '補給'];
+            // 基礎關鍵字
+            let keywords = cur.careerTrack === 'pilot' ? ['空氣', '飛行', '英文', '氣象'] : ['管理', '後勤', '機械', '維修'];
+            // 加上使用者選的興趣標籤
+            if(cur.interests && cur.interests.length > 0) {
+                keywords = [...keywords, ...cur.interests];
+            }
             
             const recs = allC.filter(c => {
-                // 排除已選的
                 if(myC.some(m => m.id === c.id)) return false;
-                // 檢查名稱是否包含關鍵字
+                // 只要課程名稱包含任一關鍵字
                 return keywords.some(k => c.name.includes(k));
             });
 
             if(recs.length === 0) {
-                container.innerHTML = `<div style="padding:10px;text-align:center;">目前沒有針對「${cur.careerTrack==='pilot'?'飛行':'地勤'}」的額外推薦選修課。</div>`;
+                container.innerHTML = `<div style="padding:10px;text-align:center;">目前沒有符合您設定條件的推薦選修課。</div>`;
             } else {
                 container.innerHTML = recs.map(c => `
                     <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
-                        <div>
-                            <div style="font-weight:bold; color:var(--cafa-blue-main);">★ 推薦：${c.name}</div>
-                            <div style="font-size:12px; color:#666;">${c.time} | ${c.credit}學分</div>
-                        </div>
+                        <div><div style="font-weight:bold; color:var(--cafa-blue-main);">★ 推薦：${c.name}</div><div style="font-size:12px; color:#666;">${c.time} | ${c.credit}學分</div></div>
                         <button class="btn btn-add" onclick="add('${c.id}')">加選</button>
-                    </div>
-                `).join('');
+                    </div>`).join('');
             }
         }
 
-        // --- AI Chat 邏輯 (本地端 NLP) ---
-        window.send = function() { 
-            const input = document.getElementById('chat-in');
-            const txt = input.value.trim();
-            if(!txt) return; 
-            
-            // User Message
-            const body = document.getElementById('chat-body');
-            body.innerHTML += `<div class="chat-msg msg-user">${txt}</div>`;
-            input.value = '';
-            body.scrollTop = body.scrollHeight;
-
-            // AI Logic
-            setTimeout(() => {
-                let reply = "抱歉，我不太理解。您可以問我關於「課程時間」、「學分」或「推薦」的問題。";
-                
-                // 1. 查詢課程時間 (e.g., "空氣動力學什麼時候?")
-                const courseQuery = allC.find(c => txt.includes(c.name) || (txt.includes("什麼時候") && c.name.includes(txt.replace("什麼時候","").trim())));
-                
-                if (txt.includes("排位") || txt.includes("等級")) {
-                    reply = "排位是根據你的 GPA 決定的！90分以上是王者，80分是鑽石，繼續加油！";
-                } else if (txt.includes("學分")) {
-                    const total = myC.reduce((a,b)=>a+parseInt(b.credit||0),0);
-                    reply = `你目前已選了 ${total} 學分。`;
-                } else if (txt.includes("推薦") || txt.includes("選什麼")) {
-                     reply = cur.careerTrack ? `既然你是${cur.careerTrack==='pilot'?'飛行':'地勤'}生，我建議你參考「職涯推薦」分頁中的課程！` : "請先到「職涯與推薦」設定你的志向，我才能給你建議喔！";
-                } else if (courseQuery) {
-                    reply = `「${courseQuery.name}」的時間是 ${courseQuery.time}，地點在 ${courseQuery.location||'未定'}，是${courseQuery.credit}學分的${courseQuery.type}課。`;
-                } else if (txt.includes("你好") || txt.includes("嗨")) {
-                    reply = "嗨！我是 CAFA AI 助教，選課上有什麼問題嗎？";
-                }
-
-                body.innerHTML += `<div class="chat-msg msg-ai">${reply}</div>`; 
-                body.scrollTop = body.scrollHeight;
-            }, 600); 
-        };
-
-        // --- 工具函式 ---
-        window.toggleSidebar = () => {
-            const sb = document.getElementById('sidebar');
-            const ov = document.getElementById('overlay');
-            sb.classList.toggle('open');
-            ov.classList.toggle('show');
-        };
-        
+        window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); };
         window.switchTab = (id) => {
             ['selection','schedule','leaderboard','visual','career','history'].forEach(v=>document.getElementById(v+'-view').style.display='none');
             document.getElementById(id+'-view').style.display='block';
             document.querySelectorAll('.menu-item').forEach(e=>e.classList.remove('active'));
             const map={'selection':0,'schedule':1,'leaderboard':2,'visual':3,'career':4,'history':5};
             if(document.querySelectorAll('.menu-item')[map[id]]) document.querySelectorAll('.menu-item')[map[id]].classList.add('active');
-            
-            // 手機版自動收合選單
             if(window.innerWidth <= 768) window.toggleSidebar();
         };
 
         window.logout = () => { sessionStorage.removeItem('cafa_user'); location.href='index.html'; };
         
-        // --- 核心邏輯 (加退選、存檔) ---
-        window.add = async (id) => { 
-            const c = allC.find(x=>x.id===id); 
-            if(checkConflict(c)) return alert("衝堂！該時段已有課程。"); 
-            myC.push(c); 
-            await save(); 
-            alert("加選成功！");
-            render(); 
-        };
+        window.add = async (id) => { const c=allC.find(x=>x.id===id); if(checkConflict(c))return alert("衝堂！"); myC.push(c); await save(); alert("加選成功"); render(); };
+        window.drop = async (id) => { if(!confirm("確定退選?"))return; myC=myC.filter(x=>x.id!==id); await save(); render(); };
         
-        window.drop = async (id) => { 
-            if(!confirm("確定要退選這門課嗎？")) return;
-            myC = myC.filter(x=>x.id!==id); 
-            await save(); 
-            render(); 
-        };
+        window.saveCareer = async () => { await save(); alert("職涯與興趣設定已儲存！"); };
+        async function save() { const idx = sDB.findIndex(s=>s.id===cur.id); if(idx>-1){ sDB[idx].courses=myC; sDB[idx].careerTrack=cur.careerTrack; sDB[idx].interests=cur.interests; await saveToCloud(KEYS.STUDENTS, sDB); } }
+
+        function checkConflict(n) { if(!n.time)return false; let [d1,p1]=n.time.split('/'); let pp1=p1.split(','); return myC.some(o=>{if(!o.time)return false; let [d2,p2]=o.time.split('/'); return d1===d2 && pp1.some(p=>p2.split(',').includes(p)); }); }
         
-        window.saveCareer = async () => {
-            await save();
-            alert("職涯志向已儲存！AI 將為您重新計算推薦課程。");
-        };
-
-        async function save() { 
-            const idx = sDB.findIndex(s=>s.id===cur.id); 
-            if(idx>-1){
-                sDB[idx].courses = myC; 
-                sDB[idx].careerTrack = cur.careerTrack; 
-                await saveToCloud(KEYS.STUDENTS, sDB);
-            } 
-        }
-
-        // 衝堂檢查 (支援 "一/3,4" 格式)
-        function checkConflict(newCourse) { 
-            if(!newCourse.time) return false; 
-            let [d1, p1] = newCourse.time.split('/'); 
-            let periods1 = p1.split(','); 
-            
-            return myC.some(existing => {
-                if(!existing.time) return false; 
-                let [d2, p2] = existing.time.split('/'); 
-                let periods2 = p2.split(','); 
-                // 同一天 且 節次有重疊
-                return d1 === d2 && periods1.some(p => periods2.includes(p)); 
-            }); 
-        }
-
         function renderGrid() {
             const t = document.getElementById('visual-body'); t.innerHTML='';
             const dMap={"一":1,"二":2,"三":3,"四":4,"五":5};
-            for(let i=1;i<=10;i++) {
-                t.innerHTML += `<tr>
-                    <td style="background:#f8f9fa;font-size:12px;">${i}</td>
-                    <td id="c1-${i}"></td><td id="c2-${i}"></td><td id="c3-${i}"></td><td id="c4-${i}"></td><td id="c5-${i}"></td>
-                </tr>`;
-            }
-            myC.forEach(c => {
-                if(!c.time) return; let [d,p]=c.time.split('/'); let dy=dMap[d];
-                p.split(',').forEach(x => { 
-                    let el=document.getElementById(`c${dy}-${x}`); 
-                    if(el) el.innerHTML=`<div class="course-block ${c.isFixed?'block-fixed':'block-normal'}">${c.name}<br>${c.location||''}</div>`; 
-                });
-            });
+            for(let i=1;i<=10;i++) t.innerHTML += `<tr><td style="background:#f8f9fa;font-size:12px;">${i}</td><td id="c1-${i}"></td><td id="c2-${i}"></td><td id="c3-${i}"></td><td id="c4-${i}"></td><td id="c5-${i}"></td></tr>`;
+            myC.forEach(c => { if(!c.time)return; let [d,p]=c.time.split('/'); let dy=dMap[d]; p.split(',').forEach(x => { let el=document.getElementById(`c${dy}-${x}`); if(el) el.innerHTML=`<div class="course-block ${c.isFixed?'block-fixed':'block-normal'}">${c.name}<br>${c.location||''}</div>`; }); });
         }
         
         function renderLeaderboard() {
@@ -525,14 +361,24 @@
                 let rowClass = d.id === cur.id ? 'background:#fff8e1;' : '';
                 let badge = `<span style="background:${d.rank.color};padding:4px 8px;border-radius:12px;font-size:12px;font-weight:bold;">${d.rank.name}</span>`;
                 if(d.gpa === -1) badge = '<span style="color:#ccc;font-size:12px;">尚無成績</span>';
-                lbBody.innerHTML += `<tr style="${rowClass}">
-                    <td>${i+1}</td><td><span class="tag tag-fixed">${d.classId}</span></td><td style="font-weight:bold">${d.name}</td><td>${badge}</td>
-                </tr>`;
+                lbBody.innerHTML += `<tr style="${rowClass}"><td>${i+1}</td><td><span class="tag tag-fixed">${d.classId}</span></td><td style="font-weight:bold">${d.name}</td><td>${badge}</td></tr>`;
             });
         }
-
-        // 預設 Rank 規則
         function getDefaultRanks() { return [{name:'王者', min:90, color:'#ffe0b2', reward:'禮券', punishment:''}, {name:'鑽石', min:80, color:'#b3e5fc', reward:'', punishment:''}, {name:'黃金', min:70, color:'#fff9c4', reward:'', punishment:''}, {name:'白銀', min:60, color:'#f5f5f5', reward:'', punishment:''}, {name:'青銅', min:0, color:'#ffccbc', reward:'', punishment:''}]; }
+
+        // Chat
+        window.send = function() { 
+            const i=document.getElementById('chat-in'); const txt=i.value.trim(); if(!txt)return; 
+            const b=document.getElementById('chat-body'); b.innerHTML+=`<div class="chat-msg msg-user">${txt}</div>`; i.value=''; b.scrollTop=b.scrollHeight;
+            setTimeout(()=>{
+                let r="請洽教務處";
+                if(txt.includes("排位")||txt.includes("等級")) r="排位是根據你的 GPA 決定的！90分以上是王者。";
+                else if(txt.includes("學分")) r=`你目前已選了 ${myC.reduce((a,b)=>a+parseInt(b.credit||0),0)} 學分。`;
+                else if(txt.includes("推薦")||txt.includes("選什麼")) r=cur.careerTrack?`建議參考「職涯推薦」頁面，我也會根據你的興趣標籤「${cur.interests.join('、')}」來找課！`:"請先設定志向與興趣！";
+                else { const c=allC.find(x=>txt.includes(x.name)); if(c) r=`「${c.name}」在${c.time}，是${c.credit}學分。`; }
+                b.innerHTML+=`<div class="chat-msg msg-ai">${r}</div>`; b.scrollTop=b.scrollHeight;
+            },600); 
+        };
     </script>
 </body>
 </html>
