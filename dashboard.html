@@ -264,7 +264,6 @@
             cur = JSON.parse(u);
             if(!cur.interests) cur.interests = []; 
             
-            // 啟動監聽，不再使用 setInterval
             initListeners();
             
             const savedTheme = localStorage.getItem('cafa_theme');
@@ -273,10 +272,8 @@
         };
 
         function initListeners() {
-            // 監聽學生資料 (同步選課人數、成績、排位)
             listenToCloud(KEYS.STUDENTS, (val) => {
                 sDB = val || [];
-                // 更新自己
                 const me = sDB.find(s => s.id === cur.id);
                 if(me) { 
                     cur = me; 
@@ -286,10 +283,8 @@
                 render(); 
             });
 
-            // 監聽課程
             listenToCloud(KEYS.FIXED, (val) => { fixedCourses = val || []; updateAllCourses(); });
             listenToCloud(KEYS.ELECTIVE, (val) => { electiveCourses = val || []; updateAllCourses(); });
-            // 監聽規則
             listenToCloud(KEYS.RANKS, (val) => { rules = val || getDefaultRanks(); render(); });
         }
 
@@ -301,10 +296,8 @@
 
         function refreshMyCourses() {
             if (cur && cur.courses) {
-                // 用 ID 對應最新課程資訊
                 myC = cur.courses.map(c_mini => {
                     const full = allC.find(f => f.id === c_mini.id);
-                    // 保留成績與學分，但更新課程名稱/時間等
                     return full ? { ...full, score: c_mini.score } : c_mini;
                 });
             }
@@ -318,7 +311,6 @@
         };
 
         function render() {
-            // Rank
             let tot=0, cr=0; myC.forEach(c=>{if(c.score){tot+=parseInt(c.score)*parseInt(c.credit); cr+=parseInt(c.credit);}});
             let gpa = cr>0 ? (tot/cr).toFixed(1) : 0;
             let rank = rules.find(r=>gpa>=r.min) || rules[rules.length-1];
@@ -326,7 +318,6 @@
             document.getElementById('my-rank-name').innerText = rank.name; document.getElementById('my-rank-name').style.color = rank.color;
             document.getElementById('my-reward').innerText = rank.reward ? `🎁 ${rank.reward}` : ''; document.getElementById('my-punish').innerText = rank.punishment ? `⚠️ ${rank.punishment}` : '';
 
-            // 計算人數
             const counts = {};
             sDB.forEach(s => {
                 if(s.courses) {
@@ -337,27 +328,36 @@
             });
 
             const tb = document.getElementById('course-list'); tb.innerHTML='';
-            allC.filter(c => !c.isFixed && c.isOpen).forEach(c => {
+            
+            // 排序：必修先顯示
+            const sortedCourses = allC.sort((a,b) => (a.isFixed === b.isFixed) ? 0 : a.isFixed ? -1 : 1);
+
+            sortedCourses.filter(c => c.isOpen).forEach(c => {
                 const has = myC.some(x=>x.id===c.id);
                 const current = counts[c.id] || 0;
                 const max = c.max || 999;
                 const isFull = current >= max;
 
                 let btnHtml = '';
-                if(has) {
-                    btnHtml = '<span style="color:green;font-weight:bold;">已選</span>';
-                } else if(isFull) {
-                    btnHtml = '<button class="btn" style="background:#ccc;cursor:not-allowed;" disabled>🚫 額滿</button>';
+                if(c.isFixed) {
+                     if(has) btnHtml = '<span style="color:#e65100;font-weight:bold;">已排定 (必修)</span>';
+                     else btnHtml = '<span style="color:red;font-size:12px;">同步中...</span>';
                 } else {
-                    btnHtml = `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`;
+                    if(has) {
+                        btnHtml = '<span style="color:green;font-weight:bold;">已選</span>';
+                    } else if(isFull) {
+                        btnHtml = '<button class="btn" style="background:#ccc;cursor:not-allowed;" disabled>🚫 額滿</button>';
+                    } else {
+                        btnHtml = `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`;
+                    }
                 }
 
                 tb.innerHTML += `
                     <tr>
-                        <td><span class="tag tag-elective">選修</span></td>
+                        <td><span class="tag ${c.isFixed?'tag-fixed':'tag-elective'}">${c.isFixed?'必修':'選修'}</span></td>
                         <td>
                             <div style="font-weight:bold;">${c.name}</div>
-                            <div style="font-size:12px;color:#666;">${c.time} | ${c.credit}學分 | <span style="color:${isFull?'red':'#00308F'}">${current} / ${max} 人</span></div>
+                            <div style="font-size:12px;color:#666;">${c.time} | ${c.credit}學分 | ${c.location||''} | <span style="color:${isFull?'red':'#00308F'}">${current} / ${max} 人</span></div>
                         </td>
                         <td style="text-align:right;">${btnHtml}</td>
                     </tr>`;
@@ -419,19 +419,14 @@
 
         window.logout = () => { sessionStorage.removeItem('cafa_user'); location.href='index.html'; };
         
-        // --- 操作邏輯：使用 listenToCloud 自動刷新 ---
         window.add = async (id) => { 
             const c = allC.find(x=>x.id===id); 
-            // 即時計算人數
             let currentCount = 0;
             sDB.forEach(s => { if(s.courses && s.courses.some(sc => sc.id === id)) currentCount++; });
             if(currentCount >= (c.max || 999)) return alert("來晚了一步！該課程剛剛額滿了。");
             if(checkConflict(c)) return alert("衝堂！該時段已有課程。"); 
-            
-            // 只需要儲存基本的 ID 和 Name 到學生資料
             myC.push(c); 
             await save(); 
-            // 注意：這裡不呼叫 render()，因為 save 會觸發 onSnapshot，onSnapshot 會呼叫 render()
             alert("加選成功！"); 
         };
         
@@ -446,7 +441,6 @@
         async function save() { 
             const idx = sDB.findIndex(s=>s.id===cur.id); 
             if(idx>-1){ 
-                // 只存必要欄位回資料庫
                 const coursesToSave = myC.map(c => ({id: c.id, name: c.name, score: c.score, credit: c.credit}));
                 sDB[idx].courses = coursesToSave; 
                 sDB[idx].careerTrack = cur.careerTrack; 
@@ -488,7 +482,7 @@
         }
         function getDefaultRanks() { return [{name:'王者', min:90, color:'#ffe0b2', reward:'禮券', punishment:''}, {name:'鑽石', min:80, color:'#b3e5fc', reward:'', punishment:''}, {name:'黃金', min:70, color:'#fff9c4', reward:'', punishment:''}, {name:'白銀', min:60, color:'#f5f5f5', reward:'', punishment:''}, {name:'青銅', min:0, color:'#ffccbc', reward:'', punishment:''}]; }
 
-        // --- AI Chat (強化版) ---
+        // --- AI Chat ---
         window.toggleChat = () => {
             const w = document.getElementById('chat-win');
             w.style.display = w.style.display === 'none' || w.style.display === '' ? 'flex' : 'none';
@@ -498,23 +492,19 @@
             const i=document.getElementById('chat-in'); const txt=i.value.trim(); if(!txt)return; 
             const b=document.getElementById('chat-body'); b.innerHTML+=`<div class="chat-msg msg-user">${txt}</div>`; i.value=''; b.scrollTop=b.scrollHeight;
             
-            // AI 邏輯：這裡使用「即時監聽」更新後的 myC, allC, cur 變數
             setTimeout(()=>{
                 let r="請洽教務處";
                 if(txt.includes("排位")||txt.includes("等級")||txt.includes("分數")) {
                     let tot=0, cr=0; myC.forEach(c=>{if(c.score){tot+=parseInt(c.score)*parseInt(c.credit); cr+=parseInt(c.credit);}});
                     let gpa = cr>0 ? (tot/cr).toFixed(1) : 0;
-                    r = `你目前的 GPA 是 ${gpa} 分。排位判定標準是：90分以上王者，80分鑽石。`;
+                    r = `你目前的 GPA 是 ${gpa} 分。`;
                 }
                 else if(txt.includes("學分")) {
                     r=`你目前已選了 ${myC.reduce((a,b)=>a+parseInt(b.credit||0),0)} 學分。`;
                 }
                 else if(txt.includes("推薦")||txt.includes("選什麼")||txt.includes("不知道選")) {
                     if(cur.careerTrack) {
-                        r = `既然你想當「${cur.careerTrack==='pilot'?'飛行員':'地勤人員'}」，而且有興趣「${cur.interests.join('、')}」...`;
-                        const rec = allC.find(c => !myC.some(m=>m.id===c.id) && cur.interests.some(int => c.name.includes(int)));
-                        if(rec) r += ` 我推薦你選「${rec.name}」！`;
-                        else r += ` 建議你可以去「職涯與推薦」頁面看看！`;
+                        r = `既然你想當「${cur.careerTrack==='pilot'?'飛行員':'地勤人員'}」，推薦你去職涯推薦區看看！`;
                     } else {
                         r = "請先去「職涯與推薦」頁面設定你的志向，我才能給你建議喔！";
                     }
@@ -535,5 +525,3 @@
     </script>
 </body>
 </html>
-
-
