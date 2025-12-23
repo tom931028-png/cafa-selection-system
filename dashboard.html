@@ -274,15 +274,17 @@
         function initListeners() {
             listenToCloud(KEYS.STUDENTS, (val) => {
                 sDB = val || [];
+                // 當學生資料庫變動時，更新當前使用者的資料
                 const me = sDB.find(s => s.id === cur.id);
                 if(me) { 
                     cur = me; 
                     if(!cur.interests) cur.interests = [];
-                    refreshMyCourses();
+                    refreshMyCourses(); // 資料更新後立刻刷新我的課表
                 }
                 render(); 
             });
 
+            // 監聽課程資料庫，確保管理員新增課程時，學生端能收到
             listenToCloud(KEYS.FIXED, (val) => { fixedCourses = val || []; updateAllCourses(); });
             listenToCloud(KEYS.ELECTIVE, (val) => { electiveCourses = val || []; updateAllCourses(); });
             listenToCloud(KEYS.RANKS, (val) => { rules = val || getDefaultRanks(); render(); });
@@ -294,15 +296,26 @@
             render();
         }
 
+        // --- ★ 修正：讓學生看到的課表永遠與管理員同步 (Single Source of Truth) ---
         function refreshMyCourses() {
             if (cur && cur.courses) {
+                // 不直接相信學生資料庫裡的詳細資訊 (因可能是舊的)，而是用 ID 去全校課程庫 (allC) 撈最新資料
                 myC = cur.courses.map(c_mini => {
                     const full = allC.find(f => f.id === c_mini.id);
-                    return full ? { ...full, score: c_mini.score } : c_mini;
+                    if (full) {
+                        // 如果找到了最新課程資料，合併它 (保留學生的分數 score)
+                        return { ...full, score: c_mini.score };
+                    } else {
+                        // 如果找不到 (可能課程被刪除了)，暫時顯示舊資料
+                        return c_mini;
+                    }
                 });
+            } else {
+                myC = [];
             }
         }
 
+        // --- 渲染與邏輯 ---
         window.setTheme = (t) => {
             const c = document.getElementById('visual-card');
             c.className = 'card'; 
@@ -318,6 +331,7 @@
             document.getElementById('my-rank-name').innerText = rank.name; document.getElementById('my-rank-name').style.color = rank.color;
             document.getElementById('my-reward').innerText = rank.reward ? `🎁 ${rank.reward}` : ''; document.getElementById('my-punish').innerText = rank.punishment ? `⚠️ ${rank.punishment}` : '';
 
+            // 計算各課程當前人數
             const counts = {};
             sDB.forEach(s => {
                 if(s.courses) {
@@ -327,41 +341,52 @@
                 }
             });
 
+            // --- 渲染選課列表 ---
             const tb = document.getElementById('course-list'); tb.innerHTML='';
             
-            // 排序：必修先顯示
-            const sortedCourses = allC.sort((a,b) => (a.isFixed === b.isFixed) ? 0 : a.isFixed ? -1 : 1);
+            // 如果 allC 是空的，顯示提示
+            if (allC.length === 0) {
+                tb.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">目前沒有開放的課程，請稍後再試。</td></tr>';
+            } else {
+                // 排序：必修先顯示
+                const sortedCourses = allC.sort((a,b) => (a.isFixed === b.isFixed) ? 0 : a.isFixed ? -1 : 1);
+    
+                sortedCourses.forEach(c => {
+                    // 只有開啟的課程才顯示在選課列表，或者如果我已經選了這門課也要顯示(方便退選)
+                    if (!c.isOpen && !myC.some(x=>x.id===c.id)) return;
 
-            sortedCourses.filter(c => c.isOpen).forEach(c => {
-                const has = myC.some(x=>x.id===c.id);
-                const current = counts[c.id] || 0;
-                const max = c.max || 999;
-                const isFull = current >= max;
-
-                let btnHtml = '';
-                if(c.isFixed) {
-                     if(has) btnHtml = '<span style="color:#e65100;font-weight:bold;">已排定 (必修)</span>';
-                     else btnHtml = '<span style="color:red;font-size:12px;">同步中...</span>';
-                } else {
-                    if(has) {
-                        btnHtml = '<span style="color:green;font-weight:bold;">已選</span>';
-                    } else if(isFull) {
-                        btnHtml = '<button class="btn" style="background:#ccc;cursor:not-allowed;" disabled>🚫 額滿</button>';
+                    const has = myC.some(x=>x.id===c.id);
+                    const current = counts[c.id] || 0;
+                    const max = c.max || 999;
+                    const isFull = current >= max;
+    
+                    let btnHtml = '';
+                    if(c.isFixed) {
+                         // 必修課狀態
+                         if(has) btnHtml = '<span style="color:#e65100;font-weight:bold;">已排定 (必修)</span>';
+                         else btnHtml = '<span style="color:red;font-size:12px;">系統同步中...</span>';
                     } else {
-                        btnHtml = `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`;
+                        // 選修課按鈕
+                        if(has) {
+                            btnHtml = '<button class="btn btn-drop" onclick="drop(\''+c.id+'\')">退選</button>';
+                        } else if(isFull) {
+                            btnHtml = '<button class="btn" style="background:#ccc;cursor:not-allowed;" disabled>🚫 額滿</button>';
+                        } else {
+                            btnHtml = `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`;
+                        }
                     }
-                }
-
-                tb.innerHTML += `
-                    <tr>
-                        <td><span class="tag ${c.isFixed?'tag-fixed':'tag-elective'}">${c.isFixed?'必修':'選修'}</span></td>
-                        <td>
-                            <div style="font-weight:bold;">${c.name}</div>
-                            <div style="font-size:12px;color:#666;">${c.time} | ${c.credit}學分 | ${c.location||''} | <span style="color:${isFull?'red':'#00308F'}">${current} / ${max} 人</span></div>
-                        </td>
-                        <td style="text-align:right;">${btnHtml}</td>
-                    </tr>`;
-            });
+    
+                    tb.innerHTML += `
+                        <tr>
+                            <td><span class="tag ${c.isFixed?'tag-fixed':'tag-elective'}">${c.isFixed?'必修':'選修'}</span></td>
+                            <td>
+                                <div style="font-weight:bold;">${c.name}</div>
+                                <div style="font-size:12px;color:#666;">${c.time} | ${c.credit}學分 | ${c.location||''} | <span style="color:${isFull?'red':'#00308F'}">${current} / ${max} 人</span></div>
+                            </td>
+                            <td style="text-align:right;">${btnHtml}</td>
+                        </tr>`;
+                });
+            }
 
             const mtb = document.getElementById('my-courses'); mtb.innerHTML='';
             myC.forEach(c => { mtb.innerHTML += `<tr><td><span class="tag ${c.isFixed?'tag-fixed':'tag-elective'}">${c.isFixed?'必修':'選修'}</span></td><td><div style="font-weight:bold;">${c.name}</div><div style="font-size:12px;color:#666;">${c.location||''}</div></td><td>${c.time}</td><td style="text-align:right;">${c.isFixed ? '🔒' : `<button class="btn btn-drop" onclick="drop('${c.id}')">退</button>`}</td></tr>`; });
@@ -376,6 +401,7 @@
             renderInterestTags();
         }
 
+        // --- 其他功能保持原樣，僅需確保 drop 函數有正確運作 ---
         window.setTrack = (t) => { cur.careerTrack = t; updateTrackUI(); renderRecommendations(); };
         function renderInterestTags() {
             const pCont = document.getElementById('preset-tags-container'), cCont = document.getElementById('custom-tags-container');
@@ -425,7 +451,9 @@
             sDB.forEach(s => { if(s.courses && s.courses.some(sc => sc.id === id)) currentCount++; });
             if(currentCount >= (c.max || 999)) return alert("來晚了一步！該課程剛剛額滿了。");
             if(checkConflict(c)) return alert("衝堂！該時段已有課程。"); 
-            myC.push(c); 
+            
+            // 加選時只存簡易資料，完整資料靠 refreshMyCourses 結合
+            myC.push({id: c.id, name: c.name, credit: c.credit, time: c.time, isFixed: false}); 
             await save(); 
             alert("加選成功！"); 
         };
@@ -441,7 +469,17 @@
         async function save() { 
             const idx = sDB.findIndex(s=>s.id===cur.id); 
             if(idx>-1){ 
-                const coursesToSave = myC.map(c => ({id: c.id, name: c.name, score: c.score, credit: c.credit}));
+                // 儲存時，確保只存必要欄位，並保留分數
+                const coursesToSave = myC.map(c => ({
+                    id: c.id, 
+                    name: c.name, 
+                    score: c.score, 
+                    credit: c.credit,
+                    time: c.time,
+                    isFixed: c.isFixed,
+                    location: c.location,
+                    teacher: c.teacher
+                }));
                 sDB[idx].courses = coursesToSave; 
                 sDB[idx].careerTrack = cur.careerTrack; 
                 sDB[idx].interests = cur.interests; 
@@ -449,7 +487,16 @@
             } 
         }
 
-        function checkConflict(n) { if(!n.time)return false; let [d1,p1]=n.time.split('/'); let pp1=p1.split(','); return myC.some(o=>{if(!o.time)return false; let [d2,p2]=o.time.split('/'); return d1===d2 && pp1.some(p=>p2.split(',').includes(p)); }); }
+        function checkConflict(n) { 
+            if(!n.time)return false; 
+            let [d1,p1]=n.time.replace(/\s/g, '').split('/'); 
+            let pp1=p1.split(','); 
+            return myC.some(o=>{
+                if(!o.time)return false; 
+                let [d2,p2]=o.time.replace(/\s/g, '').split('/'); 
+                return d1===d2 && pp1.some(p=>p2.split(',').includes(p)); 
+            }); 
+        }
         
         function renderGrid() {
             const t = document.getElementById('visual-body'); t.innerHTML='';
@@ -458,8 +505,15 @@
                 t.innerHTML += `<tr><td style="font-size:14px;">${i}<div style="font-size:10px; color:#999; margin-top:2px;">${TIME_SLOTS[i-1]}</div></td><td id="c1-${i}"></td><td id="c2-${i}"></td><td id="c3-${i}"></td><td id="c4-${i}"></td><td id="c5-${i}"></td></tr>`;
             }
             myC.forEach(c => {
-                if(!c.time) return; let [d,p]=c.time.split('/'); let dy=dMap[d];
-                p.split(',').forEach(x => { let el=document.getElementById(`c${dy}-${x}`); if(el) el.innerHTML=`<div class="course-block ${c.isFixed?'block-fixed':'block-elective'}"><div style="font-weight:bold;">${c.name}</div><div style="opacity:0.9; font-size:11px;">${c.location||'無地點'}</div></div>`; });
+                if(!c.time) return; 
+                let cleanTime = c.time.replace(/\s/g, '');
+                let [d,p]=cleanTime.split('/'); 
+                let dy=dMap[d];
+                if (!dy || !p) return;
+                p.split(',').forEach(x => { 
+                    let el=document.getElementById(`c${dy}-${x}`); 
+                    if(el) el.innerHTML=`<div class="course-block ${c.isFixed?'block-fixed':'block-elective'}"><div style="font-weight:bold;">${c.name}</div><div style="opacity:0.9; font-size:11px;">${c.location||'無地點'}</div></div>`; 
+                });
             });
         }
         
