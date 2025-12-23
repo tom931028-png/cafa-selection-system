@@ -15,7 +15,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- 舊的讀取 (保留以備不時之需，但主要改用監聽) ---
+// 讀取 (單次)
 export async function loadFromCloud(key) {
     try {
         const docRef = doc(db, "CAFA_System", key);
@@ -27,25 +27,25 @@ export async function loadFromCloud(key) {
     }
 }
 
-// --- 新增：即時監聽 (Real-time Listener) ---
-export function listenToCloud(key, callback) {
-    const docRef = doc(db, "CAFA_System", key);
-    // onSnapshot 會建立一個長連線，當資料庫變動時，自動觸發 callback
-    return onSnapshot(docRef, (doc) => {
-        const val = doc.exists() ? doc.data().value : [];
-        callback(val);
-    });
-}
-
+// 寫入
 export async function saveToCloud(key, data) {
     try {
         await setDoc(doc(db, "CAFA_System", key), {
             value: data,
             lastUpdate: new Date().toLocaleString()
         });
-        // 這裡不需要 alert，因為監聽器會自動更新畫面
     } catch (error) {
         console.error("儲存失敗:", error);
         alert("連線錯誤，資料未儲存");
     }
+}
+
+// ★ 新增：即時監聽 (Real-time Listener) ★
+export function listenToCloud(key, callback) {
+    const docRef = doc(db, "CAFA_System", key);
+    // onSnapshot 會建立長連線，資料庫一變動就執行 callback
+    return onSnapshot(docRef, (doc) => {
+        const val = doc.exists() ? doc.data().value : null;
+        callback(val);
+    });
 }
