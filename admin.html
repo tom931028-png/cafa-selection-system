@@ -69,7 +69,7 @@
         
         /* Excel 匯入區塊 */
         .import-section { background: #e8eaf6; padding: 15px; border-radius: 10px; border: 2px dashed #9fa8da; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-        .grade-import-section { background: #e0f2f1; border-color: #80cbc4; } /* 成績匯入區換個顏色 */
+        .grade-import-section { background: #e0f2f1; border-color: #80cbc4; }
         .btn-import { background: #3f51b5; color: white; }
         .btn-template { background: #7986cb; color: white; }
 
@@ -243,7 +243,6 @@
 
         <div id="grades-view" style="display:none;">
             <div class="header-bar"><div class="header-title">成績管理</div></div>
-            
             <div class="import-section grade-import-section">
                 <div>
                     <strong>📊 批次匯入成績 (Excel)</strong>
@@ -267,14 +266,35 @@
     </div>
 
     <script type="module">
-        import { loadFromCloud, saveToCloud } from './firebase-connect.js';
+        import { loadFromCloud, saveToCloud, listenToCloud } from './firebase-connect.js';
         const KEYS = { STUDENTS:'cafa_all_students_db', FIXED:'cafa_fixed_courses', ELECTIVE:'cafa_public_electives', RANKS:'cafa_rank_rules' };
         let studentDB=[], fixedCourses=[], electiveCourses=[], rankRules=[];
 
-        window.onload = async () => { 
-            await refreshAll(); document.getElementById('loading').style.display='none'; setInterval(refreshAll, 10000);
-            const savedTheme = localStorage.getItem('cafa_admin_theme'); if(savedTheme) setTheme(savedTheme);
+        window.onload = () => { 
+            // 啟動即時監聽
+            initAdminListeners();
+            document.getElementById('loading').style.display='none'; 
+            const savedTheme = localStorage.getItem('cafa_admin_theme'); 
+            if(savedTheme) setTheme(savedTheme);
         };
+
+        function initAdminListeners() {
+            // 監聽學生 (包含註冊與選課變動)
+            listenToCloud(KEYS.STUDENTS, (val) => {
+                studentDB = val || [];
+                renderMonitor();
+                renderStudents(); 
+                updateSels();
+                // 若正在成績頁面，即時刷新
+                if(document.getElementById('grades-view').style.display === 'block') loadGrades();
+            });
+
+            // 監聽課程
+            listenToCloud(KEYS.FIXED, (val) => { fixedCourses = val || []; renderCourses(); renderTeacherSchedule(); updateSels(); });
+            listenToCloud(KEYS.ELECTIVE, (val) => { electiveCourses = val || []; renderCourses(); renderTeacherSchedule(); updateSels(); });
+            // 監聽規則
+            listenToCloud(KEYS.RANKS, (val) => { rankRules = val || getDefaultRanks(); renderRankSettings(); });
+        }
 
         window.setTheme = (t) => {
             const c = document.getElementById('schedule-card'); c.className = 'card';
@@ -292,22 +312,13 @@
             if(id === 'ranks') renderRankSettings();
         };
 
-        // 綁定全域
+        // 綁定全域函式
         window.addStudent=addStudent; window.deleteStudent=deleteStudent; window.approveStudent=approveStudent;
         window.addCourse=addCourse; window.delCourse=delCourse; window.loadGrades=loadGrades; window.saveGrades=saveGrades; window.toggleStatus=toggleStatus;
         window.addNewRankRow=addNewRankRow; window.deleteRankRow=deleteRankRow; window.saveRankRules=saveRankRules; window.updateRankPreview=updateRankPreview; window.renderTeacherSchedule=renderTeacherSchedule;
         window.batchApprove=batchApprove; window.batchDelete=batchDelete; window.toggleSelectAll=toggleSelectAll;
         window.downloadStudentTemplate=downloadStudentTemplate; window.handleStudentImport=handleStudentImport;
         window.downloadGradeTemplate=downloadGradeTemplate; window.handleGradeImport=handleGradeImport;
-
-        async function refreshAll() {
-            studentDB = (await loadFromCloud(KEYS.STUDENTS))||[];
-            fixedCourses = (await loadFromCloud(KEYS.FIXED))||[];
-            electiveCourses = (await loadFromCloud(KEYS.ELECTIVE))||[];
-            rankRules = (await loadFromCloud(KEYS.RANKS))||getDefaultRanks();
-            
-            renderMonitor(); renderRankSettings(); renderStudents(); renderCourses(); updateSels();
-        }
 
         function renderRankSettings() {
             const t = document.getElementById('rank-rules-body'); t.innerHTML = '';
@@ -327,11 +338,11 @@
         async function saveRankRules() {
             const rows = document.querySelectorAll('.rank-row'); const newRules = [];
             rows.forEach(row => { const name = row.querySelector('.r-name').value; const min = parseInt(row.querySelector('.r-min').value); const color = row.querySelector('.r-color').value; const reward = row.querySelector('.r-reward').value; const punishment = row.querySelector('.r-punish').value; if(name && !isNaN(min)) newRules.push({ name, min, color, reward, punishment }); });
-            newRules.sort((a,b) => b.min - a.min); rankRules = newRules;
-            await saveToCloud(KEYS.RANKS, rankRules); alert("✅ 設定已儲存！"); renderRankSettings();
+            newRules.sort((a,b) => b.min - a.min); 
+            await saveToCloud(KEYS.RANKS, newRules); 
+            alert("✅ 設定已儲存！"); 
         }
 
-        // --- 學生管理 (優化：獨立審核區) ---
         function renderStudents() {
             const pendingList = studentDB.filter(s => s.status === 'pending');
             const activeList = studentDB.filter(s => s.status !== 'pending');
@@ -375,7 +386,7 @@
             if(checkboxes.length === 0) return alert("請先勾選要核准的申請！");
             let count = 0;
             checkboxes.forEach(cb => { const s = studentDB.find(x => x.id === cb.value); if(s) { s.status = 'active'; count++; } });
-            if(count > 0) { await saveToCloud(KEYS.STUDENTS, studentDB); alert(`✅ 已一鍵核准 ${count} 位學生！`); renderStudents(); }
+            if(count > 0) { await saveToCloud(KEYS.STUDENTS, studentDB); alert(`✅ 已一鍵核准 ${count} 位學生！`); }
         }
 
         async function batchDelete() {
@@ -383,11 +394,10 @@
             if(checkboxes.length === 0) return alert("請先勾選要刪除的項目！");
             if(!confirm(`確定要拒絕/刪除這 ${checkboxes.length} 筆申請嗎？`)) return;
             const idsToDelete = Array.from(checkboxes).map(cb => cb.value);
-            studentDB = studentDB.filter(s => !idsToDelete.includes(s.id));
-            await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents();
+            const newDB = studentDB.filter(s => !idsToDelete.includes(s.id));
+            await saveToCloud(KEYS.STUDENTS, newDB); 
         }
 
-        // --- Excel 匯入功能 (帳號) ---
         function downloadStudentTemplate() {
             const ws = XLSX.utils.aoa_to_sheet([["學號","姓名","班級","密碼"],["114001","王小明","114-航太","1234"],["114002","李大華","114-航管","1234"]]);
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "學生名單");
@@ -414,14 +424,13 @@
                         addedCount++;
                     }
                 });
-                if(addedCount > 0) { await saveToCloud(KEYS.STUDENTS, studentDB); alert(`✅ 成功匯入 ${addedCount} 筆學生資料！`); renderStudents(); } 
+                if(addedCount > 0) { await saveToCloud(KEYS.STUDENTS, studentDB); alert(`✅ 成功匯入 ${addedCount} 筆學生資料！`); } 
                 else { alert("沒有新增任何資料 (可能學號重複或格式錯誤)"); }
                 document.getElementById('import-student-file').value = '';
             };
             reader.readAsArrayBuffer(file);
         }
 
-        // --- Excel 匯入功能 (成績) ---
         function downloadGradeTemplate() {
             const ws = XLSX.utils.aoa_to_sheet([["學號","課程代碼","分數"],["114001","C001","85"],["114001","C002","90"],["114002","C001","70"]]);
             const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "成績匯入");
@@ -446,7 +455,6 @@
                     if(sid && cid && !isNaN(score)) {
                         const student = studentDB.find(s => s.id === sid);
                         if(student && student.courses) {
-                            // 嘗試用 ID 找，找不到則用 Name 找 (增加容錯)
                             const course = student.courses.find(c => c.id === cid || c.name === cid);
                             if(course) {
                                 course.score = score;
@@ -459,7 +467,6 @@
                 if(updatedCount > 0) { 
                     await saveToCloud(KEYS.STUDENTS, studentDB); 
                     alert(`✅ 成功匯入/更新了 ${updatedCount} 筆成績資料！`); 
-                    loadGrades(); // 如果當前有選學生，刷新顯示
                 } else { 
                     alert("未更新任何成績。請確認學號與課程代碼是否正確，且學生已選修該課程。"); 
                 }
@@ -468,9 +475,9 @@
             reader.readAsArrayBuffer(file);
         }
 
-        async function addStudent() { const id=document.getElementById('s_id').value; const idx=studentDB.findIndex(s=>s.id===id); const obj={id, name:document.getElementById('s_name').value, classId:document.getElementById('s_class').value, password:document.getElementById('s_pass').value, status:'active', courses:[], totalCredits:0}; if(idx>-1){Object.assign(studentDB[idx], obj);}else{studentDB.push(obj);} await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents(); }
-        async function deleteStudent(id) { if(confirm('刪除?')){studentDB=studentDB.filter(s=>s.id!==id); await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents();} }
-        async function approveStudent(id) { const idx = studentDB.findIndex(s=>s.id===id); if(idx > -1) { studentDB[idx].status = 'active'; await saveToCloud(KEYS.STUDENTS, studentDB); renderStudents(); } }
+        async function addStudent() { const id=document.getElementById('s_id').value; const idx=studentDB.findIndex(s=>s.id===id); const obj={id, name:document.getElementById('s_name').value, classId:document.getElementById('s_class').value, password:document.getElementById('s_pass').value, status:'active', courses:[], totalCredits:0}; if(idx>-1){Object.assign(studentDB[idx], obj);}else{studentDB.push(obj);} await saveToCloud(KEYS.STUDENTS, studentDB); }
+        async function deleteStudent(id) { if(confirm('刪除?')){const newDB=studentDB.filter(s=>s.id!==id); await saveToCloud(KEYS.STUDENTS, newDB);} }
+        async function approveStudent(id) { const idx = studentDB.findIndex(s=>s.id===id); if(idx > -1) { studentDB[idx].status = 'active'; await saveToCloud(KEYS.STUDENTS, studentDB); } }
 
         function renderTeacherSchedule() {
             const tea = document.getElementById('teacher-schedule-selector').value; const tbody = document.getElementById('teacher-schedule-body'); tbody.innerHTML = ''; 
@@ -481,15 +488,32 @@
         function renderMonitor() { const t = document.getElementById('student-list-body'); t.innerHTML=''; studentDB.forEach(s => { let tot=0, cr=0; (s.courses||[]).forEach(c => { if(c.score){ tot+=c.score*c.credit; cr+=c.credit; } }); let gpa = cr>0 ? (tot/cr).toFixed(1) : 0; t.innerHTML += `<tr><td>${s.name} (${s.id})</td><td>${s.classId||'-'}</td><td>${s.careerTrack==='pilot'?'飛行':'地勤'}</td><td>${gpa}</td><td>${(s.courses||[]).length} 科</td></tr>`; }); }
         function getDefaultRanks() { return [{name:'王者', min:90, color:'#ffe0b2', reward:'禮券', punishment:''}, {name:'鑽石', min:80, color:'#b3e5fc', reward:'', punishment:''}, {name:'黃金', min:70, color:'#fff9c4', reward:'', punishment:''}, {name:'白銀', min:60, color:'#f5f5f5', reward:'', punishment:''}, {name:'青銅', min:0, color:'#ffccbc', reward:'', punishment:''}]; }
         
-        async function addCourse() { const t=document.getElementById('c_type').value; const max=parseInt(document.getElementById('c_max').value)||40; const c={id:document.getElementById('c_id').value, name:document.getElementById('c_name').value, credit:parseInt(document.getElementById('c_cr').value), time:document.getElementById('c_time').value, teacher:document.getElementById('c_tea').value, max:max, type:t==='fixed'?'必修':'選修', isFixed:t==='fixed', isOpen:true}; if(t==='fixed')fixedCourses.push(c);else electiveCourses.push(c); await saveToCloud(KEYS.FIXED,fixedCourses); await saveToCloud(KEYS.ELECTIVE,electiveCourses); renderCourses(); }
-        async function delCourse(t,i) { if(t==='fixed')fixedCourses.splice(i,1);else electiveCourses.splice(i,1); await saveToCloud(KEYS.FIXED,fixedCourses); await saveToCloud(KEYS.ELECTIVE,electiveCourses); renderCourses(); }
-        async function toggleStatus(i) { electiveCourses[i].isOpen=!electiveCourses[i].isOpen; await saveToCloud(KEYS.ELECTIVE,electiveCourses); renderCourses(); }
+        async function addCourse() { const t=document.getElementById('c_type').value; const max=parseInt(document.getElementById('c_max').value)||40; const c={id:document.getElementById('c_id').value, name:document.getElementById('c_name').value, credit:parseInt(document.getElementById('c_cr').value), time:document.getElementById('c_time').value, teacher:document.getElementById('c_tea').value, max:max, type:t==='fixed'?'必修':'選修', isFixed:t==='fixed', isOpen:true}; 
+            let newArr;
+            if(t==='fixed') { newArr = [...fixedCourses, c]; await saveToCloud(KEYS.FIXED, newArr); }
+            else { newArr = [...electiveCourses, c]; await saveToCloud(KEYS.ELECTIVE, newArr); }
+        }
+        async function delCourse(t,i) { 
+            if(t==='fixed'){ const n=[...fixedCourses]; n.splice(i,1); await saveToCloud(KEYS.FIXED, n); }
+            else { const n=[...electiveCourses]; n.splice(i,1); await saveToCloud(KEYS.ELECTIVE, n); }
+        }
+        async function toggleStatus(i) { 
+            const n=[...electiveCourses]; n[i].isOpen=!n[i].isOpen; 
+            await saveToCloud(KEYS.ELECTIVE, n); 
+        }
         
         function renderCourses() { document.getElementById('course-list').innerHTML = [...fixedCourses.map((c,i)=>`<tr><td>必修</td><td>${c.name}</td><td>${c.time}</td><td>-</td><td><button class="btn btn-del" onclick="delCourse('fixed',${i})">刪</button></td></tr>`), ...electiveCourses.map((c,i)=>`<tr><td>選修</td><td>${c.name}</td><td>${c.time}</td><td>${c.max||40}</td><td><button class="btn" onclick="toggleStatus(${i})" style="background:${c.isOpen?'green':'grey'};width:auto;margin-right:5px;">${c.isOpen?'開':'關'}</button><button class="btn btn-del" onclick="delCourse('elect',${i})">刪</button></td></tr>`)].join(''); }
         
         function loadGrades() { const sid=document.getElementById('g_stu').value; const t=document.getElementById('grade-body'); t.innerHTML=''; const s=studentDB.find(x=>x.id===sid); if(!s)return; s.courses.forEach(c=>{ t.innerHTML+=`<tr><td>${c.name}</td><td>${c.credit}</td><td><input type="number" id="sc-${c.id}" value="${c.score||''}" style="width:80px"></td></tr>`; }); }
-        async function saveGrades() { const sid=document.getElementById('g_stu').value; const idx=studentDB.findIndex(x=>x.id===sid); studentDB[idx].courses=studentDB[idx].courses.map(c=>{const v=document.getElementById(`sc-${c.id}`).value; if(v)c.score=parseInt(v); return c;}); await saveToCloud(KEYS.STUDENTS, studentDB); alert("成績已儲存"); }
-        function updateSels() { const tea = document.getElementById('teacher-schedule-selector'); const ts=[...new Set([...fixedCourses,...electiveCourses].map(c=>c.teacher).filter(x=>x))].sort(); const savedT = tea.value; tea.innerHTML='<option value="">-- 請選擇教官 --</option>'; ts.forEach(t=>tea.add(new Option(t,t))); tea.value = savedT; const stu = document.getElementById('g_stu'); stu.innerHTML='<option value="">-- 請選擇學生輸入成績 --</option>'; studentDB.forEach(s=>stu.add(new Option(`${s.id} ${s.name}`,s.id))); }
+        async function saveGrades() { const sid=document.getElementById('g_stu').value; const idx=studentDB.findIndex(x=>x.id===sid); 
+            if(idx>-1) {
+                const newCourses = studentDB[idx].courses.map(c=>{const v=document.getElementById(`sc-${c.id}`).value; if(v)c.score=parseInt(v); return c;}); 
+                studentDB[idx].courses = newCourses;
+                await saveToCloud(KEYS.STUDENTS, studentDB); 
+                alert("成績已儲存");
+            }
+        }
+        function updateSels() { const tea = document.getElementById('teacher-schedule-selector'); const ts=[...new Set([...fixedCourses,...electiveCourses].map(c=>c.teacher).filter(x=>x))].sort(); const savedT = tea.value; tea.innerHTML='<option value="">-- 請選擇教官 --</option>'; ts.forEach(t=>tea.add(new Option(t,t))); tea.value = savedT; const stu = document.getElementById('g_stu'); const savedS = stu.value; stu.innerHTML='<option value="">-- 請選擇學生輸入成績 --</option>'; studentDB.forEach(s=>stu.add(new Option(`${s.id} ${s.name}`,s.id))); stu.value = savedS; }
     </script>
 </body>
 </html>
