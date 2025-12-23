@@ -45,6 +45,7 @@
         .btn-approve { background-color: #28a745; padding: 6px 12px; font-size: 12px; }
         .btn-print { background-color: #607d8b; }
         .btn-create { background-color: #28a745; margin-bottom: 15px; }
+        .btn-sync { background-color: #e65100; margin-bottom: 10px; width: 100%; }
 
         /* Excel 匯入區塊 */
         .import-section { background: #e8eaf6; padding: 15px; border-radius: 10px; border: 2px dashed #9fa8da; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
@@ -249,6 +250,7 @@
 
             <div class="card">
                 <h3>📚 現有課程列表</h3>
+                <div id="sync-btn-container"></div>
                 <div style="max-height:600px; overflow-y:auto;">
                     <table id="course-table"><thead><tr><th>類別</th><th>名稱 (代碼)</th><th>時間</th><th>地點</th><th>教官</th><th>狀態/人數</th><th>操作</th></tr></thead><tbody id="course-list"></tbody></table>
                 </div>
@@ -296,7 +298,6 @@
                 renderMonitor(); 
                 renderStudents(); 
                 updateSels(); 
-                const currentStu = document.getElementById('g_stu').value;
                 if(document.getElementById('schedule-view').style.display==='block') renderTeacherSchedule(); 
             });
             listenToCloud(KEYS.FIXED, (val) => { fixedCourses = val || []; renderCourses(); renderTeacherSchedule(); updateSels(); });
@@ -304,72 +305,72 @@
             listenToCloud(KEYS.RANKS, (val) => { rankRules = val || getDefaultRanks(); renderRankSettings(); });
         }
 
+        // --- ★ 強制同步功能：一鍵補齊所有學生的必修課 ---
+        window.syncFixedCoursesToAll = async () => {
+            if(!confirm("確定要將目前的「必修課程」強制同步給所有學生嗎？\n(這將補齊學生缺漏的必修課)")) return;
+            
+            let updateCount = 0;
+            studentDB.forEach(s => {
+                if(!s.courses) s.courses = [];
+                fixedCourses.forEach(fc => {
+                    // 如果學生沒有這門必修，就加上去
+                    if(!s.courses.some(c => c.id === fc.id)) {
+                        // 檢查衝突並移除選修
+                        s.courses = s.courses.filter(exist => {
+                             if(!exist.isFixed && checkTimeConflict(exist.time, fc.time)) return false; 
+                             return true;
+                        });
+                        s.courses.push({ id: fc.id, name: fc.name, credit: fc.credit, time: fc.time, isFixed: true, location: fc.location, teacher: fc.teacher });
+                        updateCount++;
+                    }
+                });
+            });
+
+            if(updateCount > 0) {
+                await saveToCloud(KEYS.STUDENTS, studentDB);
+                alert(`✅ 同步完成！共補齊了 ${updateCount} 筆課程紀錄。`);
+            } else {
+                alert("所有學生的必修課都已經是最新的，無需更新。");
+            }
+        };
+
         // --- 核心升級：導師課表 ---
         window.renderTeacherSchedule = () => {
             const tea = document.getElementById('teacher-schedule-selector').value; 
             const tbody = document.getElementById('teacher-schedule-body'); 
             tbody.innerHTML = ''; 
 
-            // 重繪表格，加入時間軸
             for(let i=1;i<=10;i++) {
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="schedule-time-col">
-                            第${i}節<br>
-                            <span style="font-size:10px; font-weight:normal;">${TIME_SLOTS[i-1]}</span>
-                        </td>
-                        <td id="t1-${i}"></td><td id="t2-${i}"></td><td id="t3-${i}"></td><td id="t4-${i}"></td><td id="t5-${i}"></td>
-                    </tr>`;
+                tbody.innerHTML += `<tr><td class="schedule-time-col">第${i}節<br><span style="font-size:10px; font-weight:normal;">${TIME_SLOTS[i-1]}</span></td><td id="t1-${i}"></td><td id="t2-${i}"></td><td id="t3-${i}"></td><td id="t4-${i}"></td><td id="t5-${i}"></td></tr>`;
             }
 
-            if(!tea) {
-                document.getElementById('schedule-title').innerText = "請選擇教官查看課表";
-                return;
-            }
-
+            if(!tea) { document.getElementById('schedule-title').innerText = "請選擇教官查看課表"; return; }
             document.getElementById('schedule-title').innerText = `📅 ${tea} 教官課表`;
 
-            // 篩選該教官課程
             const courses = [...fixedCourses, ...electiveCourses].filter(c => c.teacher === tea);
-
-            // 計算每門課的學生人數
             const counts = {};
             studentDB.forEach(s => {
                 if(s.courses) {
                     s.courses.forEach(sc => {
-                        if(courses.some(c => c.id === sc.id)) {
-                            counts[sc.id] = (counts[sc.id] || 0) + 1;
-                        }
+                        if(courses.some(c => c.id === sc.id)) { counts[sc.id] = (counts[sc.id] || 0) + 1; }
                     });
                 }
             });
 
-            // 渲染課程區塊
             courses.forEach(c => { 
                 if(!c.time) return; 
                 let [d, p] = c.time.split('/'); 
                 const dMap = {"一":1, "二":2, "三":3, "四":4, "五":5}; 
-                const periods = p.split(',');
-                const count = counts[c.id] || 0;
-                
-                periods.forEach(x => { 
+                p.split(',').forEach(x => { 
                     let el = document.getElementById(`t${dMap[d]}-${x}`); 
                     if(el) {
-                        // 處理衝堂顯示
                         if(el.innerHTML !== "") el.innerHTML += `<div style="border-top:1px solid rgba(255,255,255,0.3); margin-top:2px; padding-top:2px;"></div>`;
-                        
-                        el.innerHTML += `
-                            <div class="course-block" style="background:${c.isFixed ? 'linear-gradient(135deg, #e65100, #ff9800)' : 'linear-gradient(135deg, #00308F, #1976d2)'}; cursor:pointer;" onclick="alert('【課程詳情】\\n\\n名稱：${c.name}\\n代碼：${c.id}\\n地點：${c.location||'未定'}\\n學分：${c.credit}\\n選課人數：${count} 人')">
-                                <div style="font-weight:bold; font-size:13px;">${c.name}</div>
-                                <div style="font-size:11px; opacity:0.9;">${c.location||'📍 無地點'}</div>
-                                <div style="font-size:11px; margin-top:3px; background:rgba(0,0,0,0.15); border-radius:4px; padding:1px 6px; display:inline-block;">👥 ${count}人</div>
-                            </div>`;
+                        el.innerHTML += `<div class="course-block" style="background:${c.isFixed ? 'linear-gradient(135deg, #e65100, #ff9800)' : 'linear-gradient(135deg, #00308F, #1976d2)'}; cursor:pointer;" onclick="alert('【課程詳情】\\n\\n名稱：${c.name}\\n代碼：${c.id}\\n地點：${c.location||'未定'}\\n學分：${c.credit}\\n選課人數：${counts[c.id]||0} 人')"><div style="font-weight:bold; font-size:13px;">${c.name}</div><div style="font-size:11px; opacity:0.9;">${c.location||'📍 無地點'}</div><div style="font-size:11px; margin-top:3px; background:rgba(0,0,0,0.15); border-radius:4px; padding:1px 6px; display:inline-block;">👥 ${counts[c.id]||0}人</div></div>`;
                     }
                 }); 
             });
         };
 
-        // --- 成績管理邏輯 ---
         window.loadGrades = () => { 
             const sid=document.getElementById('g_stu').value; 
             const t=document.getElementById('grade-body'); t.innerHTML=''; 
@@ -497,6 +498,9 @@
         function renderCourses() {
             const t = document.getElementById('course-list');
             let html = '';
+            // ★ 按鈕
+            document.getElementById('sync-btn-container').innerHTML = `<button class="btn btn-sync" onclick="syncFixedCoursesToAll()">🔄 強制同步必修課給所有學生</button>`;
+            
             fixedCourses.forEach((c, i) => {
                 html += `<tr style="background:#fff3e0"><td><span style="color:#e65100;font-weight:bold">🔒 必修</span></td><td>${c.name} (${c.id})</td><td>${c.time}</td><td>${c.location||'-'}</td><td>${c.teacher||'-'}</td><td>全體</td><td><button class="btn btn-del" onclick="delCourse('fixed',${i})">刪除</button></td></tr>`;
             });
@@ -546,8 +550,17 @@
         };
         function getDefaultRanks() { return [{name:'王者', min:90, color:'#ffe0b2', reward:'禮券', punishment:''}, {name:'鑽石', min:80, color:'#b3e5fc', reward:'', punishment:''}, {name:'黃金', min:70, color:'#fff9c4', reward:'', punishment:''}, {name:'白銀', min:60, color:'#f5f5f5', reward:'', punishment:''}, {name:'青銅', min:0, color:'#ffccbc', reward:'', punishment:''}]; }
 
-        // Students
-        function renderStudents() {
+        // Students & Auto-Sync on creation
+        window.addStudent = async () => { 
+            const id=document.getElementById('s_id').value; 
+            if(studentDB.some(s=>s.id===id))return alert("重複"); 
+            // 建立時自動帶入必修
+            const initCourses = fixedCourses.map(fc => ({ id: fc.id, name: fc.name, credit: fc.credit, time: fc.time, isFixed: true, location: fc.location, teacher: fc.teacher }));
+            studentDB.push({id, name:document.getElementById('s_name').value, classId:document.getElementById('s_class').value, password:document.getElementById('s_pass').value, status:'active', courses:initCourses}); 
+            await saveToCloud(KEYS.STUDENTS, studentDB); 
+        };
+
+        window.renderStudents = () => {
             const pendingList = studentDB.filter(s => s.status === 'pending');
             const activeList = studentDB.filter(s => s.status !== 'pending');
             const badge = document.getElementById('pending-badge');
@@ -556,7 +569,7 @@
             
             document.getElementById('pending-list-body').innerHTML = pendingList.length === 0 ? '' : pendingList.map(s => `<tr><td class="checkbox-cell"><input type="checkbox" class="pending-checkbox" value="${s.id}"></td><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td><button class="btn btn-approve" onclick="approveStudent('${s.id}')">核准</button></td></tr>`).join('');
             document.getElementById('active-list-body').innerHTML = activeList.map(s => `<tr><td>🟢</td><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td><button class="btn btn-del" onclick="deleteStudent('${s.id}')">刪</button></td></tr>`).join('');
-        }
+        };
         window.toggleSelectAll = (src, type) => { document.querySelectorAll(`.${type}-checkbox`).forEach(cb => cb.checked = src.checked); };
         window.batchApprove = async () => {
             const cbs = document.querySelectorAll('.pending-checkbox:checked'); if(cbs.length===0) return alert("未選取");
@@ -578,11 +591,16 @@
             const r=new FileReader(); r.onload=async(e)=>{
                 const d=new Uint8Array(e.target.result), wb=XLSX.read(d,{type:'array'});
                 const json=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                let cnt=0; json.forEach(r=>{ 
+                let cnt=0; 
+                const initCourses = fixedCourses.map(fc => ({ id: fc.id, name: fc.name, credit: fc.credit, time: fc.time, isFixed: true, location: fc.location, teacher: fc.teacher }));
+                json.forEach(r=>{ 
                     const id=String(r['學號']||r['id']).trim(); 
-                    if(id && !studentDB.some(s=>s.id===id)) { studentDB.push({id, name:String(r['姓名']||r['name']), classId:String(r['班級']||''), password:String(r['密碼']||'1234'), status:'active', courses:[]}); cnt++; }
+                    if(id && !studentDB.some(s=>s.id===id)) { 
+                        studentDB.push({ id, name:String(r['姓名']||r['name']), classId:String(r['班級']||''), password:String(r['密碼']||'1234'), status:'active', courses:[...initCourses] }); 
+                        cnt++; 
+                    }
                 });
-                if(cnt>0) await saveToCloud(KEYS.STUDENTS, studentDB); alert(`匯入 ${cnt} 筆`); document.getElementById('import-student-file').value='';
+                if(cnt>0) await saveToCloud(KEYS.STUDENTS, studentDB); alert(`匯入 ${cnt} 筆，已帶入必修`); document.getElementById('import-student-file').value='';
             }; r.readAsArrayBuffer(f);
         };
         window.downloadGradeTemplate = () => { const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["學號","課程代碼","分數"],["114001","C101","85"]]), "範本"); XLSX.writeFile(wb, "成績範本.xlsx"); };
@@ -600,8 +618,6 @@
             }; r.readAsArrayBuffer(f);
         };
 
-        // CRUD
-        window.addStudent = async () => { const id=document.getElementById('s_id').value; if(studentDB.some(s=>s.id===id))return alert("重複"); studentDB.push({id, name:document.getElementById('s_name').value, classId:document.getElementById('s_class').value, password:document.getElementById('s_pass').value, status:'active', courses:[]}); await saveToCloud(KEYS.STUDENTS, studentDB); };
         window.deleteStudent = async (id) => { if(confirm("刪除?")){ await saveToCloud(KEYS.STUDENTS, studentDB.filter(s=>s.id!==id)); } };
         window.approveStudent = async (id) => { const s=studentDB.find(x=>x.id===id); if(s){s.status='active'; await saveToCloud(KEYS.STUDENTS, studentDB);} };
         
@@ -609,3 +625,4 @@
     </script>
 </body>
 </html>
+
