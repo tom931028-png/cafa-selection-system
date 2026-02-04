@@ -3,189 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>空軍軍官學校選課系統 | CAFA Login</title>
+    <title>CAFA 選課登入</title>
     <style>
-        /* --- 主題定義 --- */
-        :root { --cafa-blue: #00308F; --cafa-gold: #FFD700; --cafa-accent: #0a4abf; }
-        body {
-            font-family: "Microsoft JhengHei", "Helvetica Neue", Arial, sans-serif;
-            background-image: linear-gradient(rgba(0, 48, 143, 0.6), rgba(0, 20, 60, 0.8)), url('https://images.unsplash.com/photo-1589404559553-3857d2340884?q=80&w=2070&auto=format&fit=crop');
-            background-size: cover; background-position: center; background-repeat: no-repeat;
-            display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; color: #333;
-        }
-        .login-card {
-            background: rgba(255, 255, 255, 0.95); width: 90%; max-width: 400px;
-            padding: 40px 30px; border-radius: 15px; box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-            text-align: center; backdrop-filter: blur(10px); transition: 0.3s;
-        }
-        .logo-area { margin-bottom: 20px; }
-        .logo-text { font-size: 24px; font-weight: bold; color: var(--cafa-blue); margin-top: 10px; letter-spacing: 1px; }
-        .input-group { margin-bottom: 20px; text-align: left; }
-        .input-group label { display: block; font-size: 14px; color: #666; margin-bottom: 5px; font-weight: bold; }
-        .input-group input {
-            width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; outline: none; transition: 0.3s; box-sizing: border-box;
-        }
-        .input-group input:focus { border-color: var(--cafa-blue); box-shadow: 0 0 8px rgba(0, 48, 143, 0.2); }
-        .btn-login {
-            width: 100%; padding: 14px; background: linear-gradient(90deg, var(--cafa-blue), var(--cafa-accent));
-            color: white; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(0, 48, 143, 0.3);
-        }
-        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 48, 143, 0.4); }
-        .btn-login:disabled { background: #ccc; cursor: not-allowed; transform: none; }
-        .msg-box { margin-top: 15px; font-size: 14px; color: #d32f2f; display: none; background: #ffebee; padding: 10px; border-radius: 6px; }
-        .footer { margin-top: 25px; font-size: 12px; color: #888; border-top: 1px solid #eee; padding-top: 15px; }
-        .switch-link { color: var(--cafa-blue); cursor: pointer; font-weight: bold; text-decoration: underline; margin-top: 10px; display: block; }
+        body { background: #00308F; height: 100vh; display: flex; justify-content: center; align-items: center; font-family: sans-serif; }
+        .box { background: white; padding: 40px; border-radius: 10px; width: 300px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #FFD700; border: none; font-weight: bold; cursor: pointer; color: #00308F; border-radius: 5px; margin-top: 10px; }
+        .link { margin-top: 15px; font-size: 12px; color: #666; cursor: pointer; text-decoration: underline; }
     </style>
 </head>
 <body>
-    <div class="login-card" id="card-container">
-        <div class="logo-area">
-            <div style="font-size:50px;">✈️</div>
-            <div class="logo-text">空軍官校選課系統</div>
-            <div style="font-size:12px; color:#666;">Republic of China Air Force Academy</div>
-        </div>
-
+    <div class="box">
+        <h1 style="color:#00308F;">✈️ CAFA</h1>
         <div id="login-form">
-            <h3 style="color:#555;">學員登入</h3>
-            <form onsubmit="handleLogin(event)">
-                <div class="input-group">
-                    <label>學號 / 帳號</label>
-                    <input type="text" id="user_id" placeholder="請輸入學號 (Admin)" required>
-                </div>
-                <div class="input-group">
-                    <label>密碼</label>
-                    <input type="password" id="password" placeholder="請輸入密碼" required>
-                </div>
-                <button type="submit" class="btn-login" id="btn-login">進入系統</button>
-            </form>
-            <div class="switch-link" onclick="toggleMode('register')">還沒有帳號？立即註冊</div>
+            <input id="lid" placeholder="學號 (Admin用: admin)">
+            <input id="lpw" type="password" placeholder="密碼 (Admin用: admin)">
+            <button onclick="login()">登入系統</button>
+            <div class="link" onclick="toggle('reg')">還沒帳號？點此註冊</div>
         </div>
-
-        <div id="register-form" style="display:none;">
-            <h3 style="color:#555;">新進學員註冊</h3>
-            <form onsubmit="handleRegister(event)">
-                <div class="input-group">
-                    <label>學號</label>
-                    <input type="text" id="reg_id" placeholder="請輸入學號" required>
-                </div>
-                <div class="input-group">
-                    <label>真實姓名</label>
-                    <input type="text" id="reg_name" placeholder="請輸入姓名" required>
-                </div>
-                <div class="input-group">
-                    <label>班級 (例如: 114-航太)</label>
-                    <input type="text" id="reg_class" placeholder="請輸入班級" required>
-                </div>
-                <div class="input-group">
-                    <label>設定密碼</label>
-                    <input type="password" id="reg_pass" placeholder="密碼" required>
-                </div>
-                <div class="input-group">
-                    <label>確認密碼</label>
-                    <input type="password" id="reg_pass2" placeholder="再次輸入密碼" required>
-                </div>
-                <button type="submit" class="btn-login" style="background:linear-gradient(90deg, #28a745, #20c997);">提交註冊</button>
-            </form>
-            <div class="switch-link" onclick="toggleMode('login')">已有帳號？返回登入</div>
+        
+        <div id="reg-form" style="display:none;">
+            <input id="rid" placeholder="學號">
+            <input id="rname" placeholder="姓名">
+            <input id="rclass" placeholder="班級">
+            <input id="rpw" type="password" placeholder="設定密碼">
+            <button onclick="reg()">送出申請</button>
+            <div class="link" onclick="toggle('login')">返回登入</div>
         </div>
-
-        <div class="msg-box" id="msg"></div>
-        <div class="footer">Copyright © 2025 CAFA Course System</div>
     </div>
 
     <script type="module">
         import { loadFromCloud, saveToCloud } from './firebase-connect.js';
 
-        // 切換 登入/註冊 介面
-        window.toggleMode = function(mode) {
-            document.getElementById('msg').style.display='none';
-            if(mode === 'register') {
-                document.getElementById('login-form').style.display = 'none';
-                document.getElementById('register-form').style.display = 'block';
-            } else {
-                document.getElementById('login-form').style.display = 'block';
-                document.getElementById('register-form').style.display = 'none';
-            }
+        window.toggle = (mode) => {
+            document.getElementById('login-form').style.display = mode==='login'?'block':'none';
+            document.getElementById('reg-form').style.display = mode==='reg'?'block':'none';
         };
 
-        // 處理登入
-        window.handleLogin = async function(event) {
-            event.preventDefault();
-            const btn = document.getElementById('btn-login');
-            const msg = document.getElementById('msg');
-            const id = document.getElementById('user_id').value.trim();
-            const pass = document.getElementById('password').value.trim();
+        window.login = async () => {
+            const id = document.getElementById('lid').value;
+            const pw = document.getElementById('lpw').value;
+            
+            if(id === 'admin' && pw === 'admin') return location.href = 'admin.html';
 
-            btn.disabled = true; btn.innerText = "驗證中...";
-            msg.style.display = 'none';
-
-            // 管理員後門
-            if((id==='admin' || id==='teacher') && pass==='admin') {
-                window.location.href = 'admin.html'; return;
-            }
-
-            try {
-                const db = (await loadFromCloud('cafa_all_students_db')) || [];
-                const student = db.find(s => s.id === id);
-                
-                if(!student) throw new Error("帳號不存在，請先註冊。");
-                if(student.password !== pass) throw new Error("密碼錯誤。");
-                if(student.status === 'pending') throw new Error("帳號審核中，請等待教官開通。"); // 關鍵：阻擋未審核
-
-                sessionStorage.setItem('cafa_user', JSON.stringify(student));
-                window.location.href = 'dashboard.html';
-            } catch (e) {
-                msg.innerText = "❌ " + e.message; msg.style.display = 'block';
-                btn.disabled = false; btn.innerText = "進入系統";
-            }
+            const db = (await loadFromCloud('cafa_all_students_db')) || [];
+            const s = db.find(x => x.id === id);
+            
+            if(!s) return alert("帳號不存在");
+            if(s.password !== pw) return alert("密碼錯誤");
+            if(s.status === 'pending') return alert("帳號審核中，請通知教官");
+            
+            sessionStorage.setItem('cafa_user', JSON.stringify(s));
+            location.href = 'dashboard.html';
         };
 
-        // 處理註冊
-        window.handleRegister = async function(event) {
-            event.preventDefault();
-            const msg = document.getElementById('msg');
-            const id = document.getElementById('reg_id').value.trim();
-            const name = document.getElementById('reg_name').value.trim();
-            const cls = document.getElementById('reg_class').value.trim();
-            const p1 = document.getElementById('reg_pass').value;
-            const p2 = document.getElementById('reg_pass2').value;
+        window.reg = async () => {
+            const id = document.getElementById('rid').value;
+            const name = document.getElementById('rname').value;
+            const pw = document.getElementById('rpw').value;
+            const cls = document.getElementById('rclass').value;
+            if(!id || !name || !pw) return alert("請填寫完整");
 
-            if(p1 !== p2) {
-                alert("兩次密碼輸入不一致！"); return;
-            }
+            let db = (await loadFromCloud('cafa_all_students_db')) || [];
+            if(db.some(s => s.id === id)) return alert("此學號已註冊");
 
-            try {
-                let db = (await loadFromCloud('cafa_all_students_db')) || [];
-                if(db.some(s => s.id === id)) {
-                    alert("此學號已註冊過！"); return;
-                }
-
-                // 新增學生資料，狀態預設為 pending
-                const newStudent = {
-                    id: id,
-                    name: name,
-                    classId: cls,
-                    password: p1,
-                    status: 'pending', // 待審核狀態
-                    courses: [],
-                    careerTrack: '',
-                    interests: []
-                };
-
-                db.push(newStudent);
-                await saveToCloud('cafa_all_students_db', db);
-
-                alert("註冊申請已送出！\n\n請等待教官/管理者審核通過後即可登入。");
-                window.toggleMode('login'); // 切回登入頁
-
-            } catch(e) {
-                console.error(e);
-                alert("註冊失敗，請檢查網路連線。");
-            }
+            // 自動抓取目前的必修課給新生
+            const fixedCourses = (await loadFromCloud('cafa_fixed_courses')) || [];
+            
+            db.push({
+                id, name, classId: cls, password: pw, status: 'pending',
+                courses: fixedCourses.map(c => ({...c})), // 複製必修課
+                careerTrack: '', interests: []
+            });
+            
+            await saveToCloud('cafa_all_students_db', db);
+            alert("申請已送出，請等待審核！");
+            window.toggle('login');
         };
     </script>
 </body>
 </html>
+
 
 
 
