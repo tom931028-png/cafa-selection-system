@@ -16,6 +16,12 @@
         .btn-add { background: #28a745; } .btn-drop { background: #dc3545; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         td, th { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        
+        /* 網格課表樣式 */
+        .grid-table th { background: #f0f0f0; text-align: center; }
+        .grid-table td { border: 1px solid #ddd; height: 60px; text-align: center; vertical-align: middle; padding: 5px; }
+        .course-cell { padding: 5px; border-radius: 5px; font-size: 13px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        
         .chat-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--main); border-radius: 50%; color: white; font-size: 30px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .chat-win { position: fixed; bottom: 90px; right: 20px; width: 300px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; }
         .chat-body { flex: 1; padding: 10px; overflow-y: auto; background: #f9f9f9; }
@@ -28,8 +34,8 @@
     <div class="sidebar">
         <div style="text-align:center; margin-bottom:20px;"><h2>✈️ CAFA</h2></div>
         <div class="menu-item active" onclick="switchTab('selection')">🛒 加退選</div>
-        <div class="menu-item" onclick="switchTab('schedule')">📅 我的課表</div>
-        <div class="menu-item" onclick="switchTab('grades')">🏆 成績與排位</div>
+        <div class="menu-item" onclick="switchTab('schedule')">📅 我的課表 (網格)</div>
+        <div class="menu-item" onclick="switchTab('grades')">🏆 成績與全校排名</div>
         <div class="menu-item" onclick="switchTab('career')">🎯 職涯推薦</div>
         <div class="menu-item" onclick="logout()" style="margin-top:auto;">🚪 登出</div>
     </div>
@@ -46,7 +52,26 @@
 
         <div id="schedule-view" style="display:none">
             <div class="card">
-                <h3>已選課程</h3>
+                <h3>📅 週課表 (Grid View)</h3>
+                <div style="overflow-x:auto;">
+                    <table class="grid-table" style="width:100%; min-width:600px;">
+                        <thead>
+                            <tr>
+                                <th width="10%">節次</th>
+                                <th width="18%">星期一</th>
+                                <th width="18%">星期二</th>
+                                <th width="18%">星期三</th>
+                                <th width="18%">星期四</th>
+                                <th width="18%">星期五</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grid-body">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <h4>課程詳細資訊</h4>
                 <table><thead><tr><th>名稱</th><th>時間</th><th>地點</th><th>學分</th><th>操作</th></tr></thead><tbody id="my-list"></tbody></table>
             </div>
         </div>
@@ -57,6 +82,10 @@
                 <h1 id="my-rank" style="color:gold; text-shadow: 1px 1px 2px black;">計算中...</h1>
                 <p>目前 GPA: <span id="my-gpa">-</span></p>
                 <table><thead><tr><th>課程</th><th>學分</th><th>分數</th></tr></thead><tbody id="score-list"></tbody></table>
+            </div>
+            <div class="card">
+                <h3>🏆 全校英雄榜 (Top 30)</h3>
+                <table><thead><tr><th>排名</th><th>姓名</th><th>班級</th><th>GPA</th></tr></thead><tbody id="leaderboard-list"></tbody></table>
             </div>
         </div>
 
@@ -91,9 +120,9 @@
         window.onload = () => {
             listenToCloud(KEYS.STUDENTS, v => { 
                 sDB = v || [];
-                // 即時更新當前使用者資料
                 const me = sDB.find(s=>s.id === curUser.id);
                 if(me) { curUser = me; render(); }
+                renderLeaderboard(); // 更新排行榜
             });
             listenToCloud(KEYS.FIXED, v => { updateCourses(v, 'fixed'); });
             listenToCloud(KEYS.ELECTIVE, v => { updateCourses(v, 'elect'); });
@@ -116,7 +145,6 @@
                 const isMy = myIds.includes(c.id);
                 const btn = c.isFixed ? '<span style="color:orange">必修</span>' : (isMy ? `<button class="btn btn-drop" onclick="drop('${c.id}')">退選</button>` : `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`);
                 
-                // 計算人數
                 let count = 0; sDB.forEach(s=>(s.courses||[]).forEach(sc=>{if(sc.id===c.id) count++}));
                 
                 list.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
@@ -125,23 +153,22 @@
                 </div>`;
             });
 
-            // Render My Schedule & Grades
-            const myT = document.getElementById('my-list'); myT.innerHTML='';
+            // Render My Schedule (Grid & List)
+            renderScheduleGrid();
+
+            // Render Grades
             const scT = document.getElementById('score-list'); scT.innerHTML='';
             let tot=0, cr=0;
-
             (curUser.courses||[]).forEach(c => {
-                const info = allCourses.find(x=>x.id===c.id) || c; // 盡量找最新資訊
-                myT.innerHTML += `<tr><td>${info.name}</td><td>${info.time}</td><td>${info.location||'-'}</td><td>${info.credit}</td><td>${c.isFixed?'🔒':`<button class="btn btn-drop" onclick="drop('${c.id}')">退</button>`}</td></tr>`;
-                
+                const info = allCourses.find(x=>x.id===c.id) || c;
                 if(c.score) {
                     scT.innerHTML += `<tr><td>${info.name}</td><td>${info.credit}</td><td>${c.score}</td></tr>`;
                     tot += c.score * info.credit; cr += parseInt(info.credit);
                 }
             });
 
-            // Update GPA & Rank
-            const gpa = cr>0 ? (tot/cr).toFixed(1) : 0;
+            // Update GPA & Rank Title
+            const gpa = cr>0 ? (tot/cr).toFixed(2) : 0;
             document.getElementById('my-gpa').innerText = gpa;
             let rank = '新進學員';
             if(gpa >= 90) rank = '👑 王者飛行員';
@@ -149,16 +176,80 @@
             else if(gpa >= 70) rank = '🥇 黃金戰士';
             document.getElementById('my-rank').innerText = rank;
 
-            // Update Career Rec
             renderRec();
+        }
+
+        // ★★★ 網格課表渲染核心 ★★★
+        function renderScheduleGrid() {
+            const tbody = document.getElementById('grid-body');
+            tbody.innerHTML = '';
+            
+            // 建立時間映射
+            const timeMap = {};
+            (curUser.courses||[]).forEach(myC => {
+                const info = allCourses.find(c=>c.id===myC.id) || myC;
+                if(!info.time) return;
+                
+                let [day, periods] = info.time.split('/'); // "一/1,2"
+                const dIdx = {'一':1,'二':2,'三':3,'四':4,'五':5}[day];
+                if(!dIdx) return;
+                
+                periods.split(',').forEach(p => {
+                    if(!timeMap[p]) timeMap[p] = [null,null,null,null,null,null];
+                    timeMap[p][dIdx] = info;
+                });
+            });
+
+            // 生成 1-8 節
+            for(let i=1; i<=8; i++) {
+                let row = `<tr><td>第${i}節</td>`;
+                for(let d=1; d<=5; d++) {
+                    const c = timeMap[i]?.[d];
+                    if(c) {
+                        const bg = c.isFixed ? '#ff9800' : '#2196f3';
+                        row += `<td><div class="course-cell" style="background:${bg}">${c.name}<br>${c.location||''}</div></td>`;
+                    } else {
+                        row += `<td></td>`;
+                    }
+                }
+                row += '</tr>';
+                tbody.innerHTML += row;
+            }
+
+            // 同步更新下方列表 (作為備用查看)
+            const myList = document.getElementById('my-list'); myList.innerHTML = '';
+            (curUser.courses||[]).forEach(c => {
+                const info = allCourses.find(x=>x.id===c.id) || c;
+                myList.innerHTML += `<tr><td>${info.name}</td><td>${info.time}</td><td>${info.location||'-'}</td><td>${info.credit}</td><td>${c.isFixed?'🔒':`<button class="btn btn-drop" onclick="drop('${c.id}')">退</button>`}</td></tr>`;
+            });
+        }
+
+        // ★★★ 全校排名渲染 ★★★
+        function renderLeaderboard() {
+            const board = document.getElementById('leaderboard-list'); board.innerHTML = '';
+            if(!sDB.length) return;
+
+            // 計算全校 GPA
+            let sorted = sDB.filter(s=>s.status!=='pending').map(s => {
+                let cr=0, tot=0;
+                (s.courses||[]).forEach(c=>{ if(c.score){ tot+=c.score*parseInt(c.credit||0); cr+=parseInt(c.credit||0); } });
+                return { name: s.name, class: s.classId, gpa: cr>0?(tot/cr).toFixed(2):0, id: s.id };
+            }).sort((a,b) => b.gpa - a.gpa);
+
+            sorted.slice(0, 30).forEach((s, i) => {
+                const isMe = s.id === curUser.id;
+                let icon = i+1;
+                if(i===0) icon='🥇'; if(i===1) icon='🥈'; if(i===2) icon='🥉';
+                board.innerHTML += `<tr style="${isMe?'background:#fff9c4; font-weight:bold;':''}">
+                    <td>${icon}</td><td>${s.name}</td><td>${s.class}</td><td style="color:#d84315">${s.gpa}</td>
+                </tr>`;
+            });
         }
 
         // Actions
         window.add = async(id) => {
             const c = allCourses.find(x=>x.id===id);
-            // 檢查衝堂
             if(curUser.courses.some(my => checkConflict(my.time, c.time))) return alert("衝堂了！");
-            
             curUser.courses.push({id:c.id, name:c.name, credit:c.credit, time:c.time, isFixed:false});
             await updateMe(); alert("加選成功");
         };
@@ -169,9 +260,7 @@
             await updateMe();
         };
 
-        window.setTrack = async(t) => {
-            curUser.careerTrack = t; await updateMe(); alert("志向已更新，請看下方推薦");
-        };
+        window.setTrack = async(t) => { curUser.careerTrack = t; await updateMe(); alert("志向已更新，請看下方推薦"); };
 
         async function updateMe() {
             const idx = sDB.findIndex(s=>s.id===curUser.id);
@@ -197,15 +286,13 @@
         window.sendMsg = () => {
             const i=document.getElementById('chat-in'); const txt=i.value; if(!txt)return;
             const b=document.getElementById('chat-body');
-            b.innerHTML += `<div class="msg msg-me">${txt}</div>`;
-            i.value='';
+            b.innerHTML += `<div class="msg msg-me">${txt}</div>`; i.value='';
             setTimeout(() => {
                 let r = "這個問題太深奧了...";
                 if(txt.includes("推薦")) r = "依據你的志向，我推薦你選修無人機或程式設計課程！";
                 else if(txt.includes("學分")) r = `你目前修了 ${curUser.courses.reduce((a,c)=>a+parseInt(c.credit),0)} 學分。`;
-                else if(txt.includes("嗨")) r = "你好！我是選課小幫手。";
-                b.innerHTML += `<div class="msg msg-ai">${r}</div>`;
-                b.scrollTop = b.scrollHeight;
+                else if(txt.includes("排名")) r = `去「成績與排名」看看吧！目前全校有 ${sDB.length} 人在競爭喔！`;
+                b.innerHTML += `<div class="msg msg-ai">${r}</div>`; b.scrollTop = b.scrollHeight;
             }, 500);
         };
 
