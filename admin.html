@@ -52,7 +52,7 @@
         .btn-import { background: #3f51b5; color: white; }
         .btn-template { background: #7986cb; color: white; }
 
-        /* 課表樣式 (強化版) */
+        /* 課表樣式 */
         .schedule-table { min-width: 800px; table-layout: fixed; border-collapse: collapse; }
         .schedule-table th, .schedule-table td { border: 1px solid #eee; text-align: center; }
         .schedule-table td { height: 80px; vertical-align: top; padding: 2px; }
@@ -298,7 +298,6 @@
                 renderMonitor(); 
                 renderStudents(); 
                 updateSels(); 
-                // 資料更新後，若正在查看課表，重新渲染以顯示最新人數
                 if(document.getElementById('schedule-view').style.display==='block') renderTeacherSchedule(); 
             });
             listenToCloud(KEYS.FIXED, (val) => { fixedCourses = val || []; renderCourses(); updateSels(); renderTeacherSchedule(); });
@@ -306,13 +305,11 @@
             listenToCloud(KEYS.RANKS, (val) => { rankRules = val || getDefaultRanks(); renderRankSettings(); });
         }
 
-        // --- 功能 1：教師課表 (已修復空白與點擊詳情) ---
         window.renderTeacherSchedule = () => {
             const tea = document.getElementById('teacher-schedule-selector').value; 
             const tbody = document.getElementById('teacher-schedule-body'); 
             tbody.innerHTML = ''; 
 
-            // 繪製空表格
             for(let i=1;i<=10;i++) {
                 tbody.innerHTML += `<tr><td class="schedule-time-col">第${i}節<br><span style="font-size:10px; font-weight:normal;">${TIME_SLOTS[i-1]}</span></td><td id="t1-${i}"></td><td id="t2-${i}"></td><td id="t3-${i}"></td><td id="t4-${i}"></td><td id="t5-${i}"></td></tr>`;
             }
@@ -322,12 +319,10 @@
 
             const courses = [...fixedCourses, ...electiveCourses].filter(c => c.teacher === tea);
             
-            // 計算選課人數
             const counts = {};
             studentDB.forEach(s => {
                 if(s.courses) {
                     s.courses.forEach(sc => {
-                        // 比對 ID
                         if(courses.some(c => c.id === sc.id)) { counts[sc.id] = (counts[sc.id] || 0) + 1; }
                     });
                 }
@@ -338,10 +333,10 @@
                 let cleanTime = c.time.replace(/\s/g, ''); 
                 let [d, p] = cleanTime.split('/'); 
                 
-                if (!d || !p) return; 
+                if (!d || !p) return;
 
                 const dMap = {"一":1, "二":2, "三":3, "四":4, "五":5}; 
-                if(!dMap[d]) return; 
+                if(!dMap[d]) return;
 
                 p.split(',').forEach(x => { 
                     let el = document.getElementById(`t${dMap[d]}-${x}`); 
@@ -359,7 +354,6 @@
             });
         };
 
-        // --- 功能 2：發布課程 (已修復同步邏輯) ---
         window.addCourse = async () => {
             const t = document.getElementById('c_type').value;
             const cid = document.getElementById('c_id').value.trim();
@@ -382,70 +376,62 @@
                 max: t==='fixed' ? 9999 : maxVal
             };
 
+            let success = false;
             if(t === 'fixed') {
                 if(!confirm(`⚠️ 發布必修課程「${name}」\n\n這將會強制加入到「所有」學生的課表中。確定嗎？`)) return;
                 
-                // 1. 先存課程庫
                 const newFixed = [...fixedCourses, newCourse];
-                await saveToCloud(KEYS.FIXED, newFixed);
+                success = await saveToCloud(KEYS.FIXED, newFixed);
+                if (!success) return; // 失敗就停
 
-                // 2. 強制同步給所有學生 (使用最新的 studentDB)
                 let affectedCount = 0;
                 let conflictRemoved = 0;
-                
-                // 使用深拷貝，避免修改到原參照
-                // 重要：確保使用最新的 studentDB
                 let currentDB = JSON.parse(JSON.stringify(studentDB));
 
                 currentDB.forEach(s => {
                     if(!s.courses) s.courses = [];
-                    // 只有當學生還沒有這門課時才加
                     if(!s.courses.some(c => c.id === cid)) {
-                        // 移除衝堂的「選修」課 (必修不移除必修)
                         s.courses = s.courses.filter(exist => {
                             const isConflict = checkTimeConflict(exist.time, newCourse.time);
                             if(isConflict && !exist.isFixed) { 
                                 conflictRemoved++; 
-                                return false; // 移除該選修
+                                return false; 
                             }
                             return true;
                         });
-                        // 加入新必修
                         s.courses.push({ 
-                            id: cid, 
-                            name: name,
-                            credit: credit, 
-                            time: time, 
-                            isFixed: true, 
-                            location: location, 
-                            teacher: teacher 
+                            id: cid, name: name, credit: credit, time: time, 
+                            isFixed: true, location: location, teacher: teacher 
                         });
                         affectedCount++;
                     }
                 });
 
-                // 3. 寫回學生資料庫 (使用 await 確保寫入完成)
-                await saveToCloud(KEYS.STUDENTS, currentDB);
-                alert(`✅ 必修發布成功！\n已同步至 ${affectedCount} 位學生，並自動解決 ${conflictRemoved} 個選修衝堂。`);
+                success = await saveToCloud(KEYS.STUDENTS, currentDB);
+                if (success) {
+                    alert(`✅ 必修發布成功！\n已同步至 ${affectedCount} 位學生，並自動解決 ${conflictRemoved} 個選修衝堂。`);
+                }
             } else {
                 const newElect = [...electiveCourses, newCourse];
-                await saveToCloud(KEYS.ELECTIVE, newElect);
-                alert("✅ 選修課程已發布，學生現在可以在選課區看到了。");
+                success = await saveToCloud(KEYS.ELECTIVE, newElect);
+                if (success) {
+                    alert("✅ 選修課程已發布，學生現在可以在選課區看到了。");
+                }
             }
             
-            // 清空並切換
-            document.getElementById('c_id').value = '';
-            document.getElementById('c_name').value = '';
-            if(teacher) {
-                document.getElementById('teacher-schedule-selector').value = teacher;
-                switchTab('schedule');
+            if (success) {
+                document.getElementById('c_id').value = '';
+                document.getElementById('c_name').value = '';
+                if(teacher) {
+                    document.getElementById('teacher-schedule-selector').value = teacher;
+                    switchTab('schedule');
+                }
             }
         };
 
         window.syncFixedCoursesToAll = async () => {
             if(!confirm("確定要將目前的「必修課程」強制同步給所有學生嗎？")) return;
             let updateCount = 0;
-            // 重新讀取確保最新
             let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
 
             currentDB.forEach(s => {
@@ -460,8 +446,8 @@
             });
 
             if(updateCount > 0) {
-                await saveToCloud(KEYS.STUDENTS, currentDB);
-                alert(`✅ 同步完成！更新了 ${updateCount} 筆資料。`);
+                const success = await saveToCloud(KEYS.STUDENTS, currentDB);
+                if (success) alert(`✅ 同步完成！更新了 ${updateCount} 筆資料。`);
             } else {
                 alert("所有學生的資料已經是最新的。");
             }
@@ -478,8 +464,9 @@
 
         window.delCourse = async (type, idx) => {
             if(!confirm("確定刪除此課程？")) return;
-            if(type === 'fixed') { const n = [...fixedCourses]; n.splice(idx, 1); await saveToCloud(KEYS.FIXED, n); } 
-            else { const n = [...electiveCourses]; n.splice(idx, 1); await saveToCloud(KEYS.ELECTIVE, n); }
+            let success;
+            if(type === 'fixed') { const n = [...fixedCourses]; n.splice(idx, 1); success = await saveToCloud(KEYS.FIXED, n); } 
+            else { const n = [...electiveCourses]; n.splice(idx, 1); success = await saveToCloud(KEYS.ELECTIVE, n); }
         };
 
         window.toggleStatus = async (idx) => {
@@ -520,7 +507,6 @@
             studentDB.forEach(s=>stu.add(new Option(`${s.id} ${s.name}`, s.id))); stu.value = savedS; 
         };
 
-        // --- 其他 UI 邏輯 ---
         window.toggleCourseForm = (v) => {
             const maxInput = document.getElementById('c_max');
             const group = document.getElementById('group-max');
@@ -544,7 +530,6 @@
             if(id === 'ranks') renderRankSettings();
         };
 
-        // Rank
         function renderRankSettings() {
             const t = document.getElementById('rank-rules-body'); t.innerHTML = '';
             rankRules.sort((a,b) => b.min - a.min);
@@ -563,16 +548,16 @@
         window.saveRankRules = async () => {
             const rows = document.querySelectorAll('.rank-row'); const newRules = [];
             rows.forEach(row => { const name = row.querySelector('.r-name').value; const min = parseInt(row.querySelector('.r-min').value); const color = row.querySelector('.r-color').value; const reward = row.querySelector('.r-reward').value; const punishment = row.querySelector('.r-punish').value; if(name && !isNaN(min)) newRules.push({ name, min, color, reward, punishment }); });
-            newRules.sort((a,b) => b.min - a.min); await saveToCloud(KEYS.RANKS, newRules); alert("✅ 設定已儲存！"); 
+            newRules.sort((a,b) => b.min - a.min); 
+            const success = await saveToCloud(KEYS.RANKS, newRules); 
+            if(success) alert("✅ 設定已儲存！"); 
         };
         function getDefaultRanks() { return [{name:'王者', min:90, color:'#ffe0b2', reward:'禮券', punishment:''}, {name:'鑽石', min:80, color:'#b3e5fc', reward:'', punishment:''}, {name:'黃金', min:70, color:'#fff9c4', reward:'', punishment:''}, {name:'白銀', min:60, color:'#f5f5f5', reward:'', punishment:''}, {name:'青銅', min:0, color:'#ffccbc', reward:'', punishment:''}]; }
 
-        // --- 功能 3：學生管理 (Excel 匯入修復版) ---
         window.addStudent = async () => { 
             const id=document.getElementById('s_id').value; 
             if(studentDB.some(s=>s.id===id))return alert("重複"); 
             
-            // 每次新增都從雲端拉一次最新資料，避免 overwriting
             let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
             
             const initCourses = fixedCourses.map(fc => ({ id: fc.id, name: fc.name, credit: fc.credit, time: fc.time, isFixed: true, location: fc.location, teacher: fc.teacher }));
@@ -591,6 +576,7 @@
             document.getElementById('active-list-body').innerHTML = activeList.map(s => `<tr><td>🟢</td><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td><button class="btn btn-del" onclick="deleteStudent('${s.id}')">刪</button></td></tr>`).join('');
         };
         window.toggleSelectAll = (src, type) => { document.querySelectorAll(`.${type}-checkbox`).forEach(cb => cb.checked = src.checked); };
+        
         window.batchApprove = async () => {
             const cbs = document.querySelectorAll('.pending-checkbox:checked'); if(cbs.length===0) return alert("未選取");
             
@@ -601,8 +587,10 @@
                 const s = currentDB.find(x=>x.id===id); 
                 if(s) s.status='active'; 
             });
-            await saveToCloud(KEYS.STUDENTS, currentDB); alert(`✅ 已核准 ${cbs.length} 人`);
+            const success = await saveToCloud(KEYS.STUDENTS, currentDB); 
+            if(success) alert(`✅ 已核准 ${cbs.length} 人`);
         };
+
         window.batchDelete = async () => {
             const cbs = document.querySelectorAll('.pending-checkbox:checked'); if(cbs.length===0) return alert("未選取");
             if(!confirm("確定刪除?")) return;
@@ -615,7 +603,7 @@
         
         window.downloadStudentTemplate = () => { const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["學號","姓名","班級","密碼"],["114001","測試生","114-1","1234"]]), "範本"); XLSX.writeFile(wb, "學生帳號範本.xlsx"); };
         
-        // ★★★ 關鍵修復：Robust Excel Import ★★★
+        // ★★★ 關鍵修復：檢查 saveToCloud 回傳值 ★★★
         window.handleStudentImport = (e) => {
             const f = e.target.files[0]; 
             if(!f) return;
@@ -636,14 +624,12 @@
                     let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
                     
                     let cnt = 0; 
-                    // 準備必修課範本
                     const initCourses = fixedCourses.map(fc => ({ 
                         id: fc.id, name: fc.name, credit: fc.credit, time: fc.time, 
                         isFixed: true, location: fc.location, teacher: fc.teacher 
                     }));
 
                     json.forEach(row => { 
-                        // 容錯處理：支援中文或英文欄位
                         const idRaw = row['學號'] || row['id'] || row['ID'];
                         const nameRaw = row['姓名'] || row['name'] || row['Name'];
                         const classRaw = row['班級'] || row['class'] || row['Class'];
@@ -651,7 +637,6 @@
 
                         if (idRaw) {
                             const id = String(idRaw).trim();
-                            // 檢查是否重複
                             if (!currentDB.some(s => s.id === id)) { 
                                 currentDB.push({ 
                                     id: id, 
@@ -659,7 +644,7 @@
                                     classId: String(classRaw || '').trim(), 
                                     password: String(passRaw).trim(), 
                                     status: 'active', 
-                                    courses: [...initCourses] // 自動帶入必修
+                                    courses: [...initCourses] 
                                 }); 
                                 cnt++; 
                             }
@@ -667,13 +652,16 @@
                     });
 
                     if (cnt > 0) {
-                        await saveToCloud(KEYS.STUDENTS, currentDB);
-                        alert(`✅ 成功匯入 ${cnt} 筆新帳號！\n(已自動帶入目前的必修課程)`);
+                        // ★ 關鍵：檢查 saveToCloud 是否回傳 true
+                        const success = await saveToCloud(KEYS.STUDENTS, currentDB);
+                        if (success) {
+                            alert(`✅ 成功匯入 ${cnt} 筆新帳號！\n(已自動帶入目前的必修課程)`);
+                        }
                     } else {
                         alert("⚠️ 沒有新增任何帳號。\n可能是 Excel 格式不符，或學號已全部存在。");
                     }
                     
-                    document.getElementById('import-student-file').value = ''; // 清空選擇檔案
+                    document.getElementById('import-student-file').value = ''; 
 
                 } catch (error) {
                     console.error(error);
@@ -698,7 +686,11 @@
                     const s=currentDB.find(x=>x.id===sid);
                     if(s && s.courses){ const c=s.courses.find(x=>x.id===cid); if(c){c.score=sc; cnt++;} }
                 });
-                if(cnt>0) await saveToCloud(KEYS.STUDENTS, currentDB); alert(`更新 ${cnt} 筆成績`); document.getElementById('import-grade-file').value='';
+                if(cnt>0) {
+                    const success = await saveToCloud(KEYS.STUDENTS, currentDB);
+                    if (success) alert(`更新 ${cnt} 筆成績`);
+                } 
+                document.getElementById('import-grade-file').value='';
             }; r.readAsArrayBuffer(f);
         };
 
@@ -733,8 +725,8 @@
                             if(val === '') delete c.score; else c.score = parseInt(val);
                         }
                     });
-                    await saveToCloud(KEYS.STUDENTS, currentDB); 
-                    alert(`✅ 學生 ${s.name} 的成績已儲存！`); 
+                    const success = await saveToCloud(KEYS.STUDENTS, currentDB); 
+                    if(success) alert(`✅ 學生 ${s.name} 的成績已儲存！`); 
                 }
             } else alert("找不到學生資料");
         };
