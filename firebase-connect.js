@@ -4,12 +4,13 @@ import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstat
 
 // ★★★ 請務必確認這裡填入的是您「新專案」的設定 ★★★
 const firebaseConfig = {
-  apiKey: "請填入您的_API_KEY",
-  authDomain: "您的專案ID.firebaseapp.com",
-  projectId: "您的專案ID",
-  storageBucket: "您的專案ID.firebasestorage.app",
-  messagingSenderId: "您的SenderId",
-  appId: "您的AppId"
+  apiKey: "AIzaSyBen0PabmY0yKG3Frc_fbun29LpTqXK-Fs",
+  authDomain: "cafa-db.firebaseapp.com",
+  projectId: "cafa-db",
+  storageBucket: "cafa-db.firebasestorage.app",
+  messagingSenderId: "829038645486",
+  appId: "1:829038645486:web:ac2692236c6310d4eba3ff",
+  measurementId: "G-75BMEDYHQR"
 };
 
 let app, db;
