@@ -1,1303 +1,221 @@
-{
-type: uploaded file
-fileName: tom931028-png/cafa-selection-system/cafa-selection-system-9f34500d989dd6b095655e50e619bf6828083fa3/dashboard.html
-fullContent:
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>選課主系統 | CAFA Student</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>選課系統 | Student</title>
     <style>
-        /* --- 核心變數 --- */
-        :root { --cafa-blue-dark: #002266; --cafa-blue-main: #00308F; --cafa-blue-light: #4a7bd1; --cafa-gold: #FFD700; --bg-grey: #f0f2f5; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: "Microsoft JhengHei", Arial, sans-serif; margin: 0; background-color: var(--bg-grey); color: #333; display: flex; height: 100vh; overflow: hidden; }
-        
-        /* --- 手機版漢堡選單 --- */
-        .mobile-menu-btn { display: none; position: fixed; top: 15px; left: 15px; z-index: 1100; background: var(--cafa-blue-main); color: white; border: none; padding: 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; font-size: 20px; }
-        
-        /* --- 側邊欄 --- */
-        .sidebar { width: 260px; background: linear-gradient(180deg, var(--cafa-blue-main) 0%, var(--cafa-blue-dark) 100%); color: white; display: flex; flex-direction: column; padding-top: 25px; box-shadow: 4px 0 15px rgba(0,0,0,0.1); position: relative; z-index: 1000; transition: transform 0.3s ease; }
-        .sidebar-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
-        .menu-item { padding: 15px 25px; cursor: pointer; transition: 0.2s; color: rgba(255,255,255,0.8); display: flex; align-items: center; font-size: 15px; }
-        .menu-item:hover { background: rgba(255,255,255,0.1); color: white; }
-        .menu-item.active { background: rgba(0,0,0,0.2); border-left: 5px solid var(--cafa-gold); color: white; font-weight: bold; }
-        .menu-item span { margin-right: 12px; font-size: 18px; width: 25px; text-align: center; }
-        
-        /* --- 排位卡 --- */
-        .rank-card { background: rgba(0,0,0,0.2); margin: 10px 15px; padding: 15px; border-radius: 12px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-        .rank-name { font-size: 20px; font-weight: 800; color: var(--cafa-gold); text-shadow: 0 2px 4px rgba(0,0,0,0.3); margin: 5px 0; letter-spacing: 1px; }
-        
-        /* --- 主內容區 --- */
-        .main-content { flex: 1; padding: 20px; overflow-y: auto; background-image: linear-gradient(to bottom, #eef2f7, #f4f7fa); position: relative; width: 100%; }
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); flex-wrap: wrap; gap: 10px; }
-        .header-title { font-size: 22px; font-weight: bold; color: var(--cafa-blue-main); border-left: 6px solid var(--cafa-gold); padding-left: 12px; }
-        
-        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-top: 3px solid var(--cafa-blue-light); box-shadow: 0 4px 15px rgba(0,0,0,0.05); overflow-x: auto; position: relative; transition: all 0.3s ease; }
-        
-        /* --- 興趣標籤與輸入框 --- */
-        .interest-section { margin-bottom: 15px; }
-        .interest-container { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-        .interest-tag { padding: 6px 14px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; transition: 0.2s; background: white; font-size: 13px; color: #666; user-select: none; display: flex; align-items: center; }
-        .interest-tag:hover { background: #f0f0f0; }
-        .interest-tag.active { background: var(--cafa-gold); color: #002266; border-color: var(--cafa-gold); font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .tag-remove { margin-left: 5px; font-size: 14px; opacity: 0.6; padding: 0 4px; border-radius: 50%; }
-        .tag-remove:hover { background: rgba(0,0,0,0.1); opacity: 1; }
-        .custom-input-group { display: flex; gap: 8px; max-width: 400px; margin-top: 10px; }
-        .custom-input-group input { flex: 1; padding: 8px 15px; border: 1px solid #ccc; border-radius: 20px; outline: none; font-size: 14px; }
-        .btn-small-add { background: var(--cafa-blue-main); color: white; border: none; border-radius: 20px; padding: 0 15px; cursor: pointer; font-weight: bold; }
-
-        /* --- 表格與元件 --- */
-        table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0; font-size: 14px; }
-        th { background: #f8f9fa; color: var(--cafa-blue-dark); padding: 12px; text-align: left; border-bottom: 2px solid var(--cafa-blue-main); white-space: nowrap; }
-        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
-        .tag { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; white-space: nowrap; }
-        .tag-compulsory { background: #e3f2fd; color: #0d47a1; } .tag-elective { background: #e8f5e9; color: #1b5e20; } .tag-fixed { background: #fff3e0; color: #e65100; }
-        .btn { padding: 8px 16px; border-radius: 30px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 14px; white-space: nowrap; }
-        .btn-add { background: #28a745; color: white; } .btn-drop { background: #dc3545; color: white; }
-        .btn-save { background: var(--cafa-blue-main); color: white; width: 100%; padding: 14px; margin-top:20px; font-size: 16px; box-shadow: 0 4px 10px rgba(0,48,143,0.3); }
-        .btn-print { background: #607d8b; color: white; display: flex; align-items: center; gap: 5px; }
-
-        /* --- 視覺化課表 & 主題樣式 (Theme Styles) --- */
-        .schedule-container { overflow-x: auto; margin: 0 -20px; padding: 0 20px; }
-        .schedule-table { min-width: 700px; table-layout: fixed; border-collapse: separate; border-spacing: 0; border: 1px solid #eee; }
-        .schedule-table th, .schedule-table td { text-align: center; border-right: 1px solid #eee; border-bottom: 1px solid #eee; }
-        .schedule-table td { height: 75px; padding: 2px; vertical-align: middle; }
-        .schedule-table th:first-child, .schedule-table td:first-child { position: sticky; left: 0; background-color: #f8f9fa; z-index: 5; box-shadow: 2px 0 5px rgba(0,0,0,0.05); width: 50px; font-weight: bold; color: #666; border-right: 2px solid #ddd; }
-        .schedule-table th { z-index: 6; }
-        .course-block { width: 100%; height: 100%; padding: 4px; border-radius: 6px; color: white; font-size: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.15); display: flex; flex-direction: column; justify-content: center; align-items: center; line-height: 1.3; }
-        .block-fixed { background: linear-gradient(135deg, #e65100, #fb8c00); }
-        .block-elective { background: linear-gradient(135deg, #00308F, #1976d2); }
-
-        /* 主題按鈕與定義 */
-        .theme-controls { display: flex; align-items: center; gap: 8px; }
-        .theme-btn { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid #ddd; transition: 0.2s; position: relative; }
-        .theme-btn:hover { transform: scale(1.1); }
-        .tb-white { background: white; }
-        .tb-blue { background: #e3f2fd; }
-        .tb-dark { background: #333; }
-        .tb-warm { background: #fff8e1; }
-
-        /* 1. 空軍藍主題 (含浮水印) */
-        .card-theme-blue { background: linear-gradient(to bottom right, #f0f7ff, #dbeafe) !important; border-color: #1e88e5 !important; }
-        .card-theme-blue::before { content: '✈'; position: absolute; font-size: 150px; color: rgba(0,0,0,0.03); bottom: 20px; right: 20px; pointer-events: none; transform: rotate(-15deg); z-index: 0; }
-        
-        /* 2. 極簡黑主題 */
-        .card-theme-dark { background: #2c3e50 !important; color: #ecf0f1 !important; border-color: #34495e !important; }
-        .card-theme-dark th { background: #34495e !important; color: white !important; border-color: #465c71 !important; }
-        .card-theme-dark td { border-color: #465c71 !important; }
-        .card-theme-dark .schedule-table th:first-child, .card-theme-dark .schedule-table td:first-child { background-color: #34495e !important; color: #ecf0f1; border-color: #465c71; }
-        
-        /* 3. 暖陽黃主題 */
-        .card-theme-warm { background: #fffdeb !important; border-color: #fdd835 !important; }
-
-        /* --- AI Chat --- */
-        .ai-fab { position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px; background: linear-gradient(45deg, #00308F, #0055ff); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 28px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 2000; transition: transform 0.2s; }
-        .chat-window { position: fixed; bottom: 85px; right: 20px; width: 90%; max-width: 350px; height: 50vh; background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.25); display: none; flex-direction: column; z-index: 2000; border: 1px solid rgba(0,0,0,0.05); overflow: hidden; }
-        .chat-header { padding: 15px; background: var(--cafa-blue-main); color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        .chat-body { flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; font-size: 14px; }
-        .chat-msg { margin-bottom: 10px; max-width: 80%; padding: 8px 12px; border-radius: 12px; line-height: 1.4; word-wrap: break-word; }
-        .msg-user { background: #e3f2fd; color: #00308F; align-self: flex-end; margin-left: auto; border-bottom-right-radius: 2px; }
-        .msg-ai { background: white; color: #333; border: 1px solid #eee; align-self: flex-start; border-bottom-left-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
-        .chat-input { padding: 10px; border-top: 1px solid #eee; display: flex; gap: 10px; background: white; }
-        .chat-input input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 20px; outline: none; }
-
-        /* --- RWD --- */
-        @media (max-width: 768px) {
-            .mobile-menu-btn { display: block; }
-            .sidebar { position: fixed; top: 0; left: 0; height: 100%; transform: translateX(-100%); width: 80%; max-width: 300px; }
-            .sidebar.open { transform: translateX(0); }
-            .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 900; }
-            .sidebar-overlay.show { display: block; }
-            .main-content { padding: 70px 15px 15px 15px; }
-            .header-bar { flex-direction: column; align-items: flex-start; }
-            .theme-controls { display: flex; margin-top: 10px; } /* 手機版顯示主題切換 */
-            .rank-card { margin-top: 50px; }
-            .card { padding: 15px; border-radius: 10px; }
-        }
-
-        /* --- 列印專用樣式 --- */
-        @media print {
-            .sidebar, .mobile-menu-btn, .ai-fab, .chat-window, .theme-controls, .btn, .header-title::before { display: none !important; }
-            body, .main-content { margin: 0; padding: 0; background: white; overflow: visible; display: block; }
-            .card { box-shadow: none; border: 1px solid #ccc; margin: 0; padding: 0; page-break-inside: avoid; }
-            .header-bar { box-shadow: none; border-bottom: 2px solid #000; padding: 10px 0; margin-bottom: 20px; display: block; }
-            .header-title { border: none; padding: 0; text-align: center; font-size: 24px; color: black; }
-            #visual-view, #schedule-view { display: block !important; }
-            #selection-view, #leaderboard-view, #career-view, #history-view { display: none !important; }
-            .schedule-container { overflow: visible; margin: 0; padding: 0; }
-            .schedule-table { min-width: 100%; width: 100%; table-layout: auto; }
-            .schedule-table th, .schedule-table td { border: 1px solid #000; color: black; }
-            .course-block { border: 1px solid #000; color: black; background: none !important; box-shadow: none; }
-            .card::before { content: "空軍官校 - 學生課表"; display: block; text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 10px; }
-            /* 列印時強制移除背景色，改為白底黑字，確保清晰 */
-            .card-theme-blue, .card-theme-dark, .card-theme-warm { background: white !important; color: black !important; }
-            .card-theme-blue::before { display: none; } 
-        }
-
-        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 3000; color: var(--cafa-blue-main); flex-direction: column; }
+        :root { --main: #00308F; --bg: #f0f2f5; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; }
+        .sidebar { width: 250px; background: var(--main); color: white; padding-top: 20px; display: flex; flex-direction: column; }
+        .menu-item { padding: 15px; cursor: pointer; transition: 0.2s; }
+        .menu-item.active, .menu-item:hover { background: rgba(255,255,255,0.2); font-weight: bold; border-left: 5px solid gold; }
+        .main { flex: 1; padding: 20px; overflow-y: auto; }
+        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
+        .btn-add { background: #28a745; } .btn-drop { background: #dc3545; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td, th { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .chat-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--main); border-radius: 50%; color: white; font-size: 30px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .chat-win { position: fixed; bottom: 90px; right: 20px; width: 300px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; }
+        .chat-body { flex: 1; padding: 10px; overflow-y: auto; background: #f9f9f9; }
+        .msg { padding: 8px; margin: 5px; border-radius: 5px; font-size: 14px; max-width: 80%; }
+        .msg-ai { background: white; border: 1px solid #ddd; align-self: flex-start; }
+        .msg-me { background: #dbeafe; align-self: flex-end; margin-left: auto; }
     </style>
 </head>
 <body>
-    <div id="loading"><div style="font-size:40px; margin-bottom:10px;">☁️</div><div>資料同步中...</div></div>
-    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
-    <div class="sidebar-overlay" id="overlay" onclick="toggleSidebar()"></div>
-
-    <div class="sidebar" id="sidebar">
-        <div style="text-align:right; padding:10px; display:none;" id="close-menu"><span onclick="toggleSidebar()" style="color:white; font-size:24px; cursor:pointer;">&times;</span></div>
-        <div class="sidebar-header"><h2>✈️ CAFA</h2><p>Student Portal</p></div>
-        
-        <div class="rank-card">
-            <div style="font-size:12px;color:#ccc">我的排位 (Rank)</div>
-            <div class="rank-name" id="my-rank-name">計算中...</div>
-            <div id="my-reward" class="rank-reward" style="font-size:13px; color:#a5d6a7; margin-top:5px;"></div>
-            <div id="my-punish" class="rank-punish" style="font-size:13px; color:#ef9a9a;"></div>
-        </div>
-
-        <div class="menu-item active" onclick="switchTab('selection')"><span>🛒</span> 加退選課程</div>
-        <div class="menu-item" onclick="switchTab('schedule')"><span>📅</span> 已選清單</div>
-        <div class="menu-item" onclick="switchTab('leaderboard')"><span>🏆</span> 英雄榜</div> 
-        <div class="menu-item" onclick="switchTab('visual')"><span>📊</span> 視覺化課表</div>
-        <div class="menu-item" onclick="switchTab('career')"><span>🎯</span> 職涯與推薦</div>
-        <div class="menu-item" onclick="switchTab('history')"><span>📈</span> 歷年成績</div>
-        <div class="menu-item" onclick="logout()" style="margin-top:auto; border-top:1px solid rgba(255,255,255,0.1)"><span>🚪</span> 登出系統</div>
+    <div class="sidebar">
+        <div style="text-align:center; margin-bottom:20px;"><h2>✈️ CAFA</h2></div>
+        <div class="menu-item active" onclick="switchTab('selection')">🛒 加退選</div>
+        <div class="menu-item" onclick="switchTab('schedule')">📅 我的課表</div>
+        <div class="menu-item" onclick="switchTab('grades')">🏆 成績與排位</div>
+        <div class="menu-item" onclick="switchTab('career')">🎯 職涯推薦</div>
+        <div class="menu-item" onclick="logout()" style="margin-top:auto;">🚪 登出</div>
     </div>
 
-    <div class="main-content">
+    <div class="main">
+        <h2 id="welcome-msg">Welcome</h2>
+        
         <div id="selection-view">
-            <div class="header-bar"><div class="header-title">開放選課</div><span id="credits" style="font-weight:bold;color:#00308F; font-size:14px;">計算中...</span></div>
-            <div class="card"><table style="width:100%"><tbody id="course-list"></tbody></table></div>
+            <div class="card">
+                <h3>開放選課列表</h3>
+                <div id="course-list">載入中...</div>
+            </div>
         </div>
 
         <div id="schedule-view" style="display:none">
-            <div class="header-bar"><div class="header-title">我的已選課程</div><button class="btn btn-print" onclick="window.print()">🖨️ 列印</button></div>
-            <div class="card"><table style="width:100%"><tbody id="my-courses"></tbody></table></div>
-        </div>
-
-        <div id="leaderboard-view" style="display:none">
-            <div class="header-bar"><div class="header-title">🏆 全校榮譽英雄榜</div></div>
             <div class="card">
-                <p style="color:#666; font-size:13px; text-align:center; padding-bottom:10px; border-bottom:1px solid #eee;">依照平均積分(GPA)排序，僅顯示排位稱號以保障隱私。</p>
-                <table><thead><tr><th width="15%">排名</th><th>班級</th><th>姓名</th><th>榮譽排位</th></tr></thead><tbody id="leaderboard-body"></tbody></table>
+                <h3>已選課程</h3>
+                <table><thead><tr><th>名稱</th><th>時間</th><th>地點</th><th>學分</th><th>操作</th></tr></thead><tbody id="my-list"></tbody></table>
             </div>
         </div>
 
-        <div id="visual-view" style="display:none">
-            <div class="header-bar">
-                <div class="header-title">週課表</div>
-                <div class="theme-controls">
-                    <button class="btn btn-print" onclick="window.print()" style="margin-right:10px;">🖨️ 列印</button>
-                    <span style="font-size:12px;margin-right:5px;color:#666;">風格:</span>
-                    <div class="theme-btn tb-white" onclick="setTheme('white')" title="標準白"></div>
-                    <div class="theme-btn tb-blue" onclick="setTheme('blue')" title="空軍藍"></div>
-                    <div class="theme-btn tb-warm" onclick="setTheme('warm')" title="護眼黃"></div>
-                    <div class="theme-btn tb-dark" onclick="setTheme('dark')" title="極簡黑"></div>
-                </div>
-            </div>
-            <div class="card" id="visual-card">
-                <p style="text-align:center; font-size:12px; color:#999; margin-bottom:10px;" class="no-print">(手機版請左右滑動查看完整課表)</p>
-                <div class="schedule-container">
-                    <table class="schedule-table">
-                        <thead><tr><th style="width:50px">節次</th><th>星期一</th><th>星期二</th><th>星期三</th><th>星期四</th><th>星期五</th></tr></thead>
-                        <tbody id="visual-body"></tbody>
-                    </table>
-                </div>
+        <div id="grades-view" style="display:none">
+            <div class="card">
+                <h3>🎖️ 個人戰績</h3>
+                <h1 id="my-rank" style="color:gold; text-shadow: 1px 1px 2px black;">計算中...</h1>
+                <p>目前 GPA: <span id="my-gpa">-</span></p>
+                <table><thead><tr><th>課程</th><th>學分</th><th>分數</th></tr></thead><tbody id="score-list"></tbody></table>
             </div>
         </div>
 
         <div id="career-view" style="display:none">
-            <div class="header-bar"><div class="header-title">職涯與推薦系統</div></div>
             <div class="card">
-                <h3>步驟 1: 設定未來志向</h3>
-                <div style="display:flex;gap:15px;margin-bottom:20px; flex-wrap:wrap;">
-                    <button id="btn-track-pilot" class="btn" style="flex:1; padding:20px; border:2px solid #ddd; background:white; color:#333;" onclick="setTrack('pilot')">
-                        <div style="font-size:24px;">🦅</div><div>飛行生 (Pilot)</div>
-                    </button>
-                    <button id="btn-track-ground" class="btn" style="flex:1; padding:20px; border:2px solid #ddd; background:white; color:#333;" onclick="setTrack('ground')">
-                        <div style="font-size:24px;">🛠️</div><div>地勤生 (Ground)</div>
-                    </button>
-                </div>
-                <h3>步驟 2: 選擇或新增興趣</h3>
-                <div class="interest-section">
-                    <div style="font-size:12px; color:#666; margin-bottom:5px;">常見標籤 (點擊選擇):</div>
-                    <div class="interest-container" id="preset-tags-container"></div>
-                </div>
-                <div class="interest-section">
-                    <div style="font-size:12px; color:#666; margin-bottom:5px;">自定義標籤:</div>
-                    <div class="interest-container" id="custom-tags-container"></div>
-                    <div class="custom-input-group">
-                        <input type="text" id="new-interest-input" placeholder="輸入其他興趣 (如: 無人機、AI)">
-                        <button class="btn-small-add" onclick="addCustomInterest()">＋ 新增</button>
-                    </div>
-                </div>
-                <div id="rec-msg" style="color:var(--cafa-blue-main); font-weight:bold; margin-top:20px; border-top:1px solid #eee; padding-top:15px;"></div>
-                <button class="btn btn-save" onclick="saveCareer()">💾 儲存所有設定</button>
+                <h3>🎯 職涯路徑設定</h3>
+                <p>請選擇你的目標，系統將推薦適合的選修課。</p>
+                <button class="btn" style="background:#00308F; width:45%; padding:20px;" onclick="setTrack('pilot')">✈️ 飛行生</button>
+                <button class="btn" style="background:#e65100; width:45%; padding:20px;" onclick="setTrack('ground')">🛠️ 地勤生</button>
+                <div id="rec-area" style="margin-top:20px; border-top:1px solid #eee; padding-top:10px;"></div>
             </div>
-            <div class="card">
-                <h3>🎯 智能推薦課程</h3>
-                <div id="rec-list-container" style="color:#666; font-size:14px;">請設定上方志向與興趣，系統將自動分析...</div>
-            </div>
-        </div>
-
-        <div id="history-view" style="display:none">
-            <div class="header-bar"><div class="header-title">歷年成績單</div></div>
-            <div class="card" id="history-list"></div>
         </div>
     </div>
 
-    <div class="ai-fab" onclick="toggleChat()">🤖</div>
-    <div class="chat-window" id="chat-win">
-        <div class="chat-header">CAFA AI 助教 <span style="cursor:pointer" onclick="toggleChat()">✕</span></div>
-        <div class="chat-body" id="chat-body"><div class="chat-msg msg-ai">同學你好！我是選課小幫手。你可以問我：「推薦選什麼課？」、「我有幾學分？」</div></div>
-        <div class="chat-input"><input id="chat-in" placeholder="輸入問題..." onkeypress="if(event.key=='Enter')send()"><button class="btn btn-add" style="width:auto; padding:0 15px;" onclick="send()">➤</button></div>
+    <div class="chat-btn" onclick="toggleChat()">🤖</div>
+    <div class="chat-win" id="chat-win">
+        <div style="background:var(--main); color:white; padding:10px;">CAFA 助教</div>
+        <div class="chat-body" id="chat-body"><div class="msg msg-ai">同學你好！想問什麼？<br>試試：「推薦課程」或「我的學分」</div></div>
+        <div style="padding:10px; display:flex;"><input id="chat-in" style="flex:1;" onkeypress="if(event.key=='Enter')sendMsg()"><button onclick="sendMsg()">➤</button></div>
     </div>
 
     <script type="module">
         import { loadFromCloud, saveToCloud, listenToCloud } from './firebase-connect.js';
-        const KEYS = { STUDENTS:'cafa_all_students_db', FIXED:'cafa_fixed_courses', ELECTIVE:'cafa_public_electives', RANKS:'cafa_rank_rules' };
+        const KEYS = { STUDENTS: 'cafa_all_students_db', FIXED: 'cafa_fixed_courses', ELECTIVE: 'cafa_public_electives' };
         
-        let allC=[], myC=[], cur=null, sDB=[], rules=[];
-        let fixedCourses = [], electiveCourses = [];
-        const PRESET_TAGS = ['空氣動力', '機械', '英文', '管理', '程式', '氣象', '歷史', '心理'];
-        const TIME_SLOTS = ["08:10", "09:10", "10:10", "11:10", "13:30", "14:30", "15:30", "16:30", "17:30", "19:00"];
+        let curUser = JSON.parse(sessionStorage.getItem('cafa_user'));
+        let allCourses = [], sDB = [];
+
+        if(!curUser) location.href = 'index.html';
+        document.getElementById('welcome-msg').innerText = `Welcome, ${curUser.name}`;
 
         window.onload = () => {
-            const u = sessionStorage.getItem('cafa_user'); 
-            if(!u) return location.href='index.html';
-            cur = JSON.parse(u);
-            if(!cur.interests) cur.interests = []; 
-            
-            initListeners();
-            
-            const savedTheme = localStorage.getItem('cafa_theme');
-            if(savedTheme) setTheme(savedTheme);
-            document.getElementById('loading').style.display = 'none';
+            listenToCloud(KEYS.STUDENTS, v => { 
+                sDB = v || [];
+                // 即時更新當前使用者資料
+                const me = sDB.find(s=>s.id === curUser.id);
+                if(me) { curUser = me; render(); }
+            });
+            listenToCloud(KEYS.FIXED, v => { updateCourses(v, 'fixed'); });
+            listenToCloud(KEYS.ELECTIVE, v => { updateCourses(v, 'elect'); });
         };
 
-        function initListeners() {
-            listenToCloud(KEYS.STUDENTS, (val) => {
-                sDB = val || [];
-                // ★ 關鍵修正：當雲端資料變動時，強制更新當前使用者狀態，並同步到 sessionStorage
-                if(cur) {
-                    const me = sDB.find(s => s.id === cur.id);
-                    if(me) { 
-                        cur = me; 
-                        if(!cur.interests) cur.interests = [];
-                        sessionStorage.setItem('cafa_user', JSON.stringify(cur)); // 保持同步
-                    }
-                }
-                updateAllCourses(); // 學生狀態變動(如成績/選課)也要觸發更新
-            });
-
-            // 監聽課程資料庫
-            listenToCloud(KEYS.FIXED, (val) => { fixedCourses = val || []; updateAllCourses(); });
-            listenToCloud(KEYS.ELECTIVE, (val) => { electiveCourses = val || []; updateAllCourses(); });
-            listenToCloud(KEYS.RANKS, (val) => { rules = val || getDefaultRanks(); render(); });
-        }
-
-        function updateAllCourses() {
-            allC = [...fixedCourses, ...electiveCourses];
-            refreshMyCourses();
+        let fC=[], eC=[];
+        function updateCourses(data, type) {
+            if(type==='fixed') fC = data||[]; else eC = data||[];
+            allCourses = [...fC, ...eC];
             render();
         }
 
-        // --- ★ 修正：更強健的合併邏輯 ---
-        function refreshMyCourses() {
-            if (cur && cur.courses && allC.length > 0) {
-                myC = cur.courses.map(c_mini => {
-                    // 嘗試在最新的課程列表中找到完整資訊
-                    const full = allC.find(f => f.id === c_mini.id);
-                    if (full) {
-                        // 合併最新資訊 (地點、時間) 與 個人資訊 (分數)
-                        return { ...full, score: c_mini.score };
-                    } else {
-                        // 如果找不到 (可能該課程剛被管理員刪除)，保留舊資訊防止報錯
-                        return { ...c_mini, name: c_mini.name + ' (已停開)', time: '', isFixed: c_mini.isFixed };
-                    }
-                });
-            } else if (cur && cur.courses) {
-                // 如果 allC 還沒載入完，暫時使用學生身上的快取
-                myC = cur.courses;
-            } else {
-                myC = [];
-            }
-        }
-
-        // --- 渲染與邏輯 ---
-        window.setTheme = (t) => {
-            const c = document.getElementById('visual-card');
-            c.className = 'card'; 
-            if(t !== 'white') c.classList.add(`card-theme-${t}`);
-            localStorage.setItem('cafa_theme', t); 
-        };
-
         function render() {
-            let tot=0, cr=0; myC.forEach(c=>{if(c.score){tot+=parseInt(c.score)*parseInt(c.credit); cr+=parseInt(c.credit);}});
-            let gpa = cr>0 ? (tot/cr).toFixed(1) : 0;
-            let rank = rules.find(r=>gpa>=r.min) || rules[rules.length-1];
-            if(cr===0) rank = {name:'新進學員', color:'#ccc', reward:'-', punishment:'-'};
-            document.getElementById('my-rank-name').innerText = rank.name; document.getElementById('my-rank-name').style.color = rank.color;
-            document.getElementById('my-reward').innerText = rank.reward ? `🎁 ${rank.reward}` : ''; document.getElementById('my-punish').innerText = rank.punishment ? `⚠️ ${rank.punishment}` : '';
+            // Render Selection
+            const list = document.getElementById('course-list'); list.innerHTML = '';
+            const myIds = (curUser.courses||[]).map(c=>c.id);
+            
+            allCourses.forEach(c => {
+                if(!c.isOpen && !myIds.includes(c.id)) return;
+                const isMy = myIds.includes(c.id);
+                const btn = c.isFixed ? '<span style="color:orange">必修</span>' : (isMy ? `<button class="btn btn-drop" onclick="drop('${c.id}')">退選</button>` : `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`);
+                
+                // 計算人數
+                let count = 0; sDB.forEach(s=>(s.courses||[]).forEach(sc=>{if(sc.id===c.id) count++}));
+                
+                list.innerHTML += `<div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                    <div><b>${c.name}</b> <span style="font-size:12px; color:#666;">${c.time} | ${c.teacher} | ${count}/${c.max||99}人</span></div>
+                    <div>${btn}</div>
+                </div>`;
+            });
 
-            // 計算各課程當前人數 (即時從 sDB 計算)
-            const counts = {};
-            sDB.forEach(s => {
-                if(s.courses) {
-                    s.courses.forEach(c => {
-                        counts[c.id] = (counts[c.id] || 0) + 1;
-                    });
+            // Render My Schedule & Grades
+            const myT = document.getElementById('my-list'); myT.innerHTML='';
+            const scT = document.getElementById('score-list'); scT.innerHTML='';
+            let tot=0, cr=0;
+
+            (curUser.courses||[]).forEach(c => {
+                const info = allCourses.find(x=>x.id===c.id) || c; // 盡量找最新資訊
+                myT.innerHTML += `<tr><td>${info.name}</td><td>${info.time}</td><td>${info.location||'-'}</td><td>${info.credit}</td><td>${c.isFixed?'🔒':`<button class="btn btn-drop" onclick="drop('${c.id}')">退</button>`}</td></tr>`;
+                
+                if(c.score) {
+                    scT.innerHTML += `<tr><td>${info.name}</td><td>${info.credit}</td><td>${c.score}</td></tr>`;
+                    tot += c.score * info.credit; cr += parseInt(info.credit);
                 }
             });
 
-            // --- 渲染選課列表 ---
-            const tb = document.getElementById('course-list'); tb.innerHTML='';
+            // Update GPA & Rank
+            const gpa = cr>0 ? (tot/cr).toFixed(1) : 0;
+            document.getElementById('my-gpa').innerText = gpa;
+            let rank = '新進學員';
+            if(gpa >= 90) rank = '👑 王者飛行員';
+            else if(gpa >= 80) rank = '💎 鑽石菁英';
+            else if(gpa >= 70) rank = '🥇 黃金戰士';
+            document.getElementById('my-rank').innerText = rank;
+
+            // Update Career Rec
+            renderRec();
+        }
+
+        // Actions
+        window.add = async(id) => {
+            const c = allCourses.find(x=>x.id===id);
+            // 檢查衝堂
+            if(curUser.courses.some(my => checkConflict(my.time, c.time))) return alert("衝堂了！");
             
-            if (allC.length === 0) {
-                tb.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">資料載入中或目前沒有課程...</td></tr>';
-            } else {
-                const sortedCourses = allC.sort((a,b) => (a.isFixed === b.isFixed) ? 0 : a.isFixed ? -1 : 1);
-    
-                sortedCourses.forEach(c => {
-                    // 只有開啟的課程才顯示，或我已選的
-                    if (!c.isOpen && !myC.some(x=>x.id===c.id)) return;
+            curUser.courses.push({id:c.id, name:c.name, credit:c.credit, time:c.time, isFixed:false});
+            await updateMe(); alert("加選成功");
+        };
 
-                    const has = myC.some(x=>x.id===c.id);
-                    const current = counts[c.id] || 0;
-                    const max = c.max || 999;
-                    const isFull = current >= max;
-    
-                    let btnHtml = '';
-                    if(c.isFixed) {
-                         if(has) btnHtml = '<span style="color:#e65100;font-weight:bold;">已排定 (必修)</span>';
-                         else btnHtml = '<span style="color:red;font-size:12px;">同步中...</span>';
-                    } else {
-                        if(has) {
-                            btnHtml = '<button class="btn btn-drop" onclick="drop(\''+c.id+'\')">退選</button>';
-                        } else if(isFull) {
-                            btnHtml = '<button class="btn" style="background:#ccc;cursor:not-allowed;" disabled>🚫 額滿</button>';
-                        } else {
-                            btnHtml = `<button class="btn btn-add" onclick="add('${c.id}')">加選</button>`;
-                        }
-                    }
-    
-                    tb.innerHTML += `
-                        <tr>
-                            <td><span class="tag ${c.isFixed?'tag-fixed':'tag-elective'}">${c.isFixed?'必修':'選修'}</span></td>
-                            <td>
-                                <div style="font-weight:bold;">${c.name}</div>
-                                <div style="font-size:12px;color:#666;">${c.time} | ${c.credit}學分 | ${c.location||''} | <span style="color:${isFull?'red':'#00308F'}">${current} / ${max} 人</span></div>
-                            </td>
-                            <td style="text-align:right;">${btnHtml}</td>
-                        </tr>`;
-                });
-            }
+        window.drop = async(id) => {
+            if(!confirm("確定退選?")) return;
+            curUser.courses = curUser.courses.filter(c=>c.id!==id);
+            await updateMe();
+        };
 
-            const mtb = document.getElementById('my-courses'); mtb.innerHTML='';
-            myC.forEach(c => { mtb.innerHTML += `<tr><td><span class="tag ${c.isFixed?'tag-fixed':'tag-elective'}">${c.isFixed?'必修':'選修'}</span></td><td><div style="font-weight:bold;">${c.name}</div><div style="font-size:12px;color:#666;">${c.location||''}</div></td><td>${c.time}</td><td style="text-align:right;">${c.isFixed ? '🔒' : `<button class="btn btn-drop" onclick="drop('${c.id}')">退</button>`}</td></tr>`; });
-            document.getElementById('credits').innerText = `已選學分: ${myC.reduce((a,b)=>a+parseInt(b.credit||0),0)}`;
+        window.setTrack = async(t) => {
+            curUser.careerTrack = t; await updateMe(); alert("志向已更新，請看下方推薦");
+        };
 
-            renderLeaderboard(); renderGrid();
-            let hHTML = '<table style="width:100%"><thead><tr><th>課程</th><th>學分</th><th>分數</th></tr></thead><tbody>';
-            let hasScore = false; myC.forEach(c=>{if(c.score){hasScore=true; hHTML+=`<tr><td>${c.name}</td><td>${c.credit}</td><td style="color:${c.score<60?'red':'green'}">${c.score}</td></tr>`;}});
-            document.getElementById('history-list').innerHTML = hasScore ? hHTML+'</tbody></table>' : '<div style="text-align:center;padding:20px;color:#999">尚無成績紀錄</div>';
-            renderRecommendations();
-            updateTrackUI(); 
-            renderInterestTags();
+        async function updateMe() {
+            const idx = sDB.findIndex(s=>s.id===curUser.id);
+            if(idx>-1) { sDB[idx] = curUser; await saveToCloud(KEYS.STUDENTS, sDB); }
         }
 
-        window.setTrack = (t) => { cur.careerTrack = t; updateTrackUI(); renderRecommendations(); };
-        function renderInterestTags() {
-            const pCont = document.getElementById('preset-tags-container'), cCont = document.getElementById('custom-tags-container');
-            pCont.innerHTML = ''; cCont.innerHTML = '';
-            PRESET_TAGS.forEach(tag => { const isActive = cur.interests.includes(tag); pCont.innerHTML += `<div class="interest-tag ${isActive?'active':''}" onclick="toggleInterest('${tag}')">${tag}</div>`; });
-            const customTags = cur.interests.filter(i => !PRESET_TAGS.includes(i));
-            if(customTags.length === 0) cCont.innerHTML = '<span style="font-size:12px;color:#999;padding:5px;">尚無自定義標籤</span>';
-            customTags.forEach(tag => { cCont.innerHTML += `<div class="interest-tag active" onclick="toggleInterest('${tag}')">${tag} <span class="tag-remove">✕</span></div>`; });
-        }
-        window.toggleInterest = (tag) => { if(cur.interests.includes(tag)) cur.interests = cur.interests.filter(t => t !== tag); else cur.interests.push(tag); renderInterestTags(); updateTrackUI(); renderRecommendations(); };
-        window.addCustomInterest = () => { const input = document.getElementById('new-interest-input'), val = input.value.trim(); if(!val) return; if(cur.interests.includes(val)) return alert("已存在"); cur.interests.push(val); input.value = ''; renderInterestTags(); updateTrackUI(); renderRecommendations(); };
-
-        function updateTrackUI() {
-            const t = cur.careerTrack;
-            const b1 = document.getElementById('btn-track-pilot'), b2 = document.getElementById('btn-track-ground');
-            b1.style.borderColor='#ddd'; b1.style.background='white'; b2.style.borderColor='#ddd'; b2.style.background='white';
-            if(t === 'pilot') { b1.style.borderColor='#00308F'; b1.style.background='#e3f2fd'; }
-            if(t === 'ground') { b2.style.borderColor='#e65100'; b2.style.background='#fff3e0'; }
-            document.getElementById('rec-msg').innerText = `當前設定：${t==='pilot'?'飛行生':'地勤生'} (已設定 ${cur.interests.length} 個興趣)`;
+        function checkConflict(t1, t2) {
+            if(!t1 || !t2) return false;
+            let [d1,p1]=t1.split('/'); let [d2,p2]=t2.split('/');
+            if(d1!==d2) return false;
+            return p1.split(',').some(p=>p2.split(',').includes(p));
         }
 
-        function renderRecommendations() {
-            const container = document.getElementById('rec-list-container');
-            if(!cur.careerTrack) return;
-            let keywords = cur.careerTrack === 'pilot' ? ['空氣', '飛行', '英文', '氣象'] : ['管理', '後勤', '機械', '維修'];
-            if(cur.interests && cur.interests.length > 0) keywords = [...keywords, ...cur.interests];
-            const recs = allC.filter(c => { if(myC.some(m => m.id === c.id)) return false; return keywords.some(k => c.name.includes(k)); });
-            if(recs.length === 0) container.innerHTML = `<div style="padding:10px;text-align:center;">無符合推薦。</div>`;
-            else container.innerHTML = recs.map(c => `<div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;"><div><div style="font-weight:bold; color:var(--cafa-blue-main);">★ 推薦：${c.name}</div><div style="font-size:12px; color:#666;">${c.time} | ${c.credit}學分</div></div><button class="btn btn-add" onclick="add('${c.id}')">加選</button></div>`).join('');
+        function renderRec() {
+            if(!curUser.careerTrack) return;
+            const keywords = curUser.careerTrack==='pilot' ? ['飛行','氣象','英文'] : ['維修','管理','程式'];
+            const recs = allCourses.filter(c => !c.isFixed && keywords.some(k=>c.name.includes(k)) && !curUser.courses.some(m=>m.id===c.id));
+            document.getElementById('rec-area').innerHTML = '<h4>為您推薦：</h4>' + (recs.length ? recs.map(c=>`<div>👉 ${c.name} (${c.time})</div>`).join('') : '暫無推薦');
         }
 
-        window.toggleSidebar = () => { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); };
+        // Chat
+        window.toggleChat = () => { const w=document.getElementById('chat-win'); w.style.display = w.style.display==='flex'?'none':'flex'; };
+        window.sendMsg = () => {
+            const i=document.getElementById('chat-in'); const txt=i.value; if(!txt)return;
+            const b=document.getElementById('chat-body');
+            b.innerHTML += `<div class="msg msg-me">${txt}</div>`;
+            i.value='';
+            setTimeout(() => {
+                let r = "這個問題太深奧了...";
+                if(txt.includes("推薦")) r = "依據你的志向，我推薦你選修無人機或程式設計課程！";
+                else if(txt.includes("學分")) r = `你目前修了 ${curUser.courses.reduce((a,c)=>a+parseInt(c.credit),0)} 學分。`;
+                else if(txt.includes("嗨")) r = "你好！我是選課小幫手。";
+                b.innerHTML += `<div class="msg msg-ai">${r}</div>`;
+                b.scrollTop = b.scrollHeight;
+            }, 500);
+        };
+
         window.switchTab = (id) => {
-            ['selection','schedule','leaderboard','visual','career','history'].forEach(v=>document.getElementById(v+'-view').style.display='none');
+            ['selection','schedule','grades','career'].forEach(v=>document.getElementById(v+'-view').style.display='none');
             document.getElementById(id+'-view').style.display='block';
             document.querySelectorAll('.menu-item').forEach(e=>e.classList.remove('active'));
-            const map={'selection':0,'schedule':1,'leaderboard':2,'visual':3,'career':4,'history':5};
-            if(document.querySelectorAll('.menu-item')[map[id]]) document.querySelectorAll('.menu-item')[map[id]].classList.add('active');
-            if(window.innerWidth <= 768) window.toggleSidebar();
+            event.currentTarget.classList.add('active');
         };
-
-        window.logout = () => { sessionStorage.removeItem('cafa_user'); location.href='index.html'; };
-        
-        window.add = async (id) => { 
-            // 重新抓取最新的學生資料，避免覆蓋別人的更動
-            let freshDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            let meIndex = freshDB.findIndex(s => s.id === cur.id);
-            if (meIndex === -1) return alert("系統錯誤：找不到您的帳號");
-
-            const c = allC.find(x=>x.id===id); 
-            // 檢查人數
-            let currentCount = 0;
-            freshDB.forEach(s => { if(s.courses && s.courses.some(sc => sc.id === id)) currentCount++; });
-            if(currentCount >= (c.max || 999)) return alert("來晚了一步！該課程剛剛額滿了。");
-            
-            // 檢查衝堂 (使用最新的 myC)
-            if(checkConflict(c)) return alert("衝堂！該時段已有課程。"); 
-
-            // 寫入資料庫
-            if (!freshDB[meIndex].courses) freshDB[meIndex].courses = [];
-            freshDB[meIndex].courses.push({id: c.id, name: c.name, credit: c.credit, time: c.time, isFixed: false});
-            
-            await saveToCloud(KEYS.STUDENTS, freshDB); 
-            alert("加選成功！"); 
-            // 介面會自動透過 listenToCloud 更新，不需手動 reload
-        };
-        
-        window.drop = async (id) => { 
-            if(!confirm("確定退選?"))return; 
-            
-            // 同樣先抓最新 DB
-            let freshDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            let meIndex = freshDB.findIndex(s => s.id === cur.id);
-            if (meIndex === -1) return;
-
-            if (freshDB[meIndex].courses) {
-                freshDB[meIndex].courses = freshDB[meIndex].courses.filter(x => x.id !== id);
-                await saveToCloud(KEYS.STUDENTS, freshDB); 
-            }
-        };
-
-        window.saveCareer = async () => { 
-            let freshDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            let meIndex = freshDB.findIndex(s => s.id === cur.id);
-            if (meIndex === -1) return;
-
-            freshDB[meIndex].careerTrack = cur.careerTrack; 
-            freshDB[meIndex].interests = cur.interests; 
-            await saveToCloud(KEYS.STUDENTS, freshDB); 
-            alert("設定已儲存！"); 
-        };
-
-        function checkConflict(n) { 
-            if(!n.time)return false; 
-            let [d1,p1]=n.time.replace(/\s/g, '').split('/'); 
-            let pp1=p1.split(','); 
-            return myC.some(o=>{
-                if(!o.time)return false; 
-                let [d2,p2]=o.time.replace(/\s/g, '').split('/'); 
-                return d1===d2 && pp1.some(p=>p2.split(',').includes(p)); 
-            }); 
-        }
-        
-        function renderGrid() {
-            const t = document.getElementById('visual-body'); t.innerHTML='';
-            const dMap={"一":1,"二":2,"三":3,"四":4,"五":5};
-            for(let i=1;i<=10;i++) {
-                t.innerHTML += `<tr><td style="font-size:14px;">${i}<div style="font-size:10px; color:#999; margin-top:2px;">${TIME_SLOTS[i-1]}</div></td><td id="c1-${i}"></td><td id="c2-${i}"></td><td id="c3-${i}"></td><td id="c4-${i}"></td><td id="c5-${i}"></td></tr>`;
-            }
-            myC.forEach(c => {
-                if(!c.time) return; 
-                let cleanTime = c.time.replace(/\s/g, '');
-                let [d,p]=cleanTime.split('/'); 
-                let dy=dMap[d];
-                if (!dy || !p) return;
-                p.split(',').forEach(x => { 
-                    let el=document.getElementById(`c${dy}-${x}`); 
-                    if(el) el.innerHTML=`<div class="course-block ${c.isFixed?'block-fixed':'block-elective'}"><div style="font-weight:bold;">${c.name}</div><div style="opacity:0.9; font-size:11px;">${c.location||'無地點'}</div></div>`; 
-                });
-            });
-        }
-        
-        function renderLeaderboard() {
-            const lbBody = document.getElementById('leaderboard-body'); lbBody.innerHTML = '';
-            let list = sDB.map(s => {
-                let sTot=0, sCr=0; (s.courses||[]).forEach(c=>{if(c.score){sTot+=parseInt(c.score)*parseInt(c.credit); sCr+=parseInt(c.credit);}});
-                let sGpa = sCr>0 ? (sTot/sCr) : -1;
-                let sRank = rules.find(r=>sGpa>=r.min) || rules[rules.length-1];
-                if(sCr===0) sRank = {name:'新進學員', color:'#eee'};
-                return { name: s.name, classId: s.classId||s.dept||'-', rank: sRank, gpa: sGpa, id: s.id };
-            });
-            list.sort((a,b) => b.gpa - a.gpa);
-            list.forEach((d, i) => {
-                let rowClass = d.id === cur.id ? 'background:#fff8e1;' : '';
-                let badge = `<span style="background:${d.rank.color};padding:4px 8px;border-radius:12px;font-size:12px;font-weight:bold;">${d.rank.name}</span>`;
-                if(d.gpa === -1) badge = '<span style="color:#ccc;font-size:12px;">尚無成績</span>';
-                lbBody.innerHTML += `<tr style="${rowClass}"><td>${i+1}</td><td><span class="tag tag-fixed">${d.classId}</span></td><td style="font-weight:bold">${d.name}</td><td>${badge}</td></tr>`;
-            });
-        }
-        function getDefaultRanks() { return [{name:'王者', min:90, color:'#ffe0b2', reward:'禮券', punishment:''}, {name:'鑽石', min:80, color:'#b3e5fc', reward:'', punishment:''}, {name:'黃金', min:70, color:'#fff9c4', reward:'', punishment:''}, {name:'白銀', min:60, color:'#f5f5f5', reward:'', punishment:''}, {name:'青銅', min:0, color:'#ffccbc', reward:'', punishment:''}]; }
-
-        // --- AI Chat ---
-        window.toggleChat = () => {
-            const w = document.getElementById('chat-win');
-            w.style.display = w.style.display === 'none' || w.style.display === '' ? 'flex' : 'none';
-        };
-
-        window.send = function() { 
-            const i=document.getElementById('chat-in'); const txt=i.value.trim(); if(!txt)return; 
-            const b=document.getElementById('chat-body'); b.innerHTML+=`<div class="chat-msg msg-user">${txt}</div>`; i.value=''; b.scrollTop=b.scrollHeight;
-            
-            setTimeout(()=>{
-                let r="請洽教務處";
-                if(txt.includes("排位")||txt.includes("等級")||txt.includes("分數")) {
-                    let tot=0, cr=0; myC.forEach(c=>{if(c.score){tot+=parseInt(c.score)*parseInt(c.credit); cr+=parseInt(c.credit);}});
-                    let gpa = cr>0 ? (tot/cr).toFixed(1) : 0;
-                    r = `你目前的 GPA 是 ${gpa} 分。`;
-                }
-                else if(txt.includes("學分")) {
-                    r=`你目前已選了 ${myC.reduce((a,b)=>a+parseInt(b.credit||0),0)} 學分。`;
-                }
-                else if(txt.includes("推薦")||txt.includes("選什麼")||txt.includes("不知道選")) {
-                    if(cur.careerTrack) {
-                        r = `既然你想當「${cur.careerTrack==='pilot'?'飛行員':'地勤人員'}」，推薦你去職涯推薦區看看！`;
-                    } else {
-                        r = "請先去「職涯與推薦」頁面設定你的志向，我才能給你建議喔！";
-                    }
-                }
-                else { 
-                    const c = allC.find(x => txt.includes(x.name) || (x.id && txt.includes(x.id))); 
-                    if(c) {
-                        let currentCount = 0;
-                        sDB.forEach(s => { if(s.courses && s.courses.some(sc => sc.id === c.id)) currentCount++; });
-                        r = `「${c.name}」在 ${c.time} 上課，是 ${c.credit} 學分。目前 ${currentCount}/${c.max||'無限'} 人選修。`;
-                    } else if (txt.includes("你好") || txt.includes("嗨")) {
-                        r = "你好！有什麼選課問題都可以問我喔！";
-                    }
-                }
-                b.innerHTML+=`<div class="chat-msg msg-ai">${r}</div>`; b.scrollTop=b.scrollHeight;
-            }, 600); 
-        };
-    </script>
-</body>
-</html>
-}
-
-### 2. 修改 `admin.html` (管理端)
-**修正重點：**
-* **強制更新學生狀態：** 在 `addCourse` 函式中，新增必修課時，會確保使用最新的 `studentDB` 副本，並將新課程推送到每位學生的 `courses` 陣列中。這確保了學生登入時能看到被強迫加入的課程。
-* **等待寫入完成：** 使用 `await` 確保資料完全寫入 Firebase 後才跳出成功視窗，避免看起來成功但實際還沒寫入的狀況。
-
-```html
-{
-type: uploaded file
-fileName: tom931028-png/cafa-selection-system/cafa-selection-system-9f34500d989dd6b095655e50e619bf6828083fa3/admin.html
-fullContent:
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>導師管理系統 | CAFA Admin</title>
-    <script src="[https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js](https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js)"></script>
-    <style>
-        /* --- 核心主題色系 --- */
-        :root { --admin-blue: #00308F; --admin-dark: #002266; --admin-gold: #FFD700; --admin-bg: #f4f7fa; }
-        body { font-family: "Microsoft JhengHei", Arial, sans-serif; background-color: var(--admin-bg); margin: 0; display: flex; height: 100vh; overflow: hidden; color: #333; }
-        
-        /* --- 側邊欄 --- */
-        .sidebar { width: 260px; background: linear-gradient(180deg, var(--admin-blue) 0%, var(--admin-dark) 100%); color: white; display: flex; flex-direction: column; padding-top: 25px; box-shadow: 4px 0 15px rgba(0,0,0,0.1); z-index: 100; transition: transform 0.3s; }
-        .sidebar-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
-        .menu-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; color: rgba(255,255,255,0.8); display: flex; align-items: center; font-size: 15px; border-left: 5px solid transparent; }
-        .menu-item:hover, .menu-item.active { background: rgba(0,0,0,0.2); border-left-color: var(--admin-gold); color: white; font-weight: bold; }
-        .menu-item span { margin-right: 12px; font-size: 20px; }
-        .badge { background: #ff5252; color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: auto; font-weight: bold; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .badge.show { display: inline-block; animation: pulse 2s infinite; }
-
-        /* --- 主內容區 --- */
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; background-image: linear-gradient(to bottom, #eef2f7, #f4f7fa); position: relative; }
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 10px; }
-        .header-title { font-size: 24px; font-weight: bold; color: var(--admin-blue); border-left: 8px solid var(--admin-gold); padding-left: 15px; }
-
-        .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-top: 4px solid var(--admin-blue); box-shadow: 0 5px 20px rgba(0,0,0,0.05); overflow-x: auto; transition: all 0.3s ease; position: relative; }
-        .card-pending { border-top: 4px solid #ff9800; background: #fff8e1; }
-        
-        /* --- 課程管理優化樣式 --- */
-        .course-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end; }
-        .form-group label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-        .form-group input:focus { border-color: var(--admin-blue); outline: none; }
-        
-        /* 表格與按鈕 */
-        table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0; font-size: 14px; margin-top: 10px; }
-        th { background-color: #f1f3f5; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap; }
-        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
-        .btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; color: white; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-submit { background-color: var(--admin-blue); width: 100%; height: 42px; } 
-        .btn-add { background-color: #00695c; } 
-        .btn-del { background-color: #dc3545; padding: 6px 12px; font-size: 12px; }
-        .btn-approve { background-color: #28a745; padding: 6px 12px; font-size: 12px; }
-        .btn-print { background-color: #607d8b; }
-        .btn-create { background-color: #28a745; margin-bottom: 15px; }
-        .btn-sync { background-color: #e65100; margin-bottom: 10px; width: 100%; }
-
-        /* Excel 匯入區塊 */
-        .import-section { background: #e8eaf6; padding: 15px; border-radius: 10px; border: 2px dashed #9fa8da; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-        .btn-import { background: #3f51b5; color: white; }
-        .btn-template { background: #7986cb; color: white; }
-
-        /* 課表樣式 (強化版) */
-        .schedule-table { min-width: 800px; table-layout: fixed; border-collapse: collapse; }
-        .schedule-table th, .schedule-table td { border: 1px solid #eee; text-align: center; }
-        .schedule-table td { height: 80px; vertical-align: top; padding: 2px; }
-        .schedule-time-col { background:#f8f9fa; color:#666; font-size:12px; font-weight:bold; width:60px; vertical-align:middle !important; }
-        .course-block { padding: 6px; border-radius: 6px; color: white; font-size: 12px; margin-bottom: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition:transform 0.2s; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; }
-        .course-block:hover { transform: scale(1.02); z-index:10; position:relative; }
-        
-        .mobile-toggle { display: none; position: fixed; top: 10px; left: 10px; z-index: 200; background: var(--admin-blue); color: white; border: none; padding: 10px; border-radius: 5px; }
-
-        /* 主題切換 */
-        .theme-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-        .theme-btn { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid #ddd; }
-        .card-theme-blue { background: linear-gradient(to bottom right, #f0f7ff, #dbeafe) !important; border-color: #1e88e5 !important; }
-        .card-theme-dark { background: #2c3e50 !important; color: #ecf0f1 !important; border-color: #34495e !important; }
-        .card-theme-dark th { background: #34495e !important; color: white !important; }
-        .card-theme-dark select { background: #34495e; color: white; border-color: #555; }
-        .card-theme-warm { background: #fffdeb !important; border-color: #fdd835 !important; }
-
-        @media (max-width: 768px) {
-            .mobile-toggle { display: block; }
-            .sidebar { position: fixed; height: 100%; transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
-            .main-content { padding: 60px 15px 15px 15px; }
-            .header-bar { flex-direction: column; align-items: flex-start; gap: 10px; }
-            .course-form-grid { grid-template-columns: 1fr; }
-        }
-        
-        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 999; }
-    </style>
-</head>
-<body>
-    <div id="loading"><h3>資料同步中...</h3></div>
-    <button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰ 選單</button>
-
-    <div class="sidebar">
-        <div class="sidebar-header"><h2>✈️ 管理後台</h2></div>
-        <div class="menu-item active" onclick="switchTab('monitor')"><span>🌐</span> 全校監控</div>
-        <div class="menu-item" onclick="switchTab('schedule')"><span>📅</span> 教師課表</div>
-        <div class="menu-item" onclick="switchTab('ranks')"><span>🏆</span> 獎懲設定</div>
-        <div class="menu-item" onclick="switchTab('students')">
-            <span>👥</span> 學生與審核
-            <span id="pending-badge" class="badge">0</span>
-        </div>
-        <div class="menu-item" onclick="switchTab('courses')"><span>👨‍🏫</span> 課程管理</div>
-        <div class="menu-item" onclick="switchTab('grades')"><span>📝</span> 成績輸入</div>
-    </div>
-
-    <div class="main-content">
-        <div id="monitor-view">
-            <div class="header-bar"><div class="header-title">全校監控</div><button class="btn btn-print" onclick="window.print()">🖨️ 列印報表</button></div>
-            <div class="card">
-                <table><thead><tr><th>學號/姓名</th><th>班級</th><th>職涯</th><th>GPA</th><th>狀態</th></tr></thead><tbody id="student-list-body"></tbody></table>
-            </div>
-        </div>
-
-        <div id="schedule-view" style="display: none;">
-            <div class="header-bar">
-                <div class="header-title">教師課表</div>
-                <div style="display:flex; align-items:center; flex-wrap:wrap;">
-                    <div class="theme-controls">
-                        <span style="font-size:12px;margin-right:5px;color:#666;">風格:</span>
-                        <div class="theme-btn tb-white" style="background:white" onclick="setTheme('white')"></div>
-                        <div class="theme-btn tb-blue" style="background:#e3f2fd" onclick="setTheme('blue')"></div>
-                        <div class="theme-btn tb-warm" style="background:#fff8e1" onclick="setTheme('warm')"></div>
-                        <div class="theme-btn tb-dark" style="background:#333" onclick="setTheme('dark')"></div>
-                    </div>
-                    <button class="btn btn-print" onclick="window.print()" style="margin-left:15px;">🖨️ 列印</button>
-                </div>
-            </div>
-            <div class="card" id="schedule-card">
-                <select id="teacher-schedule-selector" onchange="renderTeacherSchedule()" style="margin-bottom:15px; padding:10px;">
-                    <option value="">-- 請選擇教官 --</option>
-                </select>
-                <h4 id="schedule-title" style="text-align:center;color:#00308F;">請選擇教官查看課表</h4>
-                <div style="overflow-x:auto;">
-                    <table class="schedule-table">
-                        <thead><tr><th style="width:60px">節次</th><th>星期一</th><th>星期二</th><th>星期三</th><th>星期四</th><th>星期五</th></tr></thead>
-                        <tbody id="teacher-schedule-body"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="ranks-view" style="display: none;">
-            <div class="header-bar"><div class="header-title">獎懲與段位設定</div></div>
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <div>請設定各段位的 GPA 門檻，系統將自動依分數高低排序。</div>
-                    <button class="btn btn-create" onclick="addNewRankRow()">＋ 新增段位</button>
-                </div>
-                <table>
-                    <thead><tr><th style="width:15%">段位名稱</th><th style="width:10%">最低GPA</th><th style="width:10%">代表色</th><th style="width:10%">預覽</th><th>獎勵內容</th><th>懲罰內容</th><th style="width:50px">操作</th></tr></thead>
-                    <tbody id="rank-rules-body"></tbody>
-                </table>
-                <button class="btn btn-submit" style="width:200px; margin-top:20px;" onclick="saveRankRules()">💾 儲存並套用設定</button>
-            </div>
-        </div>
-
-        <div id="students-view" style="display: none;">
-            <div class="header-bar"><div class="header-title">學生資料與審核</div></div>
-            
-            <div class="import-section">
-                <div>
-                    <strong>📂 批次匯入帳號 (Excel)</strong>
-                    <div style="font-size:12px; color:#666; margin-top:5px;">請上傳 .xlsx 或 .csv 檔案，系統將自動建立帳號 (預設狀態為正常)。</div>
-                </div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn btn-template" onclick="downloadStudentTemplate()">📥 下載帳號範本</button>
-                    <button class="btn btn-import" onclick="document.getElementById('import-student-file').click()">📤 上傳帳號表</button>
-                    <input type="file" id="import-student-file" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleStudentImport(event)">
-                </div>
-            </div>
-
-            <div id="pending-zone" class="card card-pending" style="display:none;">
-                <h3>⚠️ 待審核申請 (Pending Requests)</h3>
-                <div style="margin-bottom:10px; display:flex; gap:10px;">
-                    <button class="btn btn-approve" onclick="batchApprove()">⚡ 批次核准</button>
-                    <button class="btn btn-del" onclick="batchDelete()">🗑️ 批次刪除</button>
-                </div>
-                <div style="max-height:300px; overflow-y:auto;">
-                    <table>
-                        <thead><tr><th class="checkbox-cell"><input type="checkbox" onclick="toggleSelectAll(this, 'pending')"></th><th>學號</th><th>姓名</th><th>班級</th><th>操作</th></tr></thead>
-                        <tbody id="pending-list-body"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>✅ 正式學員名單</h3>
-                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-                    <input id="s_id" placeholder="學號" style="flex:1; min-width:100px;">
-                    <input id="s_name" placeholder="姓名" style="flex:1; min-width:100px;">
-                    <input id="s_class" placeholder="班級" style="flex:1; min-width:100px;">
-                    <input id="s_pass" placeholder="密碼" style="flex:1; min-width:100px;">
-                    <button class="btn btn-add" style="flex:1; min-width:100px;" onclick="addStudent()">手動新增</button>
-                </div>
-                <div style="max-height:500px; overflow-y:auto;">
-                    <table>
-                        <thead><tr><th>狀態</th><th>學號</th><th>姓名</th><th>班級</th><th>操作</th></tr></thead>
-                        <tbody id="active-list-body"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="courses-view" style="display:none;">
-            <div class="header-bar"><div class="header-title">課程管理</div></div>
-            
-            <div class="card" style="border-top-color:#28a745;">
-                <h3 style="margin-top:0; color:#28a745;">➕ 新增課程</h3>
-                <div class="course-form-grid">
-                    <div class="form-group">
-                        <label>課程類別</label>
-                        <select id="c_type" onchange="toggleCourseForm(this.value)">
-                            <option value="fixed">🔒 必修 (全校強制)</option>
-                            <option value="elective">📖 選修 (自由選課)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>課程代碼</label>
-                        <input id="c_id" placeholder="例: C101">
-                    </div>
-                    <div class="form-group">
-                        <label>課程名稱</label>
-                        <input id="c_name" placeholder="例: 飛行原理">
-                    </div>
-                    <div class="form-group">
-                        <label>學分</label>
-                        <input id="c_cr" type="number" value="2">
-                    </div>
-                    <div class="form-group">
-                        <label>上課時間 (例: 一/3,4)</label>
-                        <input id="c_time" placeholder="星期/節次">
-                    </div>
-                    <div class="form-group">
-                        <label>教官姓名</label>
-                        <input id="c_tea" placeholder="例: 王大明">
-                    </div>
-                    <div class="form-group">
-                        <label>上課地點</label>
-                        <input id="c_loc" placeholder="例: 航太 301">
-                    </div>
-                    <div class="form-group" id="group-max">
-                        <label>人數上限</label>
-                        <input id="c_max" type="number" value="40">
-                    </div>
-                    <div class="form-group">
-                        <button class="btn btn-submit" onclick="addCourse()">發布課程</button>
-                    </div>
-                </div>
-                <div style="margin-top:10px; font-size:12px; color:#d32f2f;">
-                    * 注意：發布「必修」課程時，系統會自動將該課程加入所有學生的課表，若有選修衝堂將自動移除選修課。
-                </div>
-            </div>
-
-            <div class="card">
-                <h3>📚 現有課程列表</h3>
-                <div id="sync-btn-container"></div>
-                <div style="max-height:600px; overflow-y:auto;">
-                    <table id="course-table"><thead><tr><th>類別</th><th>名稱 (代碼)</th><th>時間</th><th>地點</th><th>教官</th><th>狀態/人數</th><th>操作</th></tr></thead><tbody id="course-list"></tbody></table>
-                </div>
-            </div>
-        </div>
-
-        <div id="grades-view" style="display:none;">
-            <div class="header-bar"><div class="header-title">成績管理</div></div>
-            <div class="import-section" style="background:#e0f2f1; border-color:#80cbc4;">
-                <div><strong>📊 批次匯入成績 (Excel)</strong><div style="font-size:12px; color:#00695c; margin-top:5px;">學號 + 課程代碼 + 分數</div></div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn btn-template" onclick="downloadGradeTemplate()">📥 範本</button>
-                    <button class="btn btn-import" style="background:#00695c;" onclick="document.getElementById('import-grade-file').click()">📤 上傳</button>
-                    <input type="file" id="import-grade-file" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleGradeImport(event)">
-                </div>
-            </div>
-
-            <div class="card">
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <select id="g_stu" onchange="loadGrades()" style="flex:3">
-                        <option value="">-- 請先選擇學生 --</option>
-                    </select>
-                    <button class="btn btn-submit" style="flex:1" onclick="saveGrades()">💾 儲存成績</button>
-                </div>
-                <table id="grade-table"><thead><tr><th>課程</th><th>學分</th><th>分數輸入</th></tr></thead><tbody id="grade-body"><tr><td colspan="3" style="text-align:center; color:#999;">請先選擇學生以載入課程列表</td></tr></tbody></table>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
-        import { loadFromCloud, saveToCloud, listenToCloud } from './firebase-connect.js';
-        const KEYS = { STUDENTS:'cafa_all_students_db', FIXED:'cafa_fixed_courses', ELECTIVE:'cafa_public_electives', RANKS:'cafa_rank_rules' };
-        let studentDB=[], fixedCourses=[], electiveCourses=[], rankRules=[];
-        const TIME_SLOTS = ["08:10", "09:10", "10:10", "11:10", "13:30", "14:30", "15:30", "16:30", "17:30", "19:00"];
-
-        window.onload = () => { 
-            initAdminListeners();
-            document.getElementById('loading').style.display='none'; 
-            const savedTheme = localStorage.getItem('cafa_admin_theme'); if(savedTheme) setTheme(savedTheme);
-        };
-
-        function initAdminListeners() {
-            listenToCloud(KEYS.STUDENTS, (val) => { 
-                studentDB = val || []; 
-                renderMonitor(); 
-                renderStudents(); 
-                updateSels(); 
-                if(document.getElementById('schedule-view').style.display==='block') renderTeacherSchedule(); 
-            });
-            listenToCloud(KEYS.FIXED, (val) => { fixedCourses = val || []; renderCourses(); updateSels(); renderTeacherSchedule(); });
-            listenToCloud(KEYS.ELECTIVE, (val) => { electiveCourses = val || []; renderCourses(); updateSels(); renderTeacherSchedule(); });
-            listenToCloud(KEYS.RANKS, (val) => { rankRules = val || getDefaultRanks(); renderRankSettings(); });
-        }
-
-        // --- ★ 修正 1：更強大的教師課表渲染 ---
-        window.renderTeacherSchedule = () => {
-            const tea = document.getElementById('teacher-schedule-selector').value; 
-            const tbody = document.getElementById('teacher-schedule-body'); 
-            tbody.innerHTML = ''; 
-
-            for(let i=1;i<=10;i++) {
-                tbody.innerHTML += `<tr><td class="schedule-time-col">第${i}節<br><span style="font-size:10px; font-weight:normal;">${TIME_SLOTS[i-1]}</span></td><td id="t1-${i}"></td><td id="t2-${i}"></td><td id="t3-${i}"></td><td id="t4-${i}"></td><td id="t5-${i}"></td></tr>`;
-            }
-
-            if(!tea) { document.getElementById('schedule-title').innerText = "請選擇教官查看課表"; return; }
-            document.getElementById('schedule-title').innerText = `📅 ${tea} 教官課表`;
-
-            const courses = [...fixedCourses, ...electiveCourses].filter(c => c.teacher === tea);
-            
-            // 計算選課人數
-            const counts = {};
-            studentDB.forEach(s => {
-                if(s.courses) {
-                    s.courses.forEach(sc => {
-                        if(courses.some(c => c.id === sc.id)) { counts[sc.id] = (counts[sc.id] || 0) + 1; }
-                    });
-                }
-            });
-
-            courses.forEach(c => { 
-                if(!c.time) return; 
-                let cleanTime = c.time.replace(/\s/g, ''); 
-                let [d, p] = cleanTime.split('/'); 
-                
-                if (!d || !p) return;
-
-                const dMap = {"一":1, "二":2, "三":3, "四":4, "五":5}; 
-                if(!dMap[d]) return;
-
-                p.split(',').forEach(x => { 
-                    let el = document.getElementById(`t${dMap[d]}-${x}`); 
-                    if(el) {
-                        if(el.innerHTML !== "") el.innerHTML += `<div style="border-top:1px solid rgba(255,255,255,0.3); margin-top:2px; padding-top:2px;"></div>`;
-                        el.innerHTML += `
-                            <div class="course-block" 
-                                 style="background:${c.isFixed ? 'linear-gradient(135deg, #e65100, #ff9800)' : 'linear-gradient(135deg, #00308F, #1976d2)'}; cursor:pointer;" 
-                                 onclick="alert('【課程詳情】\\n名稱：${c.name}\\n代碼：${c.id}\\n地點：${c.location||'未定'}\\n選課人數：${counts[c.id]||0} 人')">
-                                <div style="font-weight:bold; font-size:13px;">${c.name}</div>
-                                <div style="font-size:11px; opacity:0.9;">${c.location||'📍無'}</div>
-                            </div>`;
-                    }
-                }); 
-            });
-        };
-
-        // --- ★ 修正 2：發布必修課時，更強制地寫入學生資料，且等待寫入完成 ---
-        window.addCourse = async () => {
-            const t = document.getElementById('c_type').value;
-            const cid = document.getElementById('c_id').value.trim();
-            const name = document.getElementById('c_name').value.trim();
-            const time = document.getElementById('c_time').value.trim().replace(/\s/g, ''); 
-            const teacher = document.getElementById('c_tea').value.trim();
-            const location = document.getElementById('c_loc').value.trim();
-            const credit = parseInt(document.getElementById('c_cr').value);
-            const maxVal = parseInt(document.getElementById('c_max').value)||40;
-
-            if(!cid || !name || !time) return alert("請填寫完整課程資訊 (代碼、名稱、時間)！");
-            
-            if([...fixedCourses, ...electiveCourses].some(c => c.id === cid)) return alert("課程代碼已存在！請更換代碼。");
-
-            const newCourse = {
-                id: cid, name, credit, time, teacher, location,
-                type: t==='fixed'?'必修':'選修', 
-                isFixed: t==='fixed', 
-                isOpen: true,
-                max: t==='fixed' ? 9999 : maxVal
-            };
-
-            if(t === 'fixed') {
-                if(!confirm(`⚠️ 發布必修課程「${name}」\n\n這將會強制加入到「所有」學生的課表中。確定嗎？`)) return;
-                
-                // 1. 先存課程庫
-                const newFixed = [...fixedCourses, newCourse];
-                await saveToCloud(KEYS.FIXED, newFixed);
-
-                // 2. 強制同步給所有學生 (使用當前最新的 studentDB)
-                let affectedCount = 0;
-                let conflictRemoved = 0;
-                
-                // 必須使用深拷貝，避免修改到原參照
-                // 重要：確保使用最新的 studentDB (已由 listener 更新)
-                let currentDB = JSON.parse(JSON.stringify(studentDB));
-
-                currentDB.forEach(s => {
-                    if(!s.courses) s.courses = [];
-                    // 只有當學生還沒有這門課時才加
-                    if(!s.courses.some(c => c.id === cid)) {
-                        // 移除衝堂的「選修」課 (必修不移除必修)
-                        s.courses = s.courses.filter(exist => {
-                            const isConflict = checkTimeConflict(exist.time, newCourse.time);
-                            if(isConflict && !exist.isFixed) { 
-                                conflictRemoved++; 
-                                return false; // 移除該選修
-                            }
-                            return true;
-                        });
-                        // 加入新必修
-                        s.courses.push({ 
-                            id: cid, 
-                            name: name,
-                            credit: credit, 
-                            time: time, 
-                            isFixed: true, 
-                            location: location, 
-                            teacher: teacher 
-                        });
-                        affectedCount++;
-                    }
-                });
-
-                // 3. 寫回學生資料庫 (使用 await 確保寫入完成)
-                await saveToCloud(KEYS.STUDENTS, currentDB);
-                alert(`✅ 必修發布成功！\n已同步至 ${affectedCount} 位學生，並自動解決 ${conflictRemoved} 個選修衝堂。`);
-            } else {
-                const newElect = [...electiveCourses, newCourse];
-                await saveToCloud(KEYS.ELECTIVE, newElect);
-                alert("✅ 選修課程已發布，學生現在可以在選課區看到了。");
-            }
-            
-            document.getElementById('c_id').value = '';
-            document.getElementById('c_name').value = '';
-            if(teacher) {
-                document.getElementById('teacher-schedule-selector').value = teacher;
-                switchTab('schedule');
-            }
-        };
-
-        window.syncFixedCoursesToAll = async () => {
-            if(!confirm("確定要將目前的「必修課程」強制同步給所有學生嗎？")) return;
-            let updateCount = 0;
-            // 重新讀取確保最新
-            let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-
-            currentDB.forEach(s => {
-                if(!s.courses) s.courses = [];
-                fixedCourses.forEach(fc => {
-                    if(!s.courses.some(c => c.id === fc.id)) {
-                         s.courses = s.courses.filter(exist => !(!exist.isFixed && checkTimeConflict(exist.time, fc.time)));
-                         s.courses.push({ id: fc.id, name: fc.name, credit: fc.credit, time: fc.time, isFixed: true, location: fc.location, teacher: fc.teacher });
-                         updateCount++;
-                    }
-                });
-            });
-
-            if(updateCount > 0) {
-                await saveToCloud(KEYS.STUDENTS, currentDB);
-                alert(`✅ 同步完成！更新了 ${updateCount} 筆資料。`);
-            } else {
-                alert("所有學生的資料已經是最新的。");
-            }
-        };
-
-        function checkTimeConflict(t1, t2) {
-            if(!t1 || !t2) return false;
-            let clean1 = t1.replace(/\s/g, ''), clean2 = t2.replace(/\s/g, '');
-            let [d1, p1] = clean1.split('/'); let [d2, p2] = clean2.split('/');
-            if(d1 !== d2) return false; 
-            let pp1 = p1.split(','), pp2 = p2.split(',');
-            return pp1.some(p => pp2.includes(p)); 
-        }
-
-        window.delCourse = async (type, idx) => {
-            if(!confirm("確定刪除此課程？")) return;
-            if(type === 'fixed') { const n = [...fixedCourses]; n.splice(idx, 1); await saveToCloud(KEYS.FIXED, n); } 
-            else { const n = [...electiveCourses]; n.splice(idx, 1); await saveToCloud(KEYS.ELECTIVE, n); }
-        };
-
-        window.toggleStatus = async (idx) => {
-            const n = [...electiveCourses]; n[idx].isOpen = !n[idx].isOpen;
-            await saveToCloud(KEYS.ELECTIVE, n);
-        };
-
-        function renderCourses() {
-            const t = document.getElementById('course-list');
-            let html = '';
-            document.getElementById('sync-btn-container').innerHTML = `<button class="btn btn-sync" onclick="syncFixedCoursesToAll()">🔄 強制同步必修課給所有學生</button>`;
-            
-            fixedCourses.forEach((c, i) => {
-                html += `<tr style="background:#fff3e0"><td><span style="color:#e65100;font-weight:bold">🔒 必修</span></td><td>${c.name} (${c.id})</td><td>${c.time}</td><td>${c.location||'-'}</td><td>${c.teacher||'-'}</td><td>全體</td><td><button class="btn btn-del" onclick="delCourse('fixed',${i})">刪除</button></td></tr>`;
-            });
-            electiveCourses.forEach((c, i) => {
-                html += `<tr><td><span style="color:#2e7d32;font-weight:bold">📖 選修</span></td><td>${c.name} (${c.id})</td><td>${c.time}</td><td>${c.location||'-'}</td><td>${c.teacher||'-'}</td><td><button class="btn" onclick="toggleStatus(${i})" style="background:${c.isOpen?'#28a745':'#9e9e9e'};padding:2px 8px;font-size:12px;">${c.isOpen?'開啟中':'已關閉'}</button> ${c.max}人</td><td><button class="btn btn-del" onclick="delCourse('elect',${i})">刪除</button></td></tr>`;
-            });
-            t.innerHTML = html;
-        }
-
-        window.updateSels = () => { 
-            const tea = document.getElementById('teacher-schedule-selector'); 
-            const currentCourses = [...fixedCourses, ...electiveCourses];
-            const ts = [...new Set(currentCourses.map(c=>c.teacher).filter(x=>x && x.trim() !== ''))].sort(); 
-            
-            const savedT = tea.value; 
-            tea.innerHTML='<option value="">-- 請選擇教官 --</option>'; 
-            ts.forEach(t => tea.add(new Option(t,t))); 
-            
-            if(ts.includes(savedT)) {
-                tea.value = savedT;
-            } 
-            
-            const stu = document.getElementById('g_stu'); 
-            const savedS = stu.value; 
-            stu.innerHTML='<option value="">-- 請選擇學生輸入成績 --</option>'; 
-            studentDB.forEach(s=>stu.add(new Option(`${s.id} ${s.name}`, s.id))); stu.value = savedS; 
-        };
-
-        // --- 其他 UI 邏輯 ---
-        window.toggleCourseForm = (v) => {
-            const maxInput = document.getElementById('c_max');
-            const group = document.getElementById('group-max');
-            if(v === 'fixed') { maxInput.disabled = true; maxInput.value = '全校'; group.style.opacity = 0.5; }
-            else { maxInput.disabled = false; maxInput.value = '40'; group.style.opacity = 1; }
-        };
-
-        window.setTheme = (t) => {
-            const c = document.getElementById('schedule-card'); c.className = 'card';
-            if(t !== 'white') c.classList.add(`card-theme-${t}`);
-            localStorage.setItem('cafa_admin_theme', t);
-            const title = document.getElementById('schedule-title');
-            title.style.color = (t === 'dark') ? '#fff' : '#00308F';
-        };
-
-        window.switchTab = (id) => {
-            ['monitor','schedule','ranks','students','courses','grades'].forEach(v=>document.getElementById(v+'-view').style.display='none');
-            document.getElementById(id+'-view').style.display='block';
-            document.querySelector('.sidebar').classList.remove('open');
-            if(id === 'schedule') renderTeacherSchedule();
-            if(id === 'ranks') renderRankSettings();
-        };
-
-        // Rank
-        function renderRankSettings() {
-            const t = document.getElementById('rank-rules-body'); t.innerHTML = '';
-            rankRules.sort((a,b) => b.min - a.min);
-            rankRules.forEach((r, i) => {
-                t.innerHTML += `<tr class="rank-row"><td><input class="r-name" value="${r.name}" placeholder="名稱"></td><td><input class="r-min" type="number" value="${r.min}" style="width:60px"></td><td><input class="r-color" type="color" value="${r.color}" oninput="updateRankPreview(this)"></td><td><span class="rank-badge" style="background-color:${r.color};">${r.name}</span></td><td><input class="r-reward" value="${r.reward||''}" placeholder="無"></td><td><input class="r-punish" value="${r.punish||''}" placeholder="無"></td><td><button class="btn btn-del" onclick="deleteRankRow(this)">✕</button></td></tr>`;
-            });
-        }
-        window.addNewRankRow = () => {
-            const t = document.getElementById('rank-rules-body');
-            const row = document.createElement('tr'); row.className = 'rank-row';
-            row.innerHTML = `<td><input class="r-name" value="新段位" placeholder="名稱"></td><td><input class="r-min" type="number" value="60" style="width:60px"></td><td><input class="r-color" type="color" value="#cccccc" oninput="updateRankPreview(this)"></td><td><span class="rank-badge" style="background-color:#cccccc;">新段位</span></td><td><input class="r-reward" placeholder="無"></td><td><input class="r-punish" placeholder="無"></td><td><button class="btn btn-del" onclick="deleteRankRow(this)">✕</button></td>`;
-            t.insertBefore(row, t.firstChild);
-        };
-        window.deleteRankRow = (btn) => { if(confirm("刪除?")) btn.closest('tr').remove(); };
-        window.updateRankPreview = (input) => { const r = input.closest('tr'); const b = r.querySelector('.rank-badge'); const n = r.querySelector('.r-name'); b.style.backgroundColor = input.value; b.innerText = n.value; };
-        window.saveRankRules = async () => {
-            const rows = document.querySelectorAll('.rank-row'); const newRules = [];
-            rows.forEach(row => { const name = row.querySelector('.r-name').value; const min = parseInt(row.querySelector('.r-min').value); const color = row.querySelector('.r-color').value; const reward = row.querySelector('.r-reward').value; const punishment = row.querySelector('.r-punish').value; if(name && !isNaN(min)) newRules.push({ name, min, color, reward, punishment }); });
-            newRules.sort((a,b) => b.min - a.min); await saveToCloud(KEYS.RANKS, newRules); alert("✅ 設定已儲存！"); 
-        };
-        function getDefaultRanks() { return [{name:'王者', min:90, color:'#ffe0b2', reward:'禮券', punishment:''}, {name:'鑽石', min:80, color:'#b3e5fc', reward:'', punishment:''}, {name:'黃金', min:70, color:'#fff9c4', reward:'', punishment:''}, {name:'白銀', min:60, color:'#f5f5f5', reward:'', punishment:''}, {name:'青銅', min:0, color:'#ffccbc', reward:'', punishment:''}]; }
-
-        window.addStudent = async () => { 
-            const id=document.getElementById('s_id').value; 
-            if(studentDB.some(s=>s.id===id))return alert("重複"); 
-            
-            // 每次新增都從雲端拉一次最新資料，避免 overwriting
-            let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            
-            const initCourses = fixedCourses.map(fc => ({ id: fc.id, name: fc.name, credit: fc.credit, time: fc.time, isFixed: true, location: fc.location, teacher: fc.teacher }));
-            currentDB.push({id, name:document.getElementById('s_name').value, classId:document.getElementById('s_class').value, password:document.getElementById('s_pass').value, status:'active', courses:initCourses}); 
-            await saveToCloud(KEYS.STUDENTS, currentDB); 
-        };
-
-        window.renderStudents = () => {
-            const pendingList = studentDB.filter(s => s.status === 'pending');
-            const activeList = studentDB.filter(s => s.status !== 'pending');
-            const badge = document.getElementById('pending-badge');
-            if(pendingList.length > 0) { badge.innerText = pendingList.length; badge.classList.add('show'); document.getElementById('pending-zone').style.display = 'block'; }
-            else { badge.classList.remove('show'); document.getElementById('pending-zone').style.display = 'none'; }
-            
-            document.getElementById('pending-list-body').innerHTML = pendingList.length === 0 ? '' : pendingList.map(s => `<tr><td class="checkbox-cell"><input type="checkbox" class="pending-checkbox" value="${s.id}"></td><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td><button class="btn btn-approve" onclick="approveStudent('${s.id}')">核准</button></td></tr>`).join('');
-            document.getElementById('active-list-body').innerHTML = activeList.map(s => `<tr><td>🟢</td><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td><button class="btn btn-del" onclick="deleteStudent('${s.id}')">刪</button></td></tr>`).join('');
-        };
-        window.toggleSelectAll = (src, type) => { document.querySelectorAll(`.${type}-checkbox`).forEach(cb => cb.checked = src.checked); };
-        window.batchApprove = async () => {
-            const cbs = document.querySelectorAll('.pending-checkbox:checked'); if(cbs.length===0) return alert("未選取");
-            
-            let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            const ids = Array.from(cbs).map(cb=>cb.value);
-            
-            ids.forEach(id => {
-                const s = currentDB.find(x=>x.id===id); 
-                if(s) s.status='active'; 
-            });
-            await saveToCloud(KEYS.STUDENTS, currentDB); alert(`✅ 已核准 ${cbs.length} 人`);
-        };
-        window.batchDelete = async () => {
-            const cbs = document.querySelectorAll('.pending-checkbox:checked'); if(cbs.length===0) return alert("未選取");
-            if(!confirm("確定刪除?")) return;
-            
-            let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            const ids = Array.from(cbs).map(cb=>cb.value);
-            const newDB = currentDB.filter(s => !ids.includes(s.id));
-            await saveToCloud(KEYS.STUDENTS, newDB);
-        };
-        
-        window.downloadStudentTemplate = () => { const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["學號","姓名","班級","密碼"],["114001","測試生","114-1","1234"]]), "範本"); XLSX.writeFile(wb, "學生帳號範本.xlsx"); };
-        window.handleStudentImport = (e) => {
-            const f=e.target.files[0]; if(!f)return;
-            const r=new FileReader(); r.onload=async(e)=>{
-                const d=new Uint8Array(e.target.result), wb=XLSX.read(d,{type:'array'});
-                const json=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                let cnt=0; 
-                let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-
-                const initCourses = fixedCourses.map(fc => ({ id: fc.id, name: fc.name, credit: fc.credit, time: fc.time, isFixed: true, location: fc.location, teacher: fc.teacher }));
-                json.forEach(r=>{ 
-                    const id=String(r['學號']||r['id']).trim(); 
-                    if(id && !currentDB.some(s=>s.id===id)) { 
-                        currentDB.push({ id, name:String(r['姓名']||r['name']), classId:String(r['班級']||''), password:String(r['密碼']||'1234'), status:'active', courses:[...initCourses] }); 
-                        cnt++; 
-                    }
-                });
-                if(cnt>0) await saveToCloud(KEYS.STUDENTS, currentDB); alert(`匯入 ${cnt} 筆，已帶入必修`); document.getElementById('import-student-file').value='';
-            }; r.readAsArrayBuffer(f);
-        };
-        window.downloadGradeTemplate = () => { const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["學號","課程代碼","分數"],["114001","C101","85"]]), "範本"); XLSX.writeFile(wb, "成績範本.xlsx"); };
-        window.handleGradeImport = (e) => {
-            const f=e.target.files[0]; if(!f)return;
-            const r=new FileReader(); r.onload=async(e)=>{
-                const d=new Uint8Array(e.target.result), wb=XLSX.read(d,{type:'array'});
-                const json=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                let cnt=0; 
-                let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-                
-                json.forEach(r=>{
-                    const sid=String(r['學號']), cid=String(r['課程代碼']), sc=parseInt(r['分數']);
-                    const s=currentDB.find(x=>x.id===sid);
-                    if(s && s.courses){ const c=s.courses.find(x=>x.id===cid); if(c){c.score=sc; cnt++;} }
-                });
-                if(cnt>0) await saveToCloud(KEYS.STUDENTS, currentDB); alert(`更新 ${cnt} 筆成績`); document.getElementById('import-grade-file').value='';
-            }; r.readAsArrayBuffer(f);
-        };
-        window.loadGrades = () => { 
-            const sid=document.getElementById('g_stu').value; 
-            const t=document.getElementById('grade-body'); t.innerHTML=''; 
-            if(!sid) { t.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999;">請選擇學生</td></tr>'; return; }
-            const s=studentDB.find(x=>x.id===sid); 
-            if(!s || !s.courses || s.courses.length === 0) { t.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#d32f2f;">此學生尚未選修任何課程</td></tr>'; return; }
-            s.courses.forEach(c=>{ 
-                const safeId = c.id.replace(/[^a-zA-Z0-9-_]/g, '_');
-                const val = (c.score === undefined || c.score === null) ? '' : c.score;
-                t.innerHTML+=`<tr><td>${c.name} <span style="font-size:12px;color:#999">(${c.id})</span></td><td>${c.credit}</td><td><input type="number" id="sc-${safeId}" value="${val}" style="width:80px" placeholder="未輸入" data-cid="${c.id}"></td></tr>`; 
-            }); 
-        };
-        window.saveGrades = async () => { 
-            const sid=document.getElementById('g_stu').value; 
-            if(!sid) return alert("請先選擇學生！");
-            
-            let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            const idx=currentDB.findIndex(x=>x.id===sid); 
-            
-            if(idx>-1) { 
-                const s = currentDB[idx];
-                if(s.courses) {
-                    s.courses.forEach(c => {
-                        const safeId = c.id.replace(/[^a-zA-Z0-9-_]/g, '_');
-                        const input = document.getElementById(`sc-${safeId}`);
-                        if(input) {
-                            const val = input.value.trim();
-                            if(val === '') delete c.score; else c.score = parseInt(val);
-                        }
-                    });
-                    await saveToCloud(KEYS.STUDENTS, currentDB); 
-                    alert(`✅ 學生 ${s.name} 的成績已儲存！`); 
-                }
-            } else alert("找不到學生資料");
-        };
-
-        window.deleteStudent = async (id) => { 
-            if(confirm("刪除?")){ 
-                let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-                await saveToCloud(KEYS.STUDENTS, currentDB.filter(s=>s.id!==id)); 
-            } 
-        };
-        window.approveStudent = async (id) => { 
-            let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            const s=currentDB.find(x=>x.id===id); 
-            if(s){ s.status='active'; await saveToCloud(KEYS.STUDENTS, currentDB); } 
-        };
-        
-        window.renderMonitor = () => { const t = document.getElementById('student-list-body'); t.innerHTML=''; studentDB.forEach(s => { let tot=0, cr=0; (s.courses||[]).forEach(c => { if(c.score){ tot+=c.score*c.credit; cr+=c.credit; } }); let gpa = cr>0 ? (tot/cr).toFixed(1) : 0; t.innerHTML += `<tr><td>${s.name} (${s.id})</td><td>${s.classId||'-'}</td><td>${s.careerTrack==='pilot'?'飛行':'地勤'}</td><td>${gpa}</td><td>${(s.courses||[]).length} 科</td></tr>`; }); };
+        window.logout = () => location.href='index.html';
     </script>
 </body>
 </html>
