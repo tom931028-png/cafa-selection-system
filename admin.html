@@ -2,748 +2,312 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>導師管理系統 | CAFA Admin</title>
     <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
-        /* --- 核心主題色系 --- */
-        :root { --admin-blue: #00308F; --admin-dark: #002266; --admin-gold: #FFD700; --admin-bg: #f4f7fa; }
-        body { font-family: "Microsoft JhengHei", Arial, sans-serif; background-color: var(--admin-bg); margin: 0; display: flex; height: 100vh; overflow: hidden; color: #333; }
-        
-        /* --- 側邊欄 --- */
-        .sidebar { width: 260px; background: linear-gradient(180deg, var(--admin-blue) 0%, var(--admin-dark) 100%); color: white; display: flex; flex-direction: column; padding-top: 25px; box-shadow: 4px 0 15px rgba(0,0,0,0.1); z-index: 100; transition: transform 0.3s; }
-        .sidebar-header { text-align: center; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
-        .menu-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; color: rgba(255,255,255,0.8); display: flex; align-items: center; font-size: 15px; border-left: 5px solid transparent; }
-        .menu-item:hover, .menu-item.active { background: rgba(0,0,0,0.2); border-left-color: var(--admin-gold); color: white; font-weight: bold; }
-        .menu-item span { margin-right: 12px; font-size: 20px; }
-        .badge { background: #ff5252; color: white; font-size: 11px; padding: 2px 8px; border-radius: 10px; margin-left: auto; font-weight: bold; display: none; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .badge.show { display: inline-block; animation: pulse 2s infinite; }
-
-        /* --- 主內容區 --- */
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; background-image: linear-gradient(to bottom, #eef2f7, #f4f7fa); position: relative; }
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 10px; }
-        .header-title { font-size: 24px; font-weight: bold; color: var(--admin-blue); border-left: 8px solid var(--admin-gold); padding-left: 15px; }
-
-        .card { background: white; border-radius: 12px; padding: 25px; margin-bottom: 25px; border-top: 4px solid var(--admin-blue); box-shadow: 0 5px 20px rgba(0,0,0,0.05); overflow-x: auto; transition: all 0.3s ease; position: relative; }
-        .card-pending { border-top: 4px solid #ff9800; background: #fff8e1; }
-        
-        /* --- 課程管理優化樣式 --- */
-        .course-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; align-items: end; }
-        .form-group label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-        .form-group input:focus { border-color: var(--admin-blue); outline: none; }
-        
-        /* 表格與按鈕 */
-        table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0; font-size: 14px; margin-top: 10px; }
-        th { background-color: #f1f3f5; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; white-space: nowrap; }
-        td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
-        .btn { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; color: white; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .btn-submit { background-color: var(--admin-blue); width: 100%; height: 42px; } 
-        .btn-add { background-color: #00695c; } 
-        .btn-del { background-color: #dc3545; padding: 6px 12px; font-size: 12px; }
-        .btn-approve { background-color: #28a745; padding: 6px 12px; font-size: 12px; }
-        .btn-print { background-color: #607d8b; }
-        .btn-create { background-color: #28a745; margin-bottom: 15px; }
-        .btn-sync { background-color: #e65100; margin-bottom: 10px; width: 100%; }
-
-        /* Excel 匯入區塊 */
-        .import-section { background: #e8eaf6; padding: 15px; border-radius: 10px; border: 2px dashed #9fa8da; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-        .btn-import { background: #3f51b5; color: white; }
-        .btn-template { background: #7986cb; color: white; }
-
-        /* 課表樣式 */
-        .schedule-table { min-width: 800px; table-layout: fixed; border-collapse: collapse; }
-        .schedule-table th, .schedule-table td { border: 1px solid #eee; text-align: center; }
-        .schedule-table td { height: 80px; vertical-align: top; padding: 2px; }
-        .schedule-time-col { background:#f8f9fa; color:#666; font-size:12px; font-weight:bold; width:60px; vertical-align:middle !important; }
-        .course-block { padding: 6px; border-radius: 6px; color: white; font-size: 12px; margin-bottom: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition:transform 0.2s; height:100%; display:flex; flex-direction:column; justify-content:center; align-items:center; }
-        .course-block:hover { transform: scale(1.02); z-index:10; position:relative; }
-        
-        .mobile-toggle { display: none; position: fixed; top: 10px; left: 10px; z-index: 200; background: var(--admin-blue); color: white; border: none; padding: 10px; border-radius: 5px; }
-
-        /* 主題切換 */
-        .theme-controls { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-        .theme-btn { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid #ddd; }
-        .card-theme-blue { background: linear-gradient(to bottom right, #f0f7ff, #dbeafe) !important; border-color: #1e88e5 !important; }
-        .card-theme-dark { background: #2c3e50 !important; color: #ecf0f1 !important; border-color: #34495e !important; }
-        .card-theme-dark th { background: #34495e !important; color: white !important; }
-        .card-theme-dark select { background: #34495e; color: white; border-color: #555; }
-        .card-theme-warm { background: #fffdeb !important; border-color: #fdd835 !important; }
-
-        @media (max-width: 768px) {
-            .mobile-toggle { display: block; }
-            .sidebar { position: fixed; height: 100%; transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
-            .main-content { padding: 60px 15px 15px 15px; }
-            .header-bar { flex-direction: column; align-items: flex-start; gap: 10px; }
-            .course-form-grid { grid-template-columns: 1fr; }
-        }
-        
-        #loading { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.95); display: flex; justify-content: center; align-items: center; z-index: 999; }
+        :root { --admin-blue: #00308F; --admin-bg: #f4f7fa; }
+        body { font-family: "Microsoft JhengHei", sans-serif; background: var(--admin-bg); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 250px; background: linear-gradient(180deg, #00308F, #002266); color: white; display: flex; flex-direction: column; padding-top: 20px; }
+        .menu-item { padding: 15px 20px; cursor: pointer; display: flex; align-items: center; transition: 0.2s; }
+        .menu-item:hover, .menu-item.active { background: rgba(255,255,255,0.2); font-weight: bold; border-left: 4px solid #FFD700; }
+        .menu-item span { margin-right: 10px; font-size: 18px; }
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+        .header-bar { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background: #f8f9fa; }
+        .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; margin-right: 5px; }
+        .btn-blue { background: #00308F; } .btn-green { background: #28a745; } .btn-red { background: #dc3545; } .btn-orange { background: #e65100; }
+        .badge { background: #ff5252; color: white; padding: 2px 6px; border-radius: 10px; font-size: 12px; margin-left: auto; display: none; }
+        input, select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div id="loading"><h3>資料同步中...</h3></div>
-    <button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰ 選單</button>
-
     <div class="sidebar">
-        <div class="sidebar-header"><h2>✈️ 管理後台</h2></div>
+        <div style="text-align:center; margin-bottom:20px;"><h2>✈️ 管理後台</h2></div>
         <div class="menu-item active" onclick="switchTab('monitor')"><span>🌐</span> 全校監控</div>
         <div class="menu-item" onclick="switchTab('schedule')"><span>📅</span> 教師課表</div>
-        <div class="menu-item" onclick="switchTab('ranks')"><span>🏆</span> 獎懲設定</div>
-        <div class="menu-item" onclick="switchTab('students')">
-            <span>👥</span> 學生與審核
-            <span id="pending-badge" class="badge">0</span>
-        </div>
+        <div class="menu-item" onclick="switchTab('students')"><span>👥</span> 學生管理 <span id="pending-badge" class="badge">0</span></div>
         <div class="menu-item" onclick="switchTab('courses')"><span>👨‍🏫</span> 課程管理</div>
         <div class="menu-item" onclick="switchTab('grades')"><span>📝</span> 成績輸入</div>
+        <div class="menu-item" onclick="location.href='index.html'" style="margin-top:auto; background:#333;"><span>🚪</span> 登出</div>
     </div>
 
     <div class="main-content">
         <div id="monitor-view">
-            <div class="header-bar"><div class="header-title">全校監控</div><button class="btn btn-print" onclick="window.print()">🖨️ 列印報表</button></div>
-            <div class="card">
-                <table><thead><tr><th>學號/姓名</th><th>班級</th><th>職涯</th><th>GPA</th><th>狀態</th></tr></thead><tbody id="student-list-body"></tbody></table>
-            </div>
-        </div>
-
-        <div id="schedule-view" style="display: none;">
             <div class="header-bar">
-                <div class="header-title">教師課表</div>
-                <div style="display:flex; align-items:center; flex-wrap:wrap;">
-                    <div class="theme-controls">
-                        <span style="font-size:12px;margin-right:5px;color:#666;">風格:</span>
-                        <div class="theme-btn tb-white" style="background:white" onclick="setTheme('white')"></div>
-                        <div class="theme-btn tb-blue" style="background:#e3f2fd" onclick="setTheme('blue')"></div>
-                        <div class="theme-btn tb-warm" style="background:#fff8e1" onclick="setTheme('warm')"></div>
-                        <div class="theme-btn tb-dark" style="background:#333" onclick="setTheme('dark')"></div>
-                    </div>
-                    <button class="btn btn-print" onclick="window.print()" style="margin-left:15px;">🖨️ 列印</button>
-                </div>
-            </div>
-            <div class="card" id="schedule-card">
-                <select id="teacher-schedule-selector" onchange="renderTeacherSchedule()" style="margin-bottom:15px; padding:10px;">
-                    <option value="">-- 請選擇教官 --</option>
-                </select>
-                <h4 id="schedule-title" style="text-align:center;color:#00308F;">請選擇教官查看課表</h4>
-                <div style="overflow-x:auto;">
-                    <table class="schedule-table">
-                        <thead><tr><th style="width:60px">節次</th><th>星期一</th><th>星期二</th><th>星期三</th><th>星期四</th><th>星期五</th></tr></thead>
-                        <tbody id="teacher-schedule-body"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="ranks-view" style="display: none;">
-            <div class="header-bar"><div class="header-title">獎懲與段位設定</div></div>
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <div>請設定各段位的 GPA 門檻，系統將自動依分數高低排序。</div>
-                    <button class="btn btn-create" onclick="addNewRankRow()">＋ 新增段位</button>
-                </div>
-                <table>
-                    <thead><tr><th style="width:15%">段位名稱</th><th style="width:10%">最低GPA</th><th style="width:10%">代表色</th><th style="width:10%">預覽</th><th>獎勵內容</th><th>懲罰內容</th><th style="width:50px">操作</th></tr></thead>
-                    <tbody id="rank-rules-body"></tbody>
-                </table>
-                <button class="btn btn-submit" style="width:200px; margin-top:20px;" onclick="saveRankRules()">💾 儲存並套用設定</button>
-            </div>
-        </div>
-
-        <div id="students-view" style="display: none;">
-            <div class="header-bar"><div class="header-title">學生資料與審核</div></div>
-            
-            <div class="import-section">
+                <h3>📊 全校狀況總覽</h3>
                 <div>
-                    <strong>📂 批次匯入帳號 (Excel)</strong>
-                    <div style="font-size:12px; color:#666; margin-top:5px;">請上傳 .xlsx 或 .csv 檔案，系統將自動建立帳號 (預設狀態為正常)。</div>
-                </div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn btn-template" onclick="downloadStudentTemplate()">📥 下載帳號範本</button>
-                    <button class="btn btn-import" onclick="document.getElementById('import-student-file').click()">📤 上傳帳號表</button>
-                    <input type="file" id="import-student-file" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleStudentImport(event)">
+                    <button class="btn btn-orange" onclick="initDemoData()">⚡ 一鍵生成展示資料 (Demo)</button>
+                    <button class="btn btn-blue" onclick="window.print()">🖨️ 列印</button>
                 </div>
             </div>
-
-            <div id="pending-zone" class="card card-pending" style="display:none;">
-                <h3>⚠️ 待審核申請 (Pending Requests)</h3>
-                <div style="margin-bottom:10px; display:flex; gap:10px;">
-                    <button class="btn btn-approve" onclick="batchApprove()">⚡ 批次核准</button>
-                    <button class="btn btn-del" onclick="batchDelete()">🗑️ 批次刪除</button>
-                </div>
-                <div style="max-height:300px; overflow-y:auto;">
-                    <table>
-                        <thead><tr><th class="checkbox-cell"><input type="checkbox" onclick="toggleSelectAll(this, 'pending')"></th><th>學號</th><th>姓名</th><th>班級</th><th>操作</th></tr></thead>
-                        <tbody id="pending-list-body"></tbody>
-                    </table>
-                </div>
-            </div>
-
             <div class="card">
-                <h3>✅ 正式學員名單</h3>
-                <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-                    <input id="s_id" placeholder="學號" style="flex:1; min-width:100px;">
-                    <input id="s_name" placeholder="姓名" style="flex:1; min-width:100px;">
-                    <input id="s_class" placeholder="班級" style="flex:1; min-width:100px;">
-                    <input id="s_pass" placeholder="密碼" style="flex:1; min-width:100px;">
-                    <button class="btn btn-add" style="flex:1; min-width:100px;" onclick="addStudent()">手動新增</button>
-                </div>
-                <div style="max-height:500px; overflow-y:auto;">
-                    <table>
-                        <thead><tr><th>狀態</th><th>學號</th><th>姓名</th><th>班級</th><th>操作</th></tr></thead>
-                        <tbody id="active-list-body"></tbody>
+                <table><thead><tr><th>學號</th><th>姓名</th><th>班級</th><th>職涯方向</th><th>GPA</th><th>已修學分</th></tr></thead><tbody id="monitor-list"></tbody></table>
+            </div>
+        </div>
+
+        <div id="schedule-view" style="display:none;">
+            <div class="header-bar"><h3>📅 教師/教官 課表查詢</h3></div>
+            <div class="card">
+                <select id="tea-sel" onchange="renderTeaSchedule()"><option>請選擇教官</option></select>
+                <div style="margin-top:15px; overflow-x:auto;">
+                    <table border="1" style="border-collapse:collapse; width:100%; text-align:center;">
+                        <thead><tr style="background:#eee;"><th width="10%">節次</th><th width="18%">一</th><th width="18%">二</th><th width="18%">三</th><th width="18%">四</th><th width="18%">五</th></tr></thead>
+                        <tbody id="tea-schedule-body"></tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+
+        <div id="students-view" style="display:none;">
+            <div class="header-bar"><h3>👥 學生資料與審核</h3></div>
+            <div class="card" style="background:#fff3e0; border-left:5px solid #ff9800; display:none;" id="pending-zone">
+                <h4>⚠️ 待審核註冊申請</h4>
+                <div id="pending-list"></div>
+            </div>
+            <div class="card">
+                <h4>✅ 正式學員名單</h4>
+                <div style="margin-bottom:10px; display:flex; gap:10px;">
+                    <button class="btn btn-blue" onclick="document.getElementById('file-up').click()">📂 Excel 匯入學生</button>
+                    <input type="file" id="file-up" hidden accept=".xlsx,.csv" onchange="handleImport(event)">
+                    <button class="btn btn-green" onclick="downloadTemplate()">📥 下載範本</button>
+                </div>
+                <table><thead><tr><th>學號</th><th>姓名</th><th>班級</th><th>密碼</th><th>操作</th></tr></thead><tbody id="stu-list"></tbody></table>
             </div>
         </div>
 
         <div id="courses-view" style="display:none;">
-            <div class="header-bar"><div class="header-title">課程管理</div></div>
-            
-            <div class="card" style="border-top-color:#28a745;">
-                <h3 style="margin-top:0; color:#28a745;">➕ 新增課程</h3>
-                <div class="course-form-grid">
-                    <div class="form-group">
-                        <label>課程類別</label>
-                        <select id="c_type" onchange="toggleCourseForm(this.value)">
-                            <option value="fixed">🔒 必修 (全校強制)</option>
-                            <option value="elective">📖 選修 (自由選課)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>課程代碼</label>
-                        <input id="c_id" placeholder="例: C101">
-                    </div>
-                    <div class="form-group">
-                        <label>課程名稱</label>
-                        <input id="c_name" placeholder="例: 飛行原理">
-                    </div>
-                    <div class="form-group">
-                        <label>學分</label>
-                        <input id="c_cr" type="number" value="2">
-                    </div>
-                    <div class="form-group">
-                        <label>上課時間 (例: 一/3,4)</label>
-                        <input id="c_time" placeholder="星期/節次">
-                    </div>
-                    <div class="form-group">
-                        <label>教官姓名</label>
-                        <input id="c_tea" placeholder="例: 王大明">
-                    </div>
-                    <div class="form-group">
-                        <label>上課地點</label>
-                        <input id="c_loc" placeholder="例: 航太 301">
-                    </div>
-                    <div class="form-group" id="group-max">
-                        <label>人數上限</label>
-                        <input id="c_max" type="number" value="40">
-                    </div>
-                    <div class="form-group">
-                        <button class="btn btn-submit" onclick="addCourse()">發布課程</button>
-                    </div>
-                </div>
-                <div style="margin-top:10px; font-size:12px; color:#d32f2f;">
-                    * 注意：發布「必修」課程時，系統會自動將該課程加入所有學生的課表，若有選修衝堂將自動移除選修課。
+            <div class="header-bar"><h3>👨‍🏫 課程設定</h3></div>
+            <div class="card">
+                <h4>➕ 新增/發布課程</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px; align-items:end;">
+                    <div><label>類別</label><br><select id="c_type" style="width:100%"><option value="fixed">🔒 必修</option><option value="elective">📖 選修</option></select></div>
+                    <div><label>代碼</label><br><input id="c_id" style="width:100%" placeholder="C101"></div>
+                    <div><label>名稱</label><br><input id="c_name" style="width:100%" placeholder="空氣動力學"></div>
+                    <div><label>時間</label><br><input id="c_time" style="width:100%" placeholder="一/1,2"></div>
+                    <div><label>地點</label><br><input id="c_loc" style="width:100%" placeholder="301教室"></div>
+                    <div><label>教官</label><br><input id="c_tea" style="width:100%" placeholder="李教官"></div>
+                    <div><label>學分</label><br><input id="c_cr" type="number" value="2" style="width:100%"></div>
+                    <button class="btn btn-green" onclick="addCourse()">發布</button>
                 </div>
             </div>
-
             <div class="card">
-                <h3>📚 現有課程列表</h3>
-                <div id="sync-btn-container"></div>
-                <div style="max-height:600px; overflow-y:auto;">
-                    <table id="course-table"><thead><tr><th>類別</th><th>名稱 (代碼)</th><th>時間</th><th>地點</th><th>教官</th><th>狀態/人數</th><th>操作</th></tr></thead><tbody id="course-list"></tbody></table>
-                </div>
+                <h4>📚 已開課程</h4>
+                <table><thead><tr><th>類別</th><th>代碼</th><th>名稱</th><th>時間</th><th>教官</th><th>操作</th></tr></thead><tbody id="course-list"></tbody></table>
             </div>
         </div>
 
         <div id="grades-view" style="display:none;">
-            <div class="header-bar"><div class="header-title">成績管理</div></div>
-            <div class="import-section" style="background:#e0f2f1; border-color:#80cbc4;">
-                <div><strong>📊 批次匯入成績 (Excel)</strong><div style="font-size:12px; color:#00695c; margin-top:5px;">學號 + 課程代碼 + 分數</div></div>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn btn-template" onclick="downloadGradeTemplate()">📥 範本</button>
-                    <button class="btn btn-import" style="background:#00695c;" onclick="document.getElementById('import-grade-file').click()">📤 上傳</button>
-                    <input type="file" id="import-grade-file" accept=".xlsx, .xls, .csv" style="display:none" onchange="handleGradeImport(event)">
-                </div>
-            </div>
-
+            <div class="header-bar"><h3>📝 成績輸入</h3></div>
             <div class="card">
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <select id="g_stu" onchange="loadGrades()" style="flex:3">
-                        <option value="">-- 請先選擇學生 --</option>
-                    </select>
-                    <button class="btn btn-submit" style="flex:1" onclick="saveGrades()">💾 儲存成績</button>
+                <div style="margin-bottom:15px;">
+                    <select id="g_stu" onchange="loadStuGrades()" style="padding:10px; width:300px;"><option value="">請選擇學生</option></select>
+                    <button class="btn btn-blue" onclick="saveGrades()">💾 儲存成績</button>
                 </div>
-                <table id="grade-table"><thead><tr><th>課程</th><th>學分</th><th>分數輸入</th></tr></thead><tbody id="grade-body"><tr><td colspan="3" style="text-align:center; color:#999;">請先選擇學生以載入課程列表</td></tr></tbody></table>
+                <table id="grade-table"><thead><tr><th>課程名稱</th><th>學分</th><th>分數 (0-100)</th></tr></thead><tbody id="grade-body"><tr><td colspan="3" align="center">請先選擇學生</td></tr></tbody></table>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { loadFromCloud, saveToCloud, listenToCloud } from './firebase-connect.js';
-        const KEYS = { STUDENTS:'cafa_all_students_db', FIXED:'cafa_fixed_courses', ELECTIVE:'cafa_public_electives', RANKS:'cafa_rank_rules' };
-        let studentDB=[], fixedCourses=[], electiveCourses=[], rankRules=[];
-        const TIME_SLOTS = ["08:10", "09:10", "10:10", "11:10", "13:30", "14:30", "15:30", "16:30", "17:30", "19:00"];
+        const KEYS = { STUDENTS: 'cafa_all_students_db', FIXED: 'cafa_fixed_courses', ELECTIVE: 'cafa_public_electives' };
+        let sDB = [], fC = [], eC = [];
 
-        window.onload = () => { 
-            initAdminListeners();
-            document.getElementById('loading').style.display='none'; 
-            const savedTheme = localStorage.getItem('cafa_admin_theme'); if(savedTheme) setTheme(savedTheme);
+        window.onload = () => {
+            listenToCloud(KEYS.STUDENTS, v => { sDB = v || []; renderAll(); });
+            listenToCloud(KEYS.FIXED, v => { fC = v || []; renderAll(); });
+            listenToCloud(KEYS.ELECTIVE, v => { eC = v || []; renderAll(); });
         };
 
-        function initAdminListeners() {
-            listenToCloud(KEYS.STUDENTS, (val) => { 
-                studentDB = val || []; 
-                renderMonitor(); 
-                renderStudents(); 
-                updateSels(); 
-                if(document.getElementById('schedule-view').style.display==='block') renderTeacherSchedule(); 
+        // --- Demo Generator (關鍵功能) ---
+        window.initDemoData = async () => {
+            if(!confirm("⚠️ 確定要覆寫現有資料，並生成範例數據嗎？(展示用)")) return;
+            
+            // 1. 範例課程
+            const demoFixed = [
+                {id:'F101', name:'空氣動力學', credit:3, time:'一/1,2,3', teacher:'李教官', type:'必修', isFixed:true, location:'航太館3F', max:999},
+                {id:'F102', name:'飛機結構', credit:2, time:'二/3,4', teacher:'王教授', type:'必修', isFixed:true, location:'機械館101', max:999},
+                {id:'F103', name:'軍事倫理', credit:1, time:'五/1', teacher:'陳輔導長', type:'必修', isFixed:true, location:'大禮堂', max:999}
+            ];
+            const demoElect = [
+                {id:'E201', name:'無人機戰術', credit:2, time:'三/5,6', teacher:'張少校', type:'選修', isFixed:false, location:'無人機實驗室', isOpen:true, max:30},
+                {id:'E202', name:'航空氣象學', credit:2, time:'四/1,2', teacher:'林博士', type:'選修', isFixed:false, location:'氣象中心', isOpen:true, max:40},
+                {id:'E203', name:'Python程式設計', credit:3, time:'三/2,3,4', teacher:'AI教官', type:'選修', isFixed:false, location:'電腦教室', isOpen:true, max:25}
+            ];
+
+            // 2. 範例學生
+            // 注意：這裡直接把必修課塞給學生
+            const studentProto = { status:'active', careerTrack:'pilot', interests:['無人機'], courses: demoFixed.map(c=>({...c})) };
+            const demoStudents = [
+                { id:'114001', name:'張飛官', classId:'114-甲', password:'1234', ...studentProto },
+                { id:'114002', name:'李維修', classId:'114-乙', password:'1234', ...studentProto, careerTrack:'ground' },
+                { id:'114003', name:'王待審', classId:'114-丙', password:'1234', status:'pending', courses:[] }
+            ];
+
+            // 幫張飛官加一點成績和選修
+            demoStudents[0].courses.push({...demoElect[0], score:88}); // 修了無人機，88分
+            demoStudents[0].courses[0].score = 92; // 空氣動力學 92分
+
+            await saveToCloud(KEYS.FIXED, demoFixed);
+            await saveToCloud(KEYS.ELECTIVE, demoElect);
+            await saveToCloud(KEYS.STUDENTS, demoStudents);
+            alert("✅ 範例資料生成完畢！\n\n學生帳號：114001 / 1234\n學生帳號：114002 / 1234");
+        };
+
+        // --- 渲染邏輯 ---
+        function renderAll() {
+            // 監控表
+            const mBody = document.getElementById('monitor-list'); mBody.innerHTML='';
+            sDB.forEach(s => {
+                if(s.status === 'pending') return;
+                let cr=0, tot=0; (s.courses||[]).forEach(c=>{ cr+=parseInt(c.credit||0); if(c.score) tot+=c.score*c.credit; });
+                let gpa = cr>0 ? (tot/cr).toFixed(1) : '-';
+                mBody.innerHTML += `<tr><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td>${s.careerTrack==='pilot'?'飛行':'地勤'}</td><td>${gpa}</td><td>${cr}</td></tr>`;
             });
-            listenToCloud(KEYS.FIXED, (val) => { fixedCourses = val || []; renderCourses(); updateSels(); renderTeacherSchedule(); });
-            listenToCloud(KEYS.ELECTIVE, (val) => { electiveCourses = val || []; renderCourses(); updateSels(); renderTeacherSchedule(); });
-            listenToCloud(KEYS.RANKS, (val) => { rankRules = val || getDefaultRanks(); renderRankSettings(); });
+
+            // 學生管理
+            const pZone = document.getElementById('pending-zone');
+            const pList = document.getElementById('pending-list');
+            const pStudents = sDB.filter(s=>s.status==='pending');
+            if(pStudents.length > 0) {
+                pZone.style.display='block'; document.getElementById('pending-badge').style.display='inline-block';
+                document.getElementById('pending-badge').innerText = pStudents.length;
+                pList.innerHTML = pStudents.map(s => `<div style="padding:10px; border-bottom:1px solid #ddd; display:flex; justify-content:space-between;"><span>${s.id} ${s.name} (${s.classId})</span> <button class="btn btn-green" onclick="approve('${s.id}')">核准</button></div>`).join('');
+            } else { pZone.style.display='none'; document.getElementById('pending-badge').style.display='none'; }
+            
+            document.getElementById('stu-list').innerHTML = sDB.filter(s=>s.status!=='pending').map(s => `<tr><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td>${s.password}</td><td><button class="btn btn-red" onclick="delStu('${s.id}')">刪除</button></td></tr>`).join('');
+
+            // 課程列表
+            document.getElementById('course-list').innerHTML = [...fC, ...eC].map((c,i) => `<tr><td>${c.isFixed?'🔒 必修':'📖 選修'}</td><td>${c.id}</td><td>${c.name}</td><td>${c.time}</td><td>${c.teacher}</td><td><button class="btn btn-red" onclick="delCourse('${c.id}')">刪除</button></td></tr>`).join('');
+            
+            // 更新下拉選單
+            updateSelects();
         }
 
-        window.renderTeacherSchedule = () => {
-            const tea = document.getElementById('teacher-schedule-selector').value; 
-            const tbody = document.getElementById('teacher-schedule-body'); 
-            tbody.innerHTML = ''; 
-
-            for(let i=1;i<=10;i++) {
-                tbody.innerHTML += `<tr><td class="schedule-time-col">第${i}節<br><span style="font-size:10px; font-weight:normal;">${TIME_SLOTS[i-1]}</span></td><td id="t1-${i}"></td><td id="t2-${i}"></td><td id="t3-${i}"></td><td id="t4-${i}"></td><td id="t5-${i}"></td></tr>`;
-            }
-
-            if(!tea) { document.getElementById('schedule-title').innerText = "請選擇教官查看課表"; return; }
-            document.getElementById('schedule-title').innerText = `📅 ${tea} 教官課表`;
-
-            const courses = [...fixedCourses, ...electiveCourses].filter(c => c.teacher === tea);
+        function updateSelects() {
+            const tSel = document.getElementById('tea-sel');
+            const teachers = [...new Set([...fC, ...eC].map(c=>c.teacher).filter(Boolean))];
+            tSel.innerHTML = '<option value="">請選擇教官</option>' + teachers.map(t=>`<option value="${t}">${t}</option>`).join('');
             
-            const counts = {};
-            studentDB.forEach(s => {
-                if(s.courses) {
-                    s.courses.forEach(sc => {
-                        if(courses.some(c => c.id === sc.id)) { counts[sc.id] = (counts[sc.id] || 0) + 1; }
-                    });
-                }
-            });
+            const gStu = document.getElementById('g_stu');
+            const saved = gStu.value;
+            gStu.innerHTML = '<option value="">請選擇學生</option>' + sDB.filter(s=>s.status!=='pending').map(s=>`<option value="${s.id}">${s.id} ${s.name}</option>`).join('');
+            gStu.value = saved;
+        }
 
-            courses.forEach(c => { 
-                if(!c.time) return; 
-                let cleanTime = c.time.replace(/\s/g, ''); 
-                let [d, p] = cleanTime.split('/'); 
-                
-                if (!d || !p) return;
-
-                const dMap = {"一":1, "二":2, "三":3, "四":4, "五":5}; 
-                if(!dMap[d]) return;
-
-                p.split(',').forEach(x => { 
-                    let el = document.getElementById(`t${dMap[d]}-${x}`); 
-                    if(el) {
-                        if(el.innerHTML !== "") el.innerHTML += `<div style="border-top:1px solid rgba(255,255,255,0.3); margin-top:2px; padding-top:2px;"></div>`;
-                        el.innerHTML += `
-                            <div class="course-block" 
-                                 style="background:${c.isFixed ? 'linear-gradient(135deg, #e65100, #ff9800)' : 'linear-gradient(135deg, #00308F, #1976d2)'}; cursor:pointer;" 
-                                 onclick="alert('【課程詳情】\\n名稱：${c.name}\\n代碼：${c.id}\\n地點：${c.location||'未定'}\\n選課人數：${counts[c.id]||0} 人')">
-                                <div style="font-weight:bold; font-size:13px;">${c.name}</div>
-                                <div style="font-size:11px; opacity:0.9;">${c.location||'📍無'}</div>
-                            </div>`;
-                    }
-                }); 
-            });
+        // --- 功能函數 ---
+        window.approve = async (id) => {
+            const u = sDB.find(s=>s.id===id); u.status='active';
+            // 核准時自動帶入必修課
+            u.courses = fC.map(c=>({...c})); 
+            await saveToCloud(KEYS.STUDENTS, sDB);
         };
-
+        window.delStu = async (id) => { if(confirm("刪除?")) await saveToCloud(KEYS.STUDENTS, sDB.filter(s=>s.id!==id)); };
+        
         window.addCourse = async () => {
-            const t = document.getElementById('c_type').value;
-            const cid = document.getElementById('c_id').value.trim();
-            const name = document.getElementById('c_name').value.trim();
-            const time = document.getElementById('c_time').value.trim().replace(/\s/g, ''); 
-            const teacher = document.getElementById('c_tea').value.trim();
-            const location = document.getElementById('c_loc').value.trim();
-            const credit = parseInt(document.getElementById('c_cr').value);
-            const maxVal = parseInt(document.getElementById('c_max').value)||40;
-
-            if(!cid || !name || !time) return alert("請填寫完整課程資訊 (代碼、名稱、時間)！");
+            const id=document.getElementById('c_id').value, name=document.getElementById('c_name').value, time=document.getElementById('c_time').value;
+            if(!id||!name||!time) return alert("資料不完整");
+            const type=document.getElementById('c_type').value;
+            const newC = { id, name, time, type:type==='fixed'?'必修':'選修', isFixed:type==='fixed', teacher:document.getElementById('c_tea').value, location:document.getElementById('c_loc').value, credit:document.getElementById('c_cr').value, isOpen:true, max:40 };
             
-            if([...fixedCourses, ...electiveCourses].some(c => c.id === cid)) return alert("課程代碼已存在！請更換代碼。");
-
-            const newCourse = {
-                id: cid, name, credit, time, teacher, location,
-                type: t==='fixed'?'必修':'選修', 
-                isFixed: t==='fixed', 
-                isOpen: true,
-                max: t==='fixed' ? 9999 : maxVal
-            };
-
-            let success = false;
-            if(t === 'fixed') {
-                if(!confirm(`⚠️ 發布必修課程「${name}」\n\n這將會強制加入到「所有」學生的課表中。確定嗎？`)) return;
-                
-                const newFixed = [...fixedCourses, newCourse];
-                success = await saveToCloud(KEYS.FIXED, newFixed);
-                if (!success) return; // 失敗就停
-
-                let affectedCount = 0;
-                let conflictRemoved = 0;
-                let currentDB = JSON.parse(JSON.stringify(studentDB));
-
-                currentDB.forEach(s => {
-                    if(!s.courses) s.courses = [];
-                    if(!s.courses.some(c => c.id === cid)) {
-                        s.courses = s.courses.filter(exist => {
-                            const isConflict = checkTimeConflict(exist.time, newCourse.time);
-                            if(isConflict && !exist.isFixed) { 
-                                conflictRemoved++; 
-                                return false; 
-                            }
-                            return true;
-                        });
-                        s.courses.push({ 
-                            id: cid, name: name, credit: credit, time: time, 
-                            isFixed: true, location: location, teacher: teacher 
-                        });
-                        affectedCount++;
-                    }
-                });
-
-                success = await saveToCloud(KEYS.STUDENTS, currentDB);
-                if (success) {
-                    alert(`✅ 必修發布成功！\n已同步至 ${affectedCount} 位學生，並自動解決 ${conflictRemoved} 個選修衝堂。`);
-                }
+            if(newC.isFixed) {
+                fC.push(newC); await saveToCloud(KEYS.FIXED, fC);
+                // 必修強制同步給學生
+                sDB.forEach(s => { if(!s.courses.some(c=>c.id===id)) s.courses.push({...newC}); });
+                await saveToCloud(KEYS.STUDENTS, sDB);
             } else {
-                const newElect = [...electiveCourses, newCourse];
-                success = await saveToCloud(KEYS.ELECTIVE, newElect);
-                if (success) {
-                    alert("✅ 選修課程已發布，學生現在可以在選課區看到了。");
-                }
+                eC.push(newC); await saveToCloud(KEYS.ELECTIVE, eC);
             }
-            
-            if (success) {
-                document.getElementById('c_id').value = '';
-                document.getElementById('c_name').value = '';
-                if(teacher) {
-                    document.getElementById('teacher-schedule-selector').value = teacher;
-                    switchTab('schedule');
-                }
-            }
+            alert("發布成功"); renderAll();
         };
 
-        window.syncFixedCoursesToAll = async () => {
-            if(!confirm("確定要將目前的「必修課程」強制同步給所有學生嗎？")) return;
-            let updateCount = 0;
-            let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
+        window.delCourse = async (id) => {
+            if(!confirm("刪除?")) return;
+            if(fC.some(c=>c.id===id)) await saveToCloud(KEYS.FIXED, fC.filter(c=>c.id!==id));
+            else await saveToCloud(KEYS.ELECTIVE, eC.filter(c=>c.id!==id));
+        };
 
-            currentDB.forEach(s => {
-                if(!s.courses) s.courses = [];
-                fixedCourses.forEach(fc => {
-                    if(!s.courses.some(c => c.id === fc.id)) {
-                         s.courses = s.courses.filter(exist => !(!exist.isFixed && checkTimeConflict(exist.time, fc.time)));
-                         s.courses.push({ id: fc.id, name: fc.name, credit: fc.credit, time: fc.time, isFixed: true, location: fc.location, teacher: fc.teacher });
-                         updateCount++;
-                    }
-                });
+        window.loadStuGrades = () => {
+            const sid = document.getElementById('g_stu').value;
+            const s = sDB.find(x=>x.id===sid);
+            const tb = document.getElementById('grade-body');
+            if(!s) { tb.innerHTML='<tr><td colspan="3">請選擇學生</td></tr>'; return; }
+            tb.innerHTML = (s.courses||[]).map(c => `<tr><td>${c.name}</td><td>${c.credit}</td><td><input type="number" id="sc-${c.id}" value="${c.score||''}" style="width:60px"></td></tr>`).join('');
+        };
+
+        window.saveGrades = async () => {
+            const sid = document.getElementById('g_stu').value;
+            const sIdx = sDB.findIndex(x=>x.id===sid);
+            if(sIdx===-1) return;
+            sDB[sIdx].courses.forEach(c => {
+                const inp = document.getElementById(`sc-${c.id}`);
+                if(inp && inp.value) c.score = parseInt(inp.value);
             });
-
-            if(updateCount > 0) {
-                const success = await saveToCloud(KEYS.STUDENTS, currentDB);
-                if (success) alert(`✅ 同步完成！更新了 ${updateCount} 筆資料。`);
-            } else {
-                alert("所有學生的資料已經是最新的。");
-            }
-        };
-
-        function checkTimeConflict(t1, t2) {
-            if(!t1 || !t2) return false;
-            let clean1 = t1.replace(/\s/g, ''), clean2 = t2.replace(/\s/g, '');
-            let [d1, p1] = clean1.split('/'); let [d2, p2] = clean2.split('/');
-            if(d1 !== d2) return false; 
-            let pp1 = p1.split(','), pp2 = p2.split(',');
-            return pp1.some(p => pp2.includes(p)); 
-        }
-
-        window.delCourse = async (type, idx) => {
-            if(!confirm("確定刪除此課程？")) return;
-            let success;
-            if(type === 'fixed') { const n = [...fixedCourses]; n.splice(idx, 1); success = await saveToCloud(KEYS.FIXED, n); } 
-            else { const n = [...electiveCourses]; n.splice(idx, 1); success = await saveToCloud(KEYS.ELECTIVE, n); }
-        };
-
-        window.toggleStatus = async (idx) => {
-            const n = [...electiveCourses]; n[idx].isOpen = !n[idx].isOpen;
-            await saveToCloud(KEYS.ELECTIVE, n);
-        };
-
-        function renderCourses() {
-            const t = document.getElementById('course-list');
-            let html = '';
-            document.getElementById('sync-btn-container').innerHTML = `<button class="btn btn-sync" onclick="syncFixedCoursesToAll()">🔄 強制同步必修課給所有學生</button>`;
-            
-            fixedCourses.forEach((c, i) => {
-                html += `<tr style="background:#fff3e0"><td><span style="color:#e65100;font-weight:bold">🔒 必修</span></td><td>${c.name} (${c.id})</td><td>${c.time}</td><td>${c.location||'-'}</td><td>${c.teacher||'-'}</td><td>全體</td><td><button class="btn btn-del" onclick="delCourse('fixed',${i})">刪除</button></td></tr>`;
-            });
-            electiveCourses.forEach((c, i) => {
-                html += `<tr><td><span style="color:#2e7d32;font-weight:bold">📖 選修</span></td><td>${c.name} (${c.id})</td><td>${c.time}</td><td>${c.location||'-'}</td><td>${c.teacher||'-'}</td><td><button class="btn" onclick="toggleStatus(${i})" style="background:${c.isOpen?'#28a745':'#9e9e9e'};padding:2px 8px;font-size:12px;">${c.isOpen?'開啟中':'已關閉'}</button> ${c.max}人</td><td><button class="btn btn-del" onclick="delCourse('elect',${i})">刪除</button></td></tr>`;
-            });
-            t.innerHTML = html;
-        }
-
-        window.updateSels = () => { 
-            const tea = document.getElementById('teacher-schedule-selector'); 
-            const currentCourses = [...fixedCourses, ...electiveCourses];
-            const ts = [...new Set(currentCourses.map(c=>c.teacher).filter(x=>x && x.trim() !== ''))].sort(); 
-            
-            const savedT = tea.value; 
-            tea.innerHTML='<option value="">-- 請選擇教官 --</option>'; 
-            ts.forEach(t => tea.add(new Option(t,t))); 
-            
-            if(ts.includes(savedT)) {
-                tea.value = savedT;
-            } 
-            
-            const stu = document.getElementById('g_stu'); 
-            const savedS = stu.value; 
-            stu.innerHTML='<option value="">-- 請選擇學生輸入成績 --</option>'; 
-            studentDB.forEach(s=>stu.add(new Option(`${s.id} ${s.name}`, s.id))); stu.value = savedS; 
-        };
-
-        window.toggleCourseForm = (v) => {
-            const maxInput = document.getElementById('c_max');
-            const group = document.getElementById('group-max');
-            if(v === 'fixed') { maxInput.disabled = true; maxInput.value = '全校'; group.style.opacity = 0.5; }
-            else { maxInput.disabled = false; maxInput.value = '40'; group.style.opacity = 1; }
-        };
-
-        window.setTheme = (t) => {
-            const c = document.getElementById('schedule-card'); c.className = 'card';
-            if(t !== 'white') c.classList.add(`card-theme-${t}`);
-            localStorage.setItem('cafa_admin_theme', t);
-            const title = document.getElementById('schedule-title');
-            title.style.color = (t === 'dark') ? '#fff' : '#00308F';
-        };
-
-        window.switchTab = (id) => {
-            ['monitor','schedule','ranks','students','courses','grades'].forEach(v=>document.getElementById(v+'-view').style.display='none');
-            document.getElementById(id+'-view').style.display='block';
-            document.querySelector('.sidebar').classList.remove('open');
-            if(id === 'schedule') renderTeacherSchedule();
-            if(id === 'ranks') renderRankSettings();
-        };
-
-        function renderRankSettings() {
-            const t = document.getElementById('rank-rules-body'); t.innerHTML = '';
-            rankRules.sort((a,b) => b.min - a.min);
-            rankRules.forEach((r, i) => {
-                t.innerHTML += `<tr class="rank-row"><td><input class="r-name" value="${r.name}" placeholder="名稱"></td><td><input class="r-min" type="number" value="${r.min}" style="width:60px"></td><td><input class="r-color" type="color" value="${r.color}" oninput="updateRankPreview(this)"></td><td><span class="rank-badge" style="background-color:${r.color};">${r.name}</span></td><td><input class="r-reward" value="${r.reward||''}" placeholder="無"></td><td><input class="r-punish" value="${r.punish||''}" placeholder="無"></td><td><button class="btn btn-del" onclick="deleteRankRow(this)">✕</button></td></tr>`;
-            });
-        }
-        window.addNewRankRow = () => {
-            const t = document.getElementById('rank-rules-body');
-            const row = document.createElement('tr'); row.className = 'rank-row';
-            row.innerHTML = `<td><input class="r-name" value="新段位" placeholder="名稱"></td><td><input class="r-min" type="number" value="60" style="width:60px"></td><td><input class="r-color" type="color" value="#cccccc" oninput="updateRankPreview(this)"></td><td><span class="rank-badge" style="background-color:#cccccc;">新段位</span></td><td><input class="r-reward" placeholder="無"></td><td><input class="r-punish" placeholder="無"></td><td><button class="btn btn-del" onclick="deleteRankRow(this)">✕</button></td>`;
-            t.insertBefore(row, t.firstChild);
-        };
-        window.deleteRankRow = (btn) => { if(confirm("刪除?")) btn.closest('tr').remove(); };
-        window.updateRankPreview = (input) => { const r = input.closest('tr'); const b = r.querySelector('.rank-badge'); const n = r.querySelector('.r-name'); b.style.backgroundColor = input.value; b.innerText = n.value; };
-        window.saveRankRules = async () => {
-            const rows = document.querySelectorAll('.rank-row'); const newRules = [];
-            rows.forEach(row => { const name = row.querySelector('.r-name').value; const min = parseInt(row.querySelector('.r-min').value); const color = row.querySelector('.r-color').value; const reward = row.querySelector('.r-reward').value; const punishment = row.querySelector('.r-punish').value; if(name && !isNaN(min)) newRules.push({ name, min, color, reward, punishment }); });
-            newRules.sort((a,b) => b.min - a.min); 
-            const success = await saveToCloud(KEYS.RANKS, newRules); 
-            if(success) alert("✅ 設定已儲存！"); 
-        };
-        function getDefaultRanks() { return [{name:'王者', min:90, color:'#ffe0b2', reward:'禮券', punishment:''}, {name:'鑽石', min:80, color:'#b3e5fc', reward:'', punishment:''}, {name:'黃金', min:70, color:'#fff9c4', reward:'', punishment:''}, {name:'白銀', min:60, color:'#f5f5f5', reward:'', punishment:''}, {name:'青銅', min:0, color:'#ffccbc', reward:'', punishment:''}]; }
-
-        window.addStudent = async () => { 
-            const id=document.getElementById('s_id').value; 
-            if(studentDB.some(s=>s.id===id))return alert("重複"); 
-            
-            let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            
-            const initCourses = fixedCourses.map(fc => ({ id: fc.id, name: fc.name, credit: fc.credit, time: fc.time, isFixed: true, location: fc.location, teacher: fc.teacher }));
-            currentDB.push({id, name:document.getElementById('s_name').value, classId:document.getElementById('s_class').value, password:document.getElementById('s_pass').value, status:'active', courses:initCourses}); 
-            await saveToCloud(KEYS.STUDENTS, currentDB); 
-        };
-
-        window.renderStudents = () => {
-            const pendingList = studentDB.filter(s => s.status === 'pending');
-            const activeList = studentDB.filter(s => s.status !== 'pending');
-            const badge = document.getElementById('pending-badge');
-            if(pendingList.length > 0) { badge.innerText = pendingList.length; badge.classList.add('show'); document.getElementById('pending-zone').style.display = 'block'; }
-            else { badge.classList.remove('show'); document.getElementById('pending-zone').style.display = 'none'; }
-            
-            document.getElementById('pending-list-body').innerHTML = pendingList.length === 0 ? '' : pendingList.map(s => `<tr><td class="checkbox-cell"><input type="checkbox" class="pending-checkbox" value="${s.id}"></td><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td><button class="btn btn-approve" onclick="approveStudent('${s.id}')">核准</button></td></tr>`).join('');
-            document.getElementById('active-list-body').innerHTML = activeList.map(s => `<tr><td>🟢</td><td>${s.id}</td><td>${s.name}</td><td>${s.classId}</td><td><button class="btn btn-del" onclick="deleteStudent('${s.id}')">刪</button></td></tr>`).join('');
-        };
-        window.toggleSelectAll = (src, type) => { document.querySelectorAll(`.${type}-checkbox`).forEach(cb => cb.checked = src.checked); };
-        
-        window.batchApprove = async () => {
-            const cbs = document.querySelectorAll('.pending-checkbox:checked'); if(cbs.length===0) return alert("未選取");
-            
-            let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            const ids = Array.from(cbs).map(cb=>cb.value);
-            
-            ids.forEach(id => {
-                const s = currentDB.find(x=>x.id===id); 
-                if(s) s.status='active'; 
-            });
-            const success = await saveToCloud(KEYS.STUDENTS, currentDB); 
-            if(success) alert(`✅ 已核准 ${cbs.length} 人`);
-        };
-
-        window.batchDelete = async () => {
-            const cbs = document.querySelectorAll('.pending-checkbox:checked'); if(cbs.length===0) return alert("未選取");
-            if(!confirm("確定刪除?")) return;
-            
-            let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            const ids = Array.from(cbs).map(cb=>cb.value);
-            const newDB = currentDB.filter(s => !ids.includes(s.id));
-            await saveToCloud(KEYS.STUDENTS, newDB);
+            await saveToCloud(KEYS.STUDENTS, sDB); alert("成績已儲存");
         };
         
-        window.downloadStudentTemplate = () => { const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["學號","姓名","班級","密碼"],["114001","測試生","114-1","1234"]]), "範本"); XLSX.writeFile(wb, "學生帳號範本.xlsx"); };
-        
-        // ★★★ 關鍵修復：檢查 saveToCloud 回傳值 ★★★
-        window.handleStudentImport = (e) => {
-            const f = e.target.files[0]; 
-            if(!f) return;
-
-            const r = new FileReader(); 
-            r.onload = async (e) => {
+        // Excel 匯入
+        window.handleImport = (e) => {
+            const f=e.target.files[0]; if(!f)return;
+            const r=new FileReader();
+            r.onload = async(evt) => {
                 try {
-                    const d = new Uint8Array(e.target.result);
-                    const wb = XLSX.read(d, {type: 'array'});
-                    const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                    
-                    if (json.length === 0) {
-                        alert("Excel 檔案是空的或格式無法讀取！");
-                        return;
-                    }
-
-                    // 匯入前，先從雲端抓最新的資料
-                    let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-                    
-                    let cnt = 0; 
-                    const initCourses = fixedCourses.map(fc => ({ 
-                        id: fc.id, name: fc.name, credit: fc.credit, time: fc.time, 
-                        isFixed: true, location: fc.location, teacher: fc.teacher 
-                    }));
-
-                    json.forEach(row => { 
-                        const idRaw = row['學號'] || row['id'] || row['ID'];
-                        const nameRaw = row['姓名'] || row['name'] || row['Name'];
-                        const classRaw = row['班級'] || row['class'] || row['Class'];
-                        const passRaw = row['密碼'] || row['password'] || '1234';
-
-                        if (idRaw) {
-                            const id = String(idRaw).trim();
-                            if (!currentDB.some(s => s.id === id)) { 
-                                currentDB.push({ 
-                                    id: id, 
-                                    name: String(nameRaw || '未命名').trim(), 
-                                    classId: String(classRaw || '').trim(), 
-                                    password: String(passRaw).trim(), 
-                                    status: 'active', 
-                                    courses: [...initCourses] 
-                                }); 
-                                cnt++; 
-                            }
+                    const wb = XLSX.read(evt.target.result, {type:'array'});
+                    const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                    let cnt=0;
+                    data.forEach(row => {
+                        const id = String(row['學號']||row['id']);
+                        if(id && !sDB.some(s=>s.id===id)) {
+                            sDB.push({ id, name:row['姓名']||'未命名', classId:row['班級']||'', password:'1234', status:'active', courses:fC.map(c=>({...c})) });
+                            cnt++;
                         }
                     });
-
-                    if (cnt > 0) {
-                        // ★ 關鍵：檢查 saveToCloud 是否回傳 true
-                        const success = await saveToCloud(KEYS.STUDENTS, currentDB);
-                        if (success) {
-                            alert(`✅ 成功匯入 ${cnt} 筆新帳號！\n(已自動帶入目前的必修課程)`);
-                        }
-                    } else {
-                        alert("⚠️ 沒有新增任何帳號。\n可能是 Excel 格式不符，或學號已全部存在。");
-                    }
-                    
-                    document.getElementById('import-student-file').value = ''; 
-
-                } catch (error) {
-                    console.error(error);
-                    alert("❌ 處理 Excel 時發生錯誤，請確認檔案格式正確。");
-                }
-            }; 
+                    await saveToCloud(KEYS.STUDENTS, sDB); alert(`匯入 ${cnt} 筆`);
+                } catch(err) { alert("格式錯誤"); }
+            };
             r.readAsArrayBuffer(f);
         };
-
-        window.downloadGradeTemplate = () => { const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["學號","課程代碼","分數"],["114001","C101","85"]]), "範本"); XLSX.writeFile(wb, "成績範本.xlsx"); };
+        window.downloadTemplate = () => XLSX.writeFile(XLSX.utils.book_new(), "template.xlsx");
         
-        window.handleGradeImport = (e) => {
-            const f=e.target.files[0]; if(!f)return;
-            const r=new FileReader(); r.onload=async(e)=>{
-                const d=new Uint8Array(e.target.result), wb=XLSX.read(d,{type:'array'});
-                const json=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-                let cnt=0; 
-                let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-                
-                json.forEach(r=>{
-                    const sid=String(r['學號']), cid=String(r['課程代碼']), sc=parseInt(r['分數']);
-                    const s=currentDB.find(x=>x.id===sid);
-                    if(s && s.courses){ const c=s.courses.find(x=>x.id===cid); if(c){c.score=sc; cnt++;} }
-                });
-                if(cnt>0) {
-                    const success = await saveToCloud(KEYS.STUDENTS, currentDB);
-                    if (success) alert(`更新 ${cnt} 筆成績`);
-                } 
-                document.getElementById('import-grade-file').value='';
-            }; r.readAsArrayBuffer(f);
+        // Tab Switch
+        window.switchTab = (id) => {
+            ['monitor','schedule','students','courses','grades'].forEach(i => document.getElementById(i+'-view').style.display='none');
+            document.getElementById(id+'-view').style.display='block';
+            document.querySelectorAll('.menu-item').forEach(e=>e.classList.remove('active'));
+            event.currentTarget.classList.add('active');
         };
-
-        window.loadGrades = () => { 
-            const sid=document.getElementById('g_stu').value; 
-            const t=document.getElementById('grade-body'); t.innerHTML=''; 
-            if(!sid) { t.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999;">請選擇學生</td></tr>'; return; }
-            const s=studentDB.find(x=>x.id===sid); 
-            if(!s || !s.courses || s.courses.length === 0) { t.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#d32f2f;">此學生尚未選修任何課程</td></tr>'; return; }
-            s.courses.forEach(c=>{ 
-                const safeId = c.id.replace(/[^a-zA-Z0-9-_]/g, '_');
-                const val = (c.score === undefined || c.score === null) ? '' : c.score;
-                t.innerHTML+=`<tr><td>${c.name} <span style="font-size:12px;color:#999">(${c.id})</span></td><td>${c.credit}</td><td><input type="number" id="sc-${safeId}" value="${val}" style="width:80px" placeholder="未輸入" data-cid="${c.id}"></td></tr>`; 
-            }); 
-        };
-
-        window.saveGrades = async () => { 
-            const sid=document.getElementById('g_stu').value; 
-            if(!sid) return alert("請先選擇學生！");
-            
-            let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            const idx=currentDB.findIndex(x=>x.id===sid); 
-            
-            if(idx>-1) { 
-                const s = currentDB[idx];
-                if(s.courses) {
-                    s.courses.forEach(c => {
-                        const safeId = c.id.replace(/[^a-zA-Z0-9-_]/g, '_');
-                        const input = document.getElementById(`sc-${safeId}`);
-                        if(input) {
-                            const val = input.value.trim();
-                            if(val === '') delete c.score; else c.score = parseInt(val);
-                        }
-                    });
-                    const success = await saveToCloud(KEYS.STUDENTS, currentDB); 
-                    if(success) alert(`✅ 學生 ${s.name} 的成績已儲存！`); 
+        
+        window.renderTeaSchedule = () => {
+            const t = document.getElementById('tea-sel').value;
+            const tb = document.getElementById('tea-schedule-body'); tb.innerHTML='';
+            if(!t) return;
+            const allC = [...fC, ...eC].filter(c=>c.teacher===t);
+            const timeMap = {};
+            allC.forEach(c => {
+                 // 格式: 一/1,2
+                 if(!c.time) return;
+                 let [d, p] = c.time.split('/');
+                 const dIdx = {'一':1,'二':2,'三':3,'四':4,'五':5}[d];
+                 if(!dIdx) return;
+                 p.split(',').forEach(sec => {
+                     if(!timeMap[sec]) timeMap[sec] = [null,null,null,null,null,null];
+                     timeMap[sec][dIdx] = c;
+                 });
+            });
+            for(let i=1; i<=8; i++) {
+                let row = `<tr><td>第${i}節</td>`;
+                for(let d=1; d<=5; d++) {
+                    const c = timeMap[i]?.[d];
+                    row += `<td style="background:${c? (c.isFixed?'#ffe0b2':'#b3e5fc'):''}; font-size:12px;">${c ? c.name+'<br>'+c.location : ''}</td>`;
                 }
-            } else alert("找不到學生資料");
+                row += '</tr>';
+                tb.innerHTML += row;
+            }
         };
-
-        window.deleteStudent = async (id) => { 
-            if(confirm("刪除?")){ 
-                let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-                await saveToCloud(KEYS.STUDENTS, currentDB.filter(s=>s.id!==id)); 
-            } 
-        };
-        window.approveStudent = async (id) => { 
-            let currentDB = (await loadFromCloud(KEYS.STUDENTS)) || [];
-            const s=currentDB.find(x=>x.id===id); 
-            if(s){ s.status='active'; await saveToCloud(KEYS.STUDENTS, currentDB); } 
-        };
-        
-        window.renderMonitor = () => { const t = document.getElementById('student-list-body'); t.innerHTML=''; studentDB.forEach(s => { let tot=0, cr=0; (s.courses||[]).forEach(c => { if(c.score){ tot+=c.score*c.credit; cr+=c.credit; } }); let gpa = cr>0 ? (tot/cr).toFixed(1) : 0; t.innerHTML += `<tr><td>${s.name} (${s.id})</td><td>${s.classId||'-'}</td><td>${s.careerTrack==='pilot'?'飛行':'地勤'}</td><td>${gpa}</td><td>${(s.courses||[]).length} 科</td></tr>`; }); };
     </script>
 </body>
 </html>
