@@ -35,26 +35,51 @@
         .msg-ai { background: white; border: 1px solid #ddd; align-self: flex-start; }
         .msg-me { background: #dbeafe; align-self: flex-end; margin-left: auto; }
 
-        /* --- 手機版 RWD 設定 --- */
-        .mobile-toggle { display: none; position: fixed; top: 10px; left: 10px; z-index: 2000; background: var(--main); color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+        /* --- 手機版 RWD 設定 (關鍵修正) --- */
+        .mobile-toggle { 
+            display: none; 
+            position: fixed; 
+            top: 10px; 
+            left: 10px; 
+            z-index: 10001; /* 比側邊欄更高 */
+            background: var(--main); 
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
         
         @media (max-width: 768px) {
-            .sidebar { position: fixed; height: 100%; transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
+            .sidebar { 
+                position: fixed; 
+                top: 0; 
+                left: 0; 
+                bottom: 0; /* 強制佔滿高度 */
+                height: 100%; 
+                transform: translateX(-100%); /* 預設隱藏到左側 */
+                z-index: 10000; /* 確保蓋過內容 */
+                box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+            }
+            .sidebar.open { 
+                transform: translateX(0); /* 滑入 */
+            }
             .mobile-toggle { display: block; }
-            .main { padding-top: 60px; } /* 避免內容被上方按鈕擋住 */
+            .main { padding-top: 70px; } /* 避免內容被上方按鈕擋住 */
         }
     </style>
 </head>
 <body>
-    <button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰ 選單</button>
+    <button class="mobile-toggle" onclick="toggleSidebar()">☰ 選單</button>
 
     <div class="sidebar">
         <div style="text-align:center; margin-bottom:20px;"><h2>✈️ CAFA</h2></div>
-        <div class="menu-item active" onclick="switchTab('selection')">🛒 加退選</div>
-        <div class="menu-item" onclick="switchTab('schedule')">📅 我的課表 (網格)</div>
-        <div class="menu-item" onclick="switchTab('grades')">🏆 成績與全校排名</div>
-        <div class="menu-item" onclick="switchTab('career')">🎯 職涯推薦</div>
+        <div class="menu-item active" onclick="switchTab('selection', this)">🛒 加退選</div>
+        <div class="menu-item" onclick="switchTab('schedule', this)">📅 我的課表 (網格)</div>
+        <div class="menu-item" onclick="switchTab('grades', this)">🏆 成績與全校排名</div>
+        <div class="menu-item" onclick="switchTab('career', this)">🎯 職涯推薦</div>
         <div class="menu-item" onclick="logout()" style="margin-top:auto;">🚪 登出</div>
     </div>
 
@@ -140,7 +165,7 @@
                 sDB = v || [];
                 const me = sDB.find(s=>s.id === curUser.id);
                 if(me) { curUser = me; render(); }
-                renderLeaderboard(); // 更新排行榜
+                renderLeaderboard();
             });
             listenToCloud(KEYS.FIXED, v => { updateCourses(v, 'fixed'); });
             listenToCloud(KEYS.ELECTIVE, v => { updateCourses(v, 'elect'); });
@@ -171,7 +196,7 @@
                 </div>`;
             });
 
-            // Render My Schedule (Grid & List)
+            // Render My Schedule
             renderScheduleGrid();
 
             // Render Grades
@@ -185,7 +210,6 @@
                 }
             });
 
-            // Update GPA & Rank Title
             const gpa = cr>0 ? (tot/cr).toFixed(2) : 0;
             document.getElementById('my-gpa').innerText = gpa;
             let rank = '新進學員';
@@ -197,28 +221,21 @@
             renderRec();
         }
 
-        // ★★★ 網格課表渲染核心 ★★★
         function renderScheduleGrid() {
-            const tbody = document.getElementById('grid-body');
-            tbody.innerHTML = '';
-            
-            // 建立時間映射
+            const tbody = document.getElementById('grid-body'); tbody.innerHTML = '';
             const timeMap = {};
             (curUser.courses||[]).forEach(myC => {
                 const info = allCourses.find(c=>c.id===myC.id) || myC;
                 if(!info.time) return;
-                
-                let [day, periods] = info.time.split('/'); // "一/1,2"
+                let [day, periods] = info.time.split('/');
                 const dIdx = {'一':1,'二':2,'三':3,'四':4,'五':5}[day];
                 if(!dIdx) return;
-                
                 periods.split(',').forEach(p => {
                     if(!timeMap[p]) timeMap[p] = [null,null,null,null,null,null];
                     timeMap[p][dIdx] = info;
                 });
             });
 
-            // 生成 1-8 節
             for(let i=1; i<=8; i++) {
                 let row = `<tr><td>第${i}節</td>`;
                 for(let d=1; d<=5; d++) {
@@ -226,15 +243,11 @@
                     if(c) {
                         const bg = c.isFixed ? '#ff9800' : '#2196f3';
                         row += `<td><div class="course-cell" style="background:${bg}">${c.name}<br>${c.location||''}</div></td>`;
-                    } else {
-                        row += `<td></td>`;
-                    }
+                    } else { row += `<td></td>`; }
                 }
-                row += '</tr>';
-                tbody.innerHTML += row;
+                row += '</tr>'; tbody.innerHTML += row;
             }
 
-            // 同步更新下方列表 (作為備用查看)
             const myList = document.getElementById('my-list'); myList.innerHTML = '';
             (curUser.courses||[]).forEach(c => {
                 const info = allCourses.find(x=>x.id===c.id) || c;
@@ -242,12 +255,9 @@
             });
         }
 
-        // ★★★ 全校排名渲染 ★★★
         function renderLeaderboard() {
             const board = document.getElementById('leaderboard-list'); board.innerHTML = '';
             if(!sDB.length) return;
-
-            // 計算全校 GPA
             let sorted = sDB.filter(s=>s.status!=='pending').map(s => {
                 let cr=0, tot=0;
                 (s.courses||[]).forEach(c=>{ if(c.score){ tot+=c.score*parseInt(c.credit||0); cr+=parseInt(c.credit||0); } });
@@ -264,7 +274,6 @@
             });
         }
 
-        // Actions
         window.add = async(id) => {
             const c = allCourses.find(x=>x.id===id);
             if(curUser.courses.some(my => checkConflict(my.time, c.time))) return alert("衝堂了！");
@@ -299,7 +308,6 @@
             document.getElementById('rec-area').innerHTML = '<h4>為您推薦：</h4>' + (recs.length ? recs.map(c=>`<div>👉 ${c.name} (${c.time})</div>`).join('') : '暫無推薦');
         }
 
-        // Chat
         window.toggleChat = () => { const w=document.getElementById('chat-win'); w.style.display = w.style.display==='flex'?'none':'flex'; };
         window.sendMsg = () => {
             const i=document.getElementById('chat-in'); const txt=i.value; if(!txt)return;
@@ -314,12 +322,22 @@
             }, 500);
         };
 
-        // --- 選單切換邏輯 (含手機版修正) ---
-        window.switchTab = (id) => {
+        // --- 修正後的側邊欄控制邏輯 ---
+        
+        // 切換側邊欄開關
+        window.toggleSidebar = () => {
+            const s = document.querySelector('.sidebar');
+            s.classList.toggle('open');
+        };
+
+        // 切換分頁 (加入 btn 參數以處理 active 狀態，並自動收合側邊欄)
+        window.switchTab = (id, btn) => {
             ['selection','schedule','grades','career'].forEach(v=>document.getElementById(v+'-view').style.display='none');
             document.getElementById(id+'-view').style.display='block';
+            
+            // 處理選單 Highlighting
             document.querySelectorAll('.menu-item').forEach(e=>e.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+            if(btn) btn.classList.add('active');
 
             // 手機版：點擊選項後自動收起側邊欄
             if(window.innerWidth <= 768) {
