@@ -4,12 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>選課系統 | Student</title>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
     <style>
         :root { --main: #00308F; --bg: #f0f2f5; }
         body { font-family: "Microsoft JhengHei", sans-serif; background: var(--bg); margin: 0; display: flex; height: 100vh; }
-        .sidebar { width: 250px; background: var(--main); color: white; padding-top: 20px; display: flex; flex-direction: column; }
+        
+        /* 側邊欄樣式 */
+        .sidebar { width: 250px; background: var(--main); color: white; padding-top: 20px; display: flex; flex-direction: column; transition: transform 0.3s; z-index: 1000; }
         .menu-item { padding: 15px; cursor: pointer; transition: 0.2s; }
         .menu-item.active, .menu-item:hover { background: rgba(255,255,255,0.2); font-weight: bold; border-left: 5px solid gold; }
+        
+        /* 主內容區域 */
         .main { flex: 1; padding: 20px; overflow-y: auto; }
         .card { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
@@ -22,15 +27,28 @@
         .grid-table td { border: 1px solid #ddd; height: 60px; text-align: center; vertical-align: middle; padding: 5px; }
         .course-cell { padding: 5px; border-radius: 5px; font-size: 13px; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         
-        .chat-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--main); border-radius: 50%; color: white; font-size: 30px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .chat-win { position: fixed; bottom: 90px; right: 20px; width: 300px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; }
+        /* 聊天機器人 */
+        .chat-btn { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; background: var(--main); border-radius: 50%; color: white; font-size: 30px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); z-index: 2000; }
+        .chat-win { position: fixed; bottom: 90px; right: 20px; width: 300px; height: 400px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; z-index: 2000; }
         .chat-body { flex: 1; padding: 10px; overflow-y: auto; background: #f9f9f9; }
         .msg { padding: 8px; margin: 5px; border-radius: 5px; font-size: 14px; max-width: 80%; }
         .msg-ai { background: white; border: 1px solid #ddd; align-self: flex-start; }
         .msg-me { background: #dbeafe; align-self: flex-end; margin-left: auto; }
+
+        /* --- 手機版 RWD 設定 --- */
+        .mobile-toggle { display: none; position: fixed; top: 10px; left: 10px; z-index: 2000; background: var(--main); color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer; }
+        
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; height: 100%; transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .mobile-toggle { display: block; }
+            .main { padding-top: 60px; } /* 避免內容被上方按鈕擋住 */
+        }
     </style>
 </head>
 <body>
+    <button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰ 選單</button>
+
     <div class="sidebar">
         <div style="text-align:center; margin-bottom:20px;"><h2>✈️ CAFA</h2></div>
         <div class="menu-item active" onclick="switchTab('selection')">🛒 加退選</div>
@@ -296,12 +314,19 @@
             }, 500);
         };
 
+        // --- 選單切換邏輯 (含手機版修正) ---
         window.switchTab = (id) => {
             ['selection','schedule','grades','career'].forEach(v=>document.getElementById(v+'-view').style.display='none');
             document.getElementById(id+'-view').style.display='block';
             document.querySelectorAll('.menu-item').forEach(e=>e.classList.remove('active'));
             event.currentTarget.classList.add('active');
+
+            // 手機版：點擊選項後自動收起側邊欄
+            if(window.innerWidth <= 768) {
+                document.querySelector('.sidebar').classList.remove('open');
+            }
         };
+        
         window.logout = () => location.href='index.html';
     </script>
 </body>
